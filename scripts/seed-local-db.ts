@@ -103,7 +103,7 @@ if (DRY) {
   process.exit(0);
 }
 
-const TABLES_TO_WIPE = ["paymentAdjustment", "closedMonth", "unmatchedReceipt", "receiptImportBatch", "igpBuyerMembership", "igpHistoryBatch", "igpSale", "igpAccreditation", "igpUnit", "igpProject", "igpSettings", "accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
+const TABLES_TO_WIPE = ["commissionClawback", "commissionPayoutList", "commission", "allowanceReview", "commissionRateSetting", "vipPositionRate", "paymentAdjustment", "closedMonth", "unmatchedReceipt", "receiptImportBatch", "igpBuyerMembership", "igpHistoryBatch", "igpSale", "igpAccreditation", "igpUnit", "igpProject", "igpSettings", "accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
 for (const table of TABLES_TO_WIPE) await gql(`mutation { ${table}_deleteMany(all: true) }`);
 // Members reference themselves, so break the parent links before deleting them.
 await gql(`mutation { member_updateMany(all: true, data: { parentId: null }) }`);
@@ -250,6 +250,32 @@ while (pending.length) {
     }));
     memberIds.set(member.id, id!);
     pending.splice(pending.indexOf(member), 1);
+  }
+}
+
+// F6: sellers carry approved commission rates (doc 08 section 9); the fixtures mirror the mock seed.
+// The two rate tables are seed-owned reference rows: a re-seed replaces them instead of duplicating.
+if (!CLEAN) {
+  const VIP_RATES = { DSC: 500, DRI: 200 };
+  const IGP_RATES = { DSC: 300, DRI: 100 };
+  for (const member of members.filter((item) => item.status === "active")) {
+    const memberId = memberIds.get(member.id);
+    for (const [product, rates, standard] of [
+      ["VIP", VIP_RATES, true], ...(member.designation !== "OST" ? [["IGP", IGP_RATES, false] as const] : []),
+    ] as const) {
+      for (const role of ["DSC", "DRI"] as const) {
+        await insert("CommissionRateSetting", "commissionRateSetting", clean({
+          memberId, product, role, rateBp: rates[role], standardRateBp: standard ? rates[role] : undefined,
+        }));
+      }
+    }
+  }
+  for (const designation of ["SVD", "SSM", "SM", "OST"]) {
+    for (const role of ["DSC", "DRI"] as const) {
+      await insert("VipPositionRate", "vipPositionRate", clean({
+        designation, role, rateBp: VIP_RATES[role], approvalReference: "ADM-MEMO-2026-031",
+      }));
+    }
   }
 }
 

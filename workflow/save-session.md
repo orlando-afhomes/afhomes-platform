@@ -111,60 +111,70 @@ Use the global Execution Recommendation policy for section 9; do not create a se
 # Latest Session Snapshot
 
 ## 1. Session Metadata
-- Saved 2026-11-25 (Asia/Manila). AFHomes Platform, branch `full-stack`, HEAD `1efe2ef`.
-- Tool: OpenCode. Model: DeepSeek V4.1 Flash 1017 (verified from the environment). Permission mode not verified. No compaction observed.
-- Objectives: continue the full-stack roadmap — build, verify and hand off F2 (sales network and accreditation) and F3 (customer applications and record access).
-- Phase: full-stack local build; F0–F3 complete. F1 committed `8cdfc2e`; F2 and F3 committed `1efe2ef` by the owner.
+- Saved 2026-11-26 (Asia/Manila). AFHomes Platform, branch `full-stack`, HEAD `fcb63fd`.
+- Tool: OpenCode. Model: GLM-5.3-Flash (verified from the environment). Permission mode not verified. No compaction observed.
+- Objectives: continue the full-stack roadmap — implement and verify F4 (products, contracts, sales, IGP) and F5 (payments, adjustments, cancellations, holds), then run repeated two-axis code reviews and apply the findings.
+- Phase: full-stack local build; F0–F5 complete. F4/F5 were committed by the owner as `fcb63fd` during the session; this session's sixth-round review fixes are uncommitted.
 
 ## 2. Current Project State
 - Branch model unchanged: `prototype` is frozen, `full-stack` is primary, `develop` holds the pilot plus Step D; mock removal only at F9.
-- F2 is built: `Accreditation`, `AccreditationNumber` (unique per-number ledger), `RegistrationApplication`, `SeatVacancy`, and `Member.parentHistory`/`rowVersion`. Services and routes cover members, accreditation issue/renew/status, registrations, seat vacancies, public verification, referral checks and public OST registration. The rich seed loads 15 accreditations with 19 issued numbers, 4 applications and 1 vacancy.
-- F3 is built: Customer identity columns (`normalizedEmail`, `normalizedMobile`, `normalizedName`, `dateOfBirth`), `CustomerImportJob`/`CustomerImportRow`, full lifecycle (update, discard, send back, reject, reasoned correction), import/export and private government-ID images. A draft keeps a requested Customer ID in the profile so it does not occupy the unique column until submission.
-- Local environment: emulators running (Auth 9099, SQL Connect 9399, Storage 9199, UI 4400); Java 21 at `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.10002-hotspot`; database on `db:seed:clean` (1 account, 0 business records).
+- F4 built: catalog admin with versioning (tier-level `configVersion`/`effectiveDate`/`changes`; product/scheme writes, approval, retire, guarded delete), contract lifecycle completion, Non-Standard 1–12 with Administrator then Finance approvals, sale commission correction, IGP catalog/sales/JA&D/documents/threshold/grant rules/buyer membership/history import. VIP Number issuance is blocked with a user-facing note; issuance is F6.
+- F5 built: `PaymentAdjustment` (insert-only), `ClosedMonth`, `UnmatchedReceipt`, `ReceiptImportBatch`, `Sale.financialHold`; receipt reject/return/resubmit, counted date in the first open month, bank from the existing reference list, reversals/refunds, cancellation forfeiture with a dated sale reversal, defaulted reinstatement, month close, unmatched receipts and import sign-off.
+- Six review rounds fixed authorization, audit identity/actions, concurrency, money precision, contract/IGP column persistence, system-wide OR uniqueness (case-insensitive, including IGP), IGP standing/JA&D, tier-level version reads, the adjustment table as sole source, cancellation adjustments, production copy and test isolation.
+- Local environment: emulators were started this session with Java 21 at `C:\Program Files\Eclipse Adoptium\jdk-21.0.13.10002-hotspot`; database left on `db:seed:clean` (1 account, 0 business records).
 
 ## 3. Important Decisions
-- Owner: branch/seed model unchanged; F2 and F3 plans approved and built; owner-only Git; synthetic local data; no business-rule changes.
-- F2: AA numbers allocated through the unique ledger with bounded retry; transfer guarded by row version, with serializable enforcement deferred to the staging review; registration approval commits the seller then the application (recorded `shortcut:`); public routes are same-origin and `no-store`; public verification never shows a validity date.
-- F3: staff VIP card lookup deferred to F7 because it needs active memberships; drafts never occupy the unique Customer ID column; import diagnostics store counts/errors only; only the primary government ID image is connected (supplementary holder image deferred to F4).
+- Owner: owner-only Git; the owner committed F4/F5 as `fcb63fd` during the session. Synthetic local data; no business-rule changes.
+- Non-Standard gate closed by the owner on 2026-11-24: 1–12 monthly payments (docs 05 §10.2/item 32); the stale UI20 1–36 text was synced.
+- Administrator holds `finance.refund` (doc 07 §5.3), so the Administrator may reverse/refund and decide cancellations.
+- OR/reference uniqueness is system-wide and case-insensitive across payments, open unmatched receipts, non-rejected import batches and IGP receipts; auto-assigned Cash OR numbers advance past held numbers.
+- Payment adjustments are read only from `paymentAdjustments`; the details copy is stripped.
+- Cancelling a confirmed sale writes a dated reversal in the open month (doc 13 §4.5).
+- Tests must not mutate seeded records: they create and delete their own contract/sale, product, closed month and unmatched/import records.
+- Deferred review items are accepted: unmatched-receipt file storage, reference-list admin CRUD, price-amendment sale adjustment (no operation), effective-date scheduling, closed-month re-open rule, forfeiture amount owner confirmation, `reconcileContractState` port, imports-to-collections (F8), close-month DB lock, IGP paid documents, structural smells, browser walkthrough.
 - Retained from F1: MFA hooks, 8-hour production sessions, Firebase email password reset, CAPTCHA deferred to staging.
 
 ## 4. Completed Work
-- F2 files: `src/server/repositories/sales-network.ts`; services `sales-network.ts`, `accreditation.ts`, `registrations.ts`; `src/server/api/public-route.ts`; routes `members/*`, `accreditations/*`, `registrations/*`, `seat-vacancies/*`, `public/*`; `src/server/services/sales-network.test.ts`; schema additions; seed fixtures; phase-plan F2 status.
-- F3 files: `src/server/services/customers.ts` (extended), `src/server/repositories/records.ts` (identity columns, duplicate/number queries), `src/server/storage.ts` (customer ID image), customer routes (update, discard, send-back, reject, correct, id-image, import, imports, export), schemas, HTTP repositories, `src/server/services/customers.test.ts`; seed normalized columns; phase-plan F3 status.
-- Verification: 56/56 server tests across 11 files (F2 6/6, F3 7/7); 124/124 customer screen tests; 24/24 sales-network/registration screen tests; tsc, lint (836 files) and build clean; rich seed verified; clean seed restored.
+- F4 files: `src/server/services/{catalog-admin,contracts,sales,igp,igp-catalog}.ts`; routes under `src/app/api/v1/` for products, payment-schemes, tier-levels, contracts (`[id]/[action]`), sales (correct-commission, default), IGP, IGP catalog; schema additions; seed IGP catalog/settings/accreditations; tests `contracts-f4.test.ts`, `igp.test.ts`; phase-plan F4 status.
+- F5 files: `src/server/services/payments.ts` (receipt decisions, adjustments, closed months, unmatched receipts, imports), `src/server/repositories/records.ts` (adjustment ledger reads, `financialHold`), routes for `closed-months`, `unmatched-receipts`, `history-import`, `payments/[id]/[action]`; schemas; HTTP repositories; `payments-f5.test.ts`; phase-plan F5 status.
+- Docs: phase plan F4/F5 status and review history; `decisions-and-gaps`, delivery plan and pilot plan Non-Standard sync.
+- Verification: 73/73 server tests across 14 files; 29/29 finance/import screen tests; tsc, lint (868 files) and build clean; rich seed then clean seed.
 
 ## 5. Git Working Tree
 - Staged: none.
-- Unstaged: 2 modified files, not edited by this session (pre-existing or owner-origin): `src/panels/admin/components/contract-dialogs.test.tsx` and `src/panels/admin/customer-review-pages.test.tsx` (25 insertions, 164 deletions total).
-- Untracked: none. Deleted or renamed: none. This session's F2/F3 work is committed in `1efe2ef`.
+- Unstaged (this session's sixth-round fixes; 7 files, 37 insertions, 19 deletions): `docs/implementation/02-full-stack/full-stack-phase-plan.md`, `src/server/services/catalog-admin.ts`, `contracts-f4.test.ts`, `contracts.ts`, `igp.ts`, `payments.ts`, `sales.ts`.
+- Untracked: none. Deleted or renamed: none.
+- The F4/F5 body is committed in `fcb63fd` (owner). The two previously modified owner test files no longer appear in the working tree; how the owner resolved them in `fcb63fd` was not inspected.
+- Unfinished: the 7 unstaged fix files await owner review/commit.
 
 ## 6. Pending Tasks
-- F4 planning, gated by the Non-Standard monthly payments decision (1–36 vs 1–12).
-- F5–F9 as written in the phase plan; mock removal only at F9.
-- Deferred within built phases: staff VIP card lookup (F7), supplementary holder ID image (F4), QR holder-code invalidation (F7), serializable cycle prevention and approval reconciliation (staging), public rate limiting/CAPTCHA (staging).
-- Pre-existing mock test failures remain (account delegated-accounts, department reactivation, two business-flow date assertions); they were not re-checked this session.
-- Owner: review and commit or discard the two modified test files.
+- Owner: review and commit or discard the 7 uncommitted sixth-round fix files.
+- Owner decisions for F6: allowance questions G3–G5; Legal confirmation of the clawback addendum before real payouts; cancellation forfeiture amount confirmation (doc 05 §12 says do not invent penalty rules).
+- F6 planning/implementation: commission rates frozen on the sale, VIP Number issuance, releases at 40%, month-end payout lists, clawback, approved vs paid.
+- F7–F9 as written in the phase plan; mock removal only at F9.
+- Deferred review items listed in section 3; plus browser api-mode walkthrough and staging checks.
+- Known pre-existing failures: the mock `business-flow` two date assertions; the two owner-modified screen test files (not re-run this session).
 
 ## 7. Verification State
-- `npx vitest run src/server --no-file-parallelism`: 56/56 across 11 files (organization 7, sales-network 6, customers 7, department-access 1, session 11, pilot 9, views 7, evidence 3, reports 2, storage 1, money 2).
-- Screen suites: customer 124/124; sales-network/registration 24/24.
-- `npx tsc --noEmit` clean; `npm run lint` clean (836 files); `npm run build` compiled successfully.
-- `npm run db:seed`: 28 contracts, 40 customers, 15 members, 84 payments, 15 accreditations, 19 numbers, 4 applications, 1 vacancy. `npm run db:seed:clean`: 1 user account, 0 business records.
-- Known behavior: Data Connect may miss a schema hot reload; restart the emulators after schema edits. Server tests must run with `--no-file-parallelism` because the session suite signs out a shared `dev-admin` cookie.
-- Not performed: full `npm test`, browser api-mode walkthroughs, real email delivery, staging checks.
+- `npx vitest run src/server --no-file-parallelism`: 73/73 across 14 files (targeted F4/F5/IGP 17/17).
+- Finance/import screen suites: 29/29. Other screen suites were not re-run; the two owner-modified files were not re-run.
+- `npx tsc --noEmit` clean; `npm run lint` clean (868 files); `npm run build` succeeded.
+- `npm run db:seed`: 28 contracts, 40 customers, 15 members, 84 payments, 3 tier levels, 3 products, 4 schemes, plus IGP catalog/settings and 4 JA&D accreditations. `npm run db:seed:clean`: 1 account, 0 business records.
+- Known behavior: restart the emulators after schema edits; run server tests with `--no-file-parallelism` because the session suite signs out a shared `dev-admin` cookie.
+- Not performed: full `npm test`, browser api-mode walkthroughs, staging checks, real email delivery.
 
 ## 8. Next Session Instructions
-- Run `/load`; confirm branch `full-stack`, HEAD `1efe2ef`, no staged or untracked changes, and the two modified test files that are not from this session.
-- Do not stage or commit. Ask the owner to review those two files and to settle the Non-Standard decision.
-- Plan F4 before coding. Read `docs/business-rules/05-vip-products-and-contracts.md`, the decision register UI20 entry, `src/modules/contracts/*`, `src/server/services/contracts.ts` and the product/scheme seed.
+- Run `/load`; confirm branch `full-stack`, HEAD `fcb63fd`, no staged or untracked files, and the 7 unstaged fix files from this session.
+- Do not stage or commit. Ask the owner to review/commit those files and to settle the F6 decisions (allowances, clawback addendum, forfeiture amount).
+- Plan F6 before coding. Read `docs/business-rules/08-commission-management.md`, `13-sales-performance-reporting.md`, the allowance decisions in `docs/implementation/decisions-and-gaps.md` (G3–G5), the commissions modules/screens and the closed-month snapshot.
 - After any schema edit, restart the emulators, run `npm run db:seed`, then tests; leave the database on `db:seed:clean` when handing back.
-- Run the targeted suites and the 56-test server suite with `--no-file-parallelism`; do not run the full `npm test` unless asked.
+- Run the targeted suites and the 73-test server suite with `--no-file-parallelism`; do not run the full `npm test` unless asked.
 
 ## 9. Execution Recommendation
-- Phase: QA (F3 review), then Plan F4 after the owner decision.
+- Phase: QA (sixth review-fix verification), then Plan F6.
 - Recommended next mode: QA review, then Plan.
 - Recommended model: Claude Opus 5.5, high effort.
 - Ultracode: OFF.
-- Token optimization: review `services/customers.ts` and the F4 contract modules with targeted reads and suites only.
-- Reason: the next phase changes contract and financial invariants and is gated by an unresolved owner decision.
+- Token optimization: targeted reads of doc 08, the commissions modules and the allowance decisions; run the server suites only.
+- Reason: F6 freezes commission rates and releases payouts on the F5 receipt ledger, so the uncommitted fixes and the gated owner decisions must be settled first.
 <!-- SESSION_SNAPSHOT_END -->

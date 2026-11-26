@@ -2,7 +2,7 @@ import type { AccreditationReminder } from "@/modules/accreditation/dates";
 import type { GenealogyEntry } from "@/modules/contracts/types";
 import type { VipTierCode } from "@/modules/vip/types";
 
-export type SaleStatus = "pending" | "confirmed" | "defaulted" | "cancelled" | "rejected";
+export type SaleStatus = "pending" | "confirmed" | "defaulted" | "cancelled" | "rejected" | "rescinded" | "downgraded";
 
 /** Recorded on a sale whose salesperson or referrer had an expired accreditation on the sale date (doc 03 section 9). */
 export type SaleExpiryReminder = {

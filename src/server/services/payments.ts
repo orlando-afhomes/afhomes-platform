@@ -14,8 +14,12 @@ import type { Actor } from "@/server/auth/actor";
 import { requireOperation } from "@/server/auth/authorize";
 import { dbRead, listAll, uniqueViolation } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
-import { loadContract, loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract, loadVerifiedPayments } from "@/server/repositories/records";
+import {
+  loadAllowanceReviews, loadCommissionPayoutLists, loadCommissions, loadCommissionRateSettings, loadContract,
+  loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract, loadVerifiedPayments,
+} from "@/server/repositories/records";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
+import { applyCommissionTriggerFx, commissionEffects, holdUnpaidCommissionsFx, issueVipNumberFx, loadSaleCommissionState, payoutListOf, releaseCommissionsFx, restoreDefaultedCommissionsFx, vipIssuance } from "@/server/services/commissions";
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const REFERENCE_INDEX = "payment_referenceNo_uidx";
@@ -34,7 +38,6 @@ async function assertActiveBank(method: string, bankId: string | null | undefine
   if (!banks.some((bank) => bank.key === bankId && bank.status === "active")) throw invalid("Select an active bank.", { bankId: "Select an active bank." });
 }
 
-/** The next Cash OR number that is free across payments, unmatched receipts and import batches. */
 /** The next Cash OR number that is free across payments, unmatched receipts, import batches and IGP receipts. */
 async function nextFreeCashDocumentNo(paidDate: string): Promise<string> {
   const datePrefix = paidDate.replaceAll("-", "");
@@ -154,6 +157,42 @@ export async function verifyPayment(actor: Actor, id: string, options: { excepti
       : null;
     const confirmSale = Boolean(adjustment) && !reinstated;
 
+    // F6: VIP Number issuance and commission release/holds join the same transaction (docs 06, 08, 13).
+    const fx = commissionEffects();
+    if (sale && sale.approval) {
+      const state = await loadSaleCommissionState(sale.id);
+      const collection = collectionState(contract, [...others, verified], sale);
+      const confirmedNow = confirmSale || (reinstated && Boolean(adjustment));
+      // The receipt that covers the first scheduled payment can also be the one that freezes the rates.
+      let frozen = sale.commissionRates;
+      if (!frozen && !contract.vipNumber) {
+        const [settings, issued] = await Promise.all([
+          loadCommissionRateSettings(),
+          listAll<{ vipNumber: string | null }>("contracts", "vipNumber", { where: `{ vipNumber: { startsWith: $p } }`, variableDefinitions: "$p: String!", variables: { p: `${today().slice(2, 4)}${today().slice(5, 7)}${today().slice(8, 10)}` } }),
+        ]);
+        const issuance = vipIssuance(contract, sale, [...others, verified], settings, issued.map((row) => row.vipNumber ?? "").filter(Boolean));
+        if (issuance && "vipNumber" in issuance) {
+          issueVipNumberFx(fx, actor, contract.id, sale, issuance, contract.raNumber ?? null);
+          frozen = issuance.rates;
+        }
+      }
+      if (confirmedNow || sale.status === "confirmed") {
+        if (reinstated) restoreDefaultedCommissionsFx(fx, actor, state, sale.id, firstOpenDate(closed, today()));
+        if (frozen) {
+          if (!collection.release) {
+            holdUnpaidCommissionsFx(fx, actor, state, sale.id, "Approved collections fell below 40%.", true, ["stage1"]);
+          }
+          releaseCommissionsFx(fx, actor, state, {
+            saleId: sale.id, contractId: contract.id, product: "VIP", valueCentavos: sale.valueCentavos, rates: frozen,
+            stage1Date: collection.release?.countedDate ?? null, fullPaymentDate: collection.fullPayment?.countedDate ?? null,
+          });
+        }
+      } else if (frozen) {
+        holdUnpaidCommissionsFx(fx, actor, state, sale.id, "Approved collections fell below 40%.", true, ["stage1"]);
+        holdUnpaidCommissionsFx(fx, actor, state, sale.id, "The sale is no longer Confirmed.");
+      }
+    }
+
     const definitions = [
       "$payment: UUID!", "$contract: UUID!", "$version: Int!", "$verifier: UUID!", "$verifiedAt: Timestamp!", "$verifiedDate: Date!", "$countedDate: Date!", "$details: Any!",
       (confirmSale || reinstated) ? "$sale: UUID!, $confirmedDate: Date!" : "", adjustment ? "$adjDate: Date!, $adjAmount: Int64!, $adjKind: String!, $adjReason: String!" : "",
@@ -178,14 +217,15 @@ ${reinstated ? `  r: sale(id: $sale) @check(expr: "response.reinstate == 1", mes
 
     try {
       await transact(actor, {
-        variableDefinitions: definitions,
-        fields,
+        variableDefinitions: [definitions, ...fx.definitions].filter(Boolean).join(", "),
+        fields: [fields, ...fx.fields].join("\n"),
         variables: {
           payment: payment.id, contract: contract.id, version, verifier: actor.userId, verifiedAt, verifiedDate: verified.verifiedDate, countedDate: verified.countedDate, details,
           ...((confirmSale || reinstated) ? { sale: sale.id, confirmedDate: adjustment?.confirmedDate ?? milestone?.date ?? today() } : {}),
           ...(adjustment ? { adjDate: adjustment.date, adjAmount: centavosToInt64(adjustment.amountCentavos), adjKind: adjustment.kind, adjReason: adjustment.reason } : {}),
+          ...fx.variables,
         },
-        audit,
+        audit: [...audit, ...fx.audits],
         markers: {
           NOT_VERIFIABLE: conflict("not_verifiable", "This payment was already decided."),
           STALE_CONTRACT: conflict("retry", "Another receipt on this contract was decided at the same time."),
@@ -194,6 +234,8 @@ ${reinstated ? `  r: sale(id: $sale) @check(expr: "response.reinstate == 1", mes
       });
       return { payment: verified, saleStatus: adjustment ? "confirmed" : reinstated ? "pending" : sale.status };
     } catch (error) {
+      // Another contract took the next VIP Number first: the retry re-scans and allocates the following sequence.
+      if (uniqueViolation(error) === "contract_vipNumber_uidx" && attempt < 2) continue;
       // A receipt on the same contract was decided at the same moment: read the totals again and decide again.
       if (error instanceof Error && "code" in error && (error as { code: string }).code === "retry" && attempt < 2) continue;
       throw error;
@@ -309,6 +351,29 @@ export async function adjustPayment(actor: Actor, id: string, input: { kind: "re
     const state = sale ? collectionState(contract, after, sale) : null;
     const dropToPending = Boolean(sale && sale.status === "confirmed" && state && !state.confirmation);
     const releaseHold = Boolean(sale && sale.financialHold && state?.confirmation);
+    // F6: commission holds and the returned-cheque trigger join the same transaction (docs 07 §14, 08 §13–14).
+    const fx = commissionEffects();
+    if (sale && sale.approval) {
+      const cState = await loadSaleCommissionState(sale.id);
+      if (sale.commissionRates) {
+        const before = collectionState(contract, all, sale);
+        if (payment.method === "Cheque" && input.kind === "reversal" && before.release && !state?.release) {
+          applyCommissionTriggerFx(fx, actor, cState, { saleId: sale.id, trigger: "returned_cheque", date, stages: ["stage1"] });
+        }
+        if (dropToPending) {
+          holdUnpaidCommissionsFx(fx, actor, cState, sale.id, "Approved collections fell below 40%.", true, ["stage1"]);
+          holdUnpaidCommissionsFx(fx, actor, cState, sale.id, "The sale is no longer Confirmed.");
+        } else if (sale.status === "confirmed" || releaseHold) {
+          if (!state?.release) {
+            holdUnpaidCommissionsFx(fx, actor, cState, sale.id, "Approved collections fell below 40%.", true, ["stage1"]);
+          }
+          releaseCommissionsFx(fx, actor, cState, {
+            saleId: sale.id, contractId: contract.id, product: "VIP", valueCentavos: sale.valueCentavos, rates: sale.commissionRates,
+            stage1Date: state?.release?.countedDate ?? null, fullPaymentDate: state?.fullPayment?.countedDate ?? null,
+          });
+        }
+      }
+    }
     const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id });
     const event = { at: nowIso(), actorId: actor.userId, event: input.kind === "reversal" ? BUSINESS_AUDIT_ACTIONS.PAYMENT_REVERSED : BUSINESS_AUDIT_ACTIONS.PAYMENT_REFUNDED, note: reason };
     const details = { ...(stored.payment?.details ?? {}), ...detailsOf(adjusted), history: [...payment.history, event] };
@@ -332,16 +397,17 @@ export async function adjustPayment(actor: Actor, id: string, input: { kind: "re
     if (releaseHold && sale) audit.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, entityType: "sale", entityId: sale.id, details: { module: "finance", previousValue: "financial_hold", newValue: "no_hold", relatedRecordIds: [contract.id] } });
     try {
       await transact(actor, {
-        variableDefinitions: definitions,
-        fields,
+        variableDefinitions: [definitions, ...fx.definitions].filter(Boolean).join(", "),
+        fields: [fields, ...fx.fields].join("\n"),
         variables: {
           contract: contract.id, version,
           adj: { id: adjustment.id, paymentId: payment.id, kind: adjustment.kind, amountCentavos: centavosToInt64(adjustment.amountCentavos), date: adjustment.date, reason: adjustment.reason, actorId: actor.userId },
           id: payment.id, details,
           ...(sale ? { sale: sale.id, hold: Boolean(dropToPending || (sale.financialHold && !releaseHold)) } : {}),
           ...(dropToPending ? { adjDate: date, adjAmount: centavosToInt64(-(sale?.valueCentavos ?? 0)), adjReason: "Required payment reversed or refunded", actor: actor.userId } : {}),
+          ...fx.variables,
         },
-        audit,
+        audit: [...audit, ...fx.audits],
         markers: { STALE_CONTRACT: conflict("retry", "Another receipt decision changed this contract. Try again.") },
       });
       return (await loadPayment(payment.id))!;
@@ -365,17 +431,28 @@ export async function closeMonth(actor: Actor, month: string): Promise<ClosedMon
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month >= today().slice(0, 7)) throw invalid("Select a month that has ended.", { month: "Select a month that has ended." });
   const existing = await dbRead<{ closedMonths: Array<{ snapshot: ClosedMonth | null }> }>(`query($m: String!) { closedMonths(where: { month: { eq: $m } }, limit: 1) { snapshot } }`, { m: month });
   if (existing.closedMonths[0]?.snapshot) return existing.closedMonths[0].snapshot;
-  const [payments, adjustmentRows] = await Promise.all([
+  const [payments, adjustmentRows, commissions, allowanceReviews, lists] = await Promise.all([
     loadVerifiedPayments(),
     listAll<{ id: string; date: string; amountCentavos: string; kind: string; reason: string; actor: { id: string } | null }>("saleAdjustments", "id date amountCentavos kind reason actor { id }"),
+    loadCommissions(),
+    loadAllowanceReviews(),
+    loadCommissionPayoutLists(),
   ]);
   const adjustments = adjustmentRows.map((row) => ({ id: row.id, date: row.date, amountCentavos: int64ToCentavos(row.amountCentavos), kind: row.kind as "confirmation" | "reversal" | "reconfirmation" | "amendment", reason: row.reason, actorId: row.actor?.id ?? "" }));
-  const snapshot = closedMonthSnapshot({ sales: [{ adjustments }], payments, commissions: [], allowanceReviews: [] }, month, nowIso(), actor.userId);
+  const snapshot = closedMonthSnapshot({ sales: [{ adjustments }], payments, commissions, allowanceReviews }, month, nowIso(), actor.userId);
+  // F6: closing the month makes the system prepare that month's payout list (2026-11-16 amendment), prepared by the system.
+  const payoutList = payoutListOf(month, commissions, lists, null);
   await transact(actor, {
-    variableDefinitions: "$d: ClosedMonth_Data!",
-    fields: "month: closedMonth_insert(data: $d)",
-    variables: { d: { id: newId(), month, closedAt: snapshot.closedAt, closedById: actor.userId, snapshot } },
-    audit: [{ action: BUSINESS_AUDIT_ACTIONS.MONTH_CLOSED, entityType: "closed-month", entityId: month, details: { module: "finance", newValue: "closed" } }],
+    variableDefinitions: payoutList ? "$d: ClosedMonth_Data!, $pl: CommissionPayoutList_Data!" : "$d: ClosedMonth_Data!",
+    fields: ["month: closedMonth_insert(data: $d)", ...(payoutList ? ["payoutList: commissionPayoutList_insert(data: $pl)"] : [])].join("\n"),
+    variables: {
+      d: { id: newId(), month, closedAt: snapshot.closedAt, closedById: actor.userId, snapshot },
+      ...(payoutList ? { pl: payoutList.data } : {}),
+    },
+    audit: [
+      { action: BUSINESS_AUDIT_ACTIONS.MONTH_CLOSED, entityType: "closed-month", entityId: month, details: { module: "finance", newValue: "closed" } },
+      ...(payoutList ? [{ action: BUSINESS_AUDIT_ACTIONS.COMMISSION_PAYOUT_LIST_PREPARED, entityType: "commission", entityId: String(payoutList.data.id), details: { module: "commissions", newValue: month, relatedRecordIds: payoutList.commissionIds } } satisfies AuditSpec] : []),
+    ],
   });
   return snapshot;
 }

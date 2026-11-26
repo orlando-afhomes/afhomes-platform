@@ -17,7 +17,7 @@ import { MAX_IMPORT_ROWS } from "@/modules/customers/import";
 import { addYearsToDate, parseManilaDateOnly } from "@/shared/lib/dates";
 import type { Actor } from "@/server/auth/actor";
 import { loadScopeMembers, requireOperation } from "@/server/auth/authorize";
-import { dbRead, dbWrite, listAll, uniqueViolation } from "@/server/db";
+import { dbRead, listAll, uniqueViolation } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
 import { paperNumberTaken } from "@/server/services/payments";
@@ -172,14 +172,12 @@ async function loadHistoryBatches(): Promise<IgpHistoryBatch[]> {
   return rows.map((row) => ({ id: row.id, fileName: row.fileName, createdAt: row.createdAt, createdBy: row.createdBy?.id ?? "", status: "imported", totalRows: row.totalRows, rows: row.rows ?? [], skipped: row.skipped ?? [] }));
 }
 
-/** The singleton settings row; created with the confirmed defaults on first use. */
+/** The singleton settings row, read-only; writes create it when an action changes a setting. */
 async function loadSettings(): Promise<{ thresholdBp: number; grantTierRules: IgpGrantTierRule[] }> {
   const result = await dbRead<{ igpSettingss: SettingsRow[] }>(`query { igpSettingss(where: { key: { eq: "igp" } }, limit: 1) { id key thresholdBp grantTierRules } }`);
   const row = result.igpSettingss[0];
   if (row) return { thresholdBp: row.thresholdBp, grantTierRules: row.grantTierRules ?? DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })) };
-  const defaults = { thresholdBp: 1_000, grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })) };
-  await dbWrite("mutation($d: IgpSettings_Data!) { igpSettings: igpSettings_insert(data: $d) }", { d: { id: newId(), key: "igp", ...defaults } });
-  return defaults;
+  return { thresholdBp: 1_000, grantTierRules: DEFAULT_IGP_GRANT_TIER_RULES.map((rule) => ({ ...rule })) };
 }
 
 async function loadCatalog(): Promise<{ projects: IgpProject[]; units: IgpUnit[] }> {
@@ -475,7 +473,15 @@ export async function actIgp(actor: Actor, action: IgpAction): Promise<IgpSale |
     const settings = await loadSettings();
     const row = await dbRead<{ igpSettingss: Array<{ id: string }> }>(`query { igpSettingss(where: { key: { eq: "igp" } }, limit: 1) { id } }`);
     const id = row.igpSettingss[0]?.id;
-    if (!id) throw notFound("IGP settings");
+    if (!id) {
+      await transact(actor, {
+        variableDefinitions: "$d: IgpSettings_Data!",
+        fields: "settings: igpSettings_insert(data: $d)",
+        variables: { d: { id: newId(), key: "igp", thresholdBp: action.basisPoints, grantTierRules: settings.grantTierRules } },
+        audit: [{ action: BUSINESS_AUDIT_ACTIONS.IGP_THRESHOLD_CHANGED, entityType: "igp-settings", entityId: "igp-threshold", details: { module: "sales", previousValue: String(settings.thresholdBp), newValue: String(action.basisPoints), reason } }],
+      });
+      return null;
+    }
     await transact(actor, {
       variableDefinitions: "$id: UUID!, $d: IgpSettings_Data!",
       fields: "settings: igpSettings_update(id: $id, data: $d)",
@@ -493,12 +499,21 @@ export async function actIgp(actor: Actor, action: IgpAction): Promise<IgpSale |
     const settings = await loadSettings();
     const row = await dbRead<{ igpSettingss: Array<{ id: string }> }>(`query { igpSettingss(where: { key: { eq: "igp" } }, limit: 1) { id } }`);
     const id = row.igpSettingss[0]?.id;
-    if (!id) throw notFound("IGP settings");
     const describe = (rules: readonly IgpGrantTierRule[]) => rules.map(({ tier, minPriceCentavos }) => `${tier}:${minPriceCentavos}`).join(", ");
+    const nextRules = action.rules.map(({ tier, minPriceCentavos }) => ({ tier, minPriceCentavos }));
+    if (!id) {
+      await transact(actor, {
+        variableDefinitions: "$d: IgpSettings_Data!",
+        fields: "settings: igpSettings_insert(data: $d)",
+        variables: { d: { id: newId(), key: "igp", thresholdBp: settings.thresholdBp, grantTierRules: nextRules } },
+        audit: [{ action: BUSINESS_AUDIT_ACTIONS.IGP_GRANT_TIER_RULES_CHANGED, entityType: "igp-settings", entityId: "igp-grant-tier-rules", details: { module: "sales", previousValue: describe(settings.grantTierRules), newValue: describe(action.rules), reason } }],
+      });
+      return null;
+    }
     await transact(actor, {
       variableDefinitions: "$id: UUID!, $d: IgpSettings_Data!",
       fields: "settings: igpSettings_update(id: $id, data: $d)",
-      variables: { id, d: { grantTierRules: action.rules.map(({ tier, minPriceCentavos }) => ({ tier, minPriceCentavos })) } },
+      variables: { id, d: { grantTierRules: nextRules } },
       audit: [{ action: BUSINESS_AUDIT_ACTIONS.IGP_GRANT_TIER_RULES_CHANGED, entityType: "igp-settings", entityId: "igp-grant-tier-rules", details: { module: "sales", previousValue: describe(settings.grantTierRules), newValue: describe(action.rules), reason } }],
     });
     return null;

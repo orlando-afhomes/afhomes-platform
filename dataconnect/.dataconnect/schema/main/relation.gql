@@ -440,6 +440,142 @@ extend type AccreditationNumber {
   """
   _id: ID! @fdc_generated(from: "AccreditationNumber.id", purpose: ENTITY_ID)
 }
+extend type AllowanceReview {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "AllowanceReview", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table.
+  """
+  _count: Int! @fdc_generated(from: "AllowanceReview.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `clawbackOffsetCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  clawbackOffsetCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.clawbackOffsetCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `inputs` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  inputs_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.inputs", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `memberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  memberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.memberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `month` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  month_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.month", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `result` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  result_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.result", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `reviewedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reviewedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.reviewedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `AllowanceReview` table where the `reviewedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reviewedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview.reviewedById", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `clawbackOffsetCentavos` field in the `AllowanceReview` table.
+  """
+  clawbackOffsetCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "AllowanceReview.clawbackOffsetCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `clawbackOffsetCentavos` field in the `AllowanceReview` table.
+  """
+  clawbackOffsetCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "AllowanceReview.clawbackOffsetCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `clawbackOffsetCentavos` field in the `AllowanceReview` table.
+  """
+  clawbackOffsetCentavos_min: Int64 @fdc_generated(from: "AllowanceReview.clawbackOffsetCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `inputs` field in the `AllowanceReview` table.
+  """
+  inputs_min: Any @fdc_generated(from: "AllowanceReview.inputs", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `result` field in the `AllowanceReview` table.
+  """
+  result_min: Any @fdc_generated(from: "AllowanceReview.result", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `reviewedAt` field in the `AllowanceReview` table.
+  """
+  reviewedAt_min: Timestamp @fdc_generated(from: "AllowanceReview.reviewedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `clawbackOffsetCentavos` field in the `AllowanceReview` table.
+  """
+  clawbackOffsetCentavos_max: Int64 @fdc_generated(from: "AllowanceReview.clawbackOffsetCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `inputs` field in the `AllowanceReview` table.
+  """
+  inputs_max: Any @fdc_generated(from: "AllowanceReview.inputs", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `result` field in the `AllowanceReview` table.
+  """
+  result_max: Any @fdc_generated(from: "AllowanceReview.result", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `reviewedAt` field in the `AllowanceReview` table.
+  """
+  reviewedAt_max: Timestamp @fdc_generated(from: "AllowanceReview.reviewedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "AllowanceReview.id", purpose: ENTITY_ID)
+}
 extend type AuditEvent {
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
@@ -617,7 +753,1004 @@ extend type ClosedMonth {
   """
   _id: ID! @fdc_generated(from: "ClosedMonth.id", purpose: ENTITY_ID)
 }
+extend type Commission {
+  """
+  ✨ List `CommissionClawback` objects in a one-to-many relationship (where `CommissionClawback`.`commission` is this object).
+  """
+  commissionClawbacks_on_commission(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionClawback_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionClawback_Having
+  ): [CommissionClawback!]! @fdc_generated(from: "CommissionClawback.commission", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Commission", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Commission` table.
+  """
+  _count: Int! @fdc_generated(from: "Commission.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `amountCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  amountCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.amountCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `approvedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.approvedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `approvedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.approvedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `basisCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  basisCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.basisCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `contractId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  contractId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.contractId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `history` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  history_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.history", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `holdReason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  holdReason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.holdReason", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `holdTrigger` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  holdTrigger_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.holdTrigger", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `igpSaleId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  igpSaleId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.igpSaleId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutConfirmedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutConfirmedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutConfirmedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutCountedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutCountedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutCountedDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutEvidenceFileName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutEvidenceFileName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutEvidenceFileName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutEvidence` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutEvidence_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutEvidence", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutInitiatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutInitiatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutInitiatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutMethod` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutMethod_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutMethod", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutProcessedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutProcessedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutProcessedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `payoutReference` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  payoutReference_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.payoutReference", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `percentBp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  percentBp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.percentBp", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `product` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  product_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.product", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `recipientDesignation` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recipientDesignation_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.recipientDesignation", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `recipientMemberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recipientMemberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.recipientMemberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `recipientName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recipientName_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.recipientName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `releaseDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  releaseDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.releaseDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `releaseRestorable` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  releaseRestorable_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.releaseRestorable", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `rereleaseAfter` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  rereleaseAfter_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.rereleaseAfter", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `role` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  role_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.role", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `saleId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  saleId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.saleId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `stage` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  stage_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.stage", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Commission` table where the `voidedPayouts` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  voidedPayouts_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Commission.voidedPayouts", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `amountCentavos` field in the `Commission` table.
+  """
+  amountCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "Commission.amountCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `basisCentavos` field in the `Commission` table.
+  """
+  basisCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "Commission.basisCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `percentBp` field in the `Commission` table.
+  """
+  percentBp_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Commission.percentBp", purpose: QUERY_SUM)
+  """
+  ✨ Average the `amountCentavos` field in the `Commission` table.
+  """
+  amountCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Commission.amountCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `basisCentavos` field in the `Commission` table.
+  """
+  basisCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Commission.basisCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `percentBp` field in the `Commission` table.
+  """
+  percentBp_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Commission.percentBp", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `amountCentavos` field in the `Commission` table.
+  """
+  amountCentavos_min: Int64 @fdc_generated(from: "Commission.amountCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `approvedAt` field in the `Commission` table.
+  """
+  approvedAt_min: Timestamp @fdc_generated(from: "Commission.approvedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `basisCentavos` field in the `Commission` table.
+  """
+  basisCentavos_min: Int64 @fdc_generated(from: "Commission.basisCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `history` field in the `Commission` table.
+  """
+  history_min: Any @fdc_generated(from: "Commission.history", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `payoutConfirmedAt` field in the `Commission` table.
+  """
+  payoutConfirmedAt_min: Timestamp @fdc_generated(from: "Commission.payoutConfirmedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `payoutCountedDate` field in the `Commission` table.
+  """
+  payoutCountedDate_min: Date @fdc_generated(from: "Commission.payoutCountedDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `payoutDate` field in the `Commission` table.
+  """
+  payoutDate_min: Date @fdc_generated(from: "Commission.payoutDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `payoutEvidence` field in the `Commission` table.
+  """
+  payoutEvidence_min: Any @fdc_generated(from: "Commission.payoutEvidence", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `payoutInitiatedAt` field in the `Commission` table.
+  """
+  payoutInitiatedAt_min: Timestamp @fdc_generated(from: "Commission.payoutInitiatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `percentBp` field in the `Commission` table.
+  """
+  percentBp_min: Int @fdc_generated(from: "Commission.percentBp", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `releaseDate` field in the `Commission` table.
+  """
+  releaseDate_min: Date @fdc_generated(from: "Commission.releaseDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `rereleaseAfter` field in the `Commission` table.
+  """
+  rereleaseAfter_min: Date @fdc_generated(from: "Commission.rereleaseAfter", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `voidedPayouts` field in the `Commission` table.
+  """
+  voidedPayouts_min: Any @fdc_generated(from: "Commission.voidedPayouts", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `amountCentavos` field in the `Commission` table.
+  """
+  amountCentavos_max: Int64 @fdc_generated(from: "Commission.amountCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `approvedAt` field in the `Commission` table.
+  """
+  approvedAt_max: Timestamp @fdc_generated(from: "Commission.approvedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `basisCentavos` field in the `Commission` table.
+  """
+  basisCentavos_max: Int64 @fdc_generated(from: "Commission.basisCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `history` field in the `Commission` table.
+  """
+  history_max: Any @fdc_generated(from: "Commission.history", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `payoutConfirmedAt` field in the `Commission` table.
+  """
+  payoutConfirmedAt_max: Timestamp @fdc_generated(from: "Commission.payoutConfirmedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `payoutCountedDate` field in the `Commission` table.
+  """
+  payoutCountedDate_max: Date @fdc_generated(from: "Commission.payoutCountedDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `payoutDate` field in the `Commission` table.
+  """
+  payoutDate_max: Date @fdc_generated(from: "Commission.payoutDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `payoutEvidence` field in the `Commission` table.
+  """
+  payoutEvidence_max: Any @fdc_generated(from: "Commission.payoutEvidence", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `payoutInitiatedAt` field in the `Commission` table.
+  """
+  payoutInitiatedAt_max: Timestamp @fdc_generated(from: "Commission.payoutInitiatedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `percentBp` field in the `Commission` table.
+  """
+  percentBp_max: Int @fdc_generated(from: "Commission.percentBp", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `releaseDate` field in the `Commission` table.
+  """
+  releaseDate_max: Date @fdc_generated(from: "Commission.releaseDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `rereleaseAfter` field in the `Commission` table.
+  """
+  rereleaseAfter_max: Date @fdc_generated(from: "Commission.rereleaseAfter", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `voidedPayouts` field in the `Commission` table.
+  """
+  voidedPayouts_max: Any @fdc_generated(from: "Commission.voidedPayouts", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Commission.id", purpose: ENTITY_ID)
+}
+extend type CommissionClawback {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "CommissionClawback", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table.
+  """
+  _count: Int! @fdc_generated(from: "CommissionClawback.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `amountCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  amountCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.amountCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `commissionId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  commissionId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.commissionId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `igpSaleId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  igpSaleId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.igpSaleId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `raisedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  raisedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.raisedDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `recipientMemberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recipientMemberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.recipientMemberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `recoveries` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recoveries_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.recoveries", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `refundDueCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  refundDueCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.refundDueCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `saleId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  saleId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.saleId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `trigger` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  trigger_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.trigger", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionClawback` table where the `writeOff` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  writeOff_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback.writeOff", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `amountCentavos` field in the `CommissionClawback` table.
+  """
+  amountCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "CommissionClawback.amountCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `refundDueCentavos` field in the `CommissionClawback` table.
+  """
+  refundDueCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "CommissionClawback.refundDueCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `amountCentavos` field in the `CommissionClawback` table.
+  """
+  amountCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "CommissionClawback.amountCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `refundDueCentavos` field in the `CommissionClawback` table.
+  """
+  refundDueCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "CommissionClawback.refundDueCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `amountCentavos` field in the `CommissionClawback` table.
+  """
+  amountCentavos_min: Int64 @fdc_generated(from: "CommissionClawback.amountCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `raisedDate` field in the `CommissionClawback` table.
+  """
+  raisedDate_min: Date @fdc_generated(from: "CommissionClawback.raisedDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `recoveries` field in the `CommissionClawback` table.
+  """
+  recoveries_min: Any @fdc_generated(from: "CommissionClawback.recoveries", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `refundDueCentavos` field in the `CommissionClawback` table.
+  """
+  refundDueCentavos_min: Int64 @fdc_generated(from: "CommissionClawback.refundDueCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `writeOff` field in the `CommissionClawback` table.
+  """
+  writeOff_min: Any @fdc_generated(from: "CommissionClawback.writeOff", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `amountCentavos` field in the `CommissionClawback` table.
+  """
+  amountCentavos_max: Int64 @fdc_generated(from: "CommissionClawback.amountCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `raisedDate` field in the `CommissionClawback` table.
+  """
+  raisedDate_max: Date @fdc_generated(from: "CommissionClawback.raisedDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `recoveries` field in the `CommissionClawback` table.
+  """
+  recoveries_max: Any @fdc_generated(from: "CommissionClawback.recoveries", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `refundDueCentavos` field in the `CommissionClawback` table.
+  """
+  refundDueCentavos_max: Int64 @fdc_generated(from: "CommissionClawback.refundDueCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `writeOff` field in the `CommissionClawback` table.
+  """
+  writeOff_max: Any @fdc_generated(from: "CommissionClawback.writeOff", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "CommissionClawback.id", purpose: ENTITY_ID)
+}
+extend type CommissionPayoutList {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "CommissionPayoutList", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table.
+  """
+  _count: Int! @fdc_generated(from: "CommissionPayoutList.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `approvedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.approvedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `approvedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.approvedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `approvedCommissionIds` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedCommissionIds_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.approvedCommissionIds", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `entries` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  entries_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.entries", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `month` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  month_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.month", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `offsets` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  offsets_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.offsets", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `preparedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  preparedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.preparedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionPayoutList` table where the `preparedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  preparedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList.preparedById", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `approvedAt` field in the `CommissionPayoutList` table.
+  """
+  approvedAt_min: Timestamp @fdc_generated(from: "CommissionPayoutList.approvedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `approvedCommissionIds` field in the `CommissionPayoutList` table.
+  """
+  approvedCommissionIds_min: Any @fdc_generated(from: "CommissionPayoutList.approvedCommissionIds", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `entries` field in the `CommissionPayoutList` table.
+  """
+  entries_min: Any @fdc_generated(from: "CommissionPayoutList.entries", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `offsets` field in the `CommissionPayoutList` table.
+  """
+  offsets_min: Any @fdc_generated(from: "CommissionPayoutList.offsets", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `preparedAt` field in the `CommissionPayoutList` table.
+  """
+  preparedAt_min: Timestamp @fdc_generated(from: "CommissionPayoutList.preparedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `approvedAt` field in the `CommissionPayoutList` table.
+  """
+  approvedAt_max: Timestamp @fdc_generated(from: "CommissionPayoutList.approvedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `approvedCommissionIds` field in the `CommissionPayoutList` table.
+  """
+  approvedCommissionIds_max: Any @fdc_generated(from: "CommissionPayoutList.approvedCommissionIds", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `entries` field in the `CommissionPayoutList` table.
+  """
+  entries_max: Any @fdc_generated(from: "CommissionPayoutList.entries", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `offsets` field in the `CommissionPayoutList` table.
+  """
+  offsets_max: Any @fdc_generated(from: "CommissionPayoutList.offsets", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `preparedAt` field in the `CommissionPayoutList` table.
+  """
+  preparedAt_max: Timestamp @fdc_generated(from: "CommissionPayoutList.preparedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "CommissionPayoutList.id", purpose: ENTITY_ID)
+}
+extend type CommissionRateSetting {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "CommissionRateSetting", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table.
+  """
+  _count: Int! @fdc_generated(from: "CommissionRateSetting.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `memberId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  memberId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.memberId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `product` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  product_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.product", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `rateBp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  rateBp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.rateBp", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `role` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  role_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.role", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `standardRateBp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  standardRateBp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.standardRateBp", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `CommissionRateSetting` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `rateBp` field in the `CommissionRateSetting` table.
+  """
+  rateBp_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "CommissionRateSetting.rateBp", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `standardRateBp` field in the `CommissionRateSetting` table.
+  """
+  standardRateBp_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "CommissionRateSetting.standardRateBp", purpose: QUERY_SUM)
+  """
+  ✨ Average the `rateBp` field in the `CommissionRateSetting` table.
+  """
+  rateBp_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "CommissionRateSetting.rateBp", purpose: QUERY_AVG)
+  """
+  ✨ Average the `standardRateBp` field in the `CommissionRateSetting` table.
+  """
+  standardRateBp_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "CommissionRateSetting.standardRateBp", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `details` field in the `CommissionRateSetting` table.
+  """
+  details_min: Any @fdc_generated(from: "CommissionRateSetting.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `rateBp` field in the `CommissionRateSetting` table.
+  """
+  rateBp_min: Int @fdc_generated(from: "CommissionRateSetting.rateBp", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `standardRateBp` field in the `CommissionRateSetting` table.
+  """
+  standardRateBp_min: Int @fdc_generated(from: "CommissionRateSetting.standardRateBp", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `CommissionRateSetting` table.
+  """
+  updatedAt_min: Timestamp @fdc_generated(from: "CommissionRateSetting.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `details` field in the `CommissionRateSetting` table.
+  """
+  details_max: Any @fdc_generated(from: "CommissionRateSetting.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `rateBp` field in the `CommissionRateSetting` table.
+  """
+  rateBp_max: Int @fdc_generated(from: "CommissionRateSetting.rateBp", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `standardRateBp` field in the `CommissionRateSetting` table.
+  """
+  standardRateBp_max: Int @fdc_generated(from: "CommissionRateSetting.standardRateBp", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `CommissionRateSetting` table.
+  """
+  updatedAt_max: Timestamp @fdc_generated(from: "CommissionRateSetting.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "CommissionRateSetting.memberId,product,role", purpose: ENTITY_ID)
+}
 extend type Contract {
+  """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`contract` is this object).
+  """
+  commissions_on_contract(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.contract", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`contract` is this object).
   """
@@ -2509,6 +3642,74 @@ extend type IgpProject {
 }
 extend type IgpSale {
   """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`igpSale` is this object).
+  """
+  commissions_on_igpSale(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.igpSale", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionClawback` objects in a one-to-many relationship (where `CommissionClawback`.`igpSale` is this object).
+  """
+  commissionClawbacks_on_igpSale(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionClawback_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionClawback_Having
+  ): [CommissionClawback!]! @fdc_generated(from: "CommissionClawback.igpSale", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `IgpBuyerMembership` objects in a one-to-many relationship (where `IgpBuyerMembership`.`sale` is this object).
   """
   igpBuyerMemberships_on_sale(
@@ -3066,6 +4267,142 @@ extend type Member {
     having: AccreditationNumber_Having
   ): [AccreditationNumber!]! @fdc_generated(from: "AccreditationNumber.member", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `AllowanceReview` objects in a one-to-many relationship (where `AllowanceReview`.`member` is this object).
+  """
+  allowanceReviews_on_member(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AllowanceReview_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AllowanceReview_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AllowanceReview_Having
+  ): [AllowanceReview!]! @fdc_generated(from: "AllowanceReview.member", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`recipientMember` is this object).
+  """
+  commissions_on_recipientMember(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.recipientMember", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionClawback` objects in a one-to-many relationship (where `CommissionClawback`.`recipientMember` is this object).
+  """
+  commissionClawbacks_on_recipientMember(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionClawback_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionClawback_Having
+  ): [CommissionClawback!]! @fdc_generated(from: "CommissionClawback.recipientMember", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionRateSetting` objects in a one-to-many relationship (where `CommissionRateSetting`.`member` is this object).
+  """
+  commissionRateSettings_on_member(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionRateSetting_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionRateSetting_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionRateSetting_Having
+  ): [CommissionRateSetting!]! @fdc_generated(from: "CommissionRateSetting.member", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Contract` objects in a one-to-many relationship (where `Contract`.`sellerMember` is this object).
   """
   contracts_on_sellerMember(
@@ -3534,6 +4871,15 @@ extend type Member {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Member.branchId", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Member` table where the `clawbackAddendumSignedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  clawbackAddendumSignedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Member.clawbackAddendumSignedDate", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Member` table where the `designation` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   designation_count(
@@ -3642,6 +4988,10 @@ extend type Member {
     distinct: Boolean = false
   ): Float @fdc_generated(from: "Member.rowVersion", purpose: QUERY_AVG)
   """
+  ✨ Minimum of the `clawbackAddendumSignedDate` field in the `Member` table.
+  """
+  clawbackAddendumSignedDate_min: Date @fdc_generated(from: "Member.clawbackAddendumSignedDate", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `details` field in the `Member` table.
   """
   details_min: Any @fdc_generated(from: "Member.details", purpose: QUERY_MIN)
@@ -3653,6 +5003,10 @@ extend type Member {
   ✨ Minimum of the `rowVersion` field in the `Member` table.
   """
   rowVersion_min: Int @fdc_generated(from: "Member.rowVersion", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `clawbackAddendumSignedDate` field in the `Member` table.
+  """
+  clawbackAddendumSignedDate_max: Date @fdc_generated(from: "Member.clawbackAddendumSignedDate", purpose: QUERY_MAX)
   """
   ✨ Maximum of the `details` field in the `Member` table.
   """
@@ -5862,6 +7216,74 @@ extend type RoleAssignment {
 }
 extend type Sale {
   """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`sale` is this object).
+  """
+  commissions_on_sale(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.sale", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionClawback` objects in a one-to-many relationship (where `CommissionClawback`.`sale` is this object).
+  """
+  commissionClawbacks_on_sale(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionClawback_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionClawback_Having
+  ): [CommissionClawback!]! @fdc_generated(from: "CommissionClawback.sale", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `SaleAdjustment` objects in a one-to-many relationship (where `SaleAdjustment`.`sale` is this object).
   """
   saleAdjustments_on_sale(
@@ -6975,6 +8397,40 @@ extend type UserAccount {
     having: AccountStatusEvent_Having
   ): [AccountStatusEvent!]! @fdc_generated(from: "AccountStatusEvent.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `AllowanceReview` objects in a one-to-many relationship (where `AllowanceReview`.`reviewedBy` is this object).
+  """
+  allowanceReviews_on_reviewedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AllowanceReview_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AllowanceReview_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AllowanceReview_Having
+  ): [AllowanceReview!]! @fdc_generated(from: "AllowanceReview.reviewedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `AuditEvent` objects in a one-to-many relationship (where `AuditEvent`.`actor` is this object).
   """
   auditEvents_on_actor(
@@ -7042,6 +8498,142 @@ extend type UserAccount {
     """
     having: ClosedMonth_Having
   ): [ClosedMonth!]! @fdc_generated(from: "ClosedMonth.closedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`approvedBy` is this object).
+  """
+  commissions_on_approvedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.approvedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Commission` objects in a one-to-many relationship (where `Commission`.`payoutProcessedBy` is this object).
+  """
+  commissions_on_payoutProcessedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission.payoutProcessedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionPayoutList` objects in a one-to-many relationship (where `CommissionPayoutList`.`approvedBy` is this object).
+  """
+  commissionPayoutLists_on_approvedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionPayoutList_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionPayoutList_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionPayoutList_Having
+  ): [CommissionPayoutList!]! @fdc_generated(from: "CommissionPayoutList.approvedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `CommissionPayoutList` objects in a one-to-many relationship (where `CommissionPayoutList`.`preparedBy` is this object).
+  """
+  commissionPayoutLists_on_preparedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionPayoutList_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionPayoutList_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionPayoutList_Having
+  ): [CommissionPayoutList!]! @fdc_generated(from: "CommissionPayoutList.preparedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `CustomerImportJob` objects in a one-to-many relationship (where `CustomerImportJob`.`actor` is this object).
   """
@@ -7798,4 +9390,114 @@ extend type UserAccount {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "UserAccount.id", purpose: ENTITY_ID)
+}
+extend type VipPositionRate {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "VipPositionRate", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table.
+  """
+  _count: Int! @fdc_generated(from: "VipPositionRate.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `approvalReference` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvalReference_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.approvalReference", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `designation` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  designation_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.designation", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `rateBp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  rateBp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.rateBp", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `role` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  role_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.role", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `VipPositionRate` table where the `updatedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  updatedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate.updatedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `rateBp` field in the `VipPositionRate` table.
+  """
+  rateBp_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "VipPositionRate.rateBp", purpose: QUERY_SUM)
+  """
+  ✨ Average the `rateBp` field in the `VipPositionRate` table.
+  """
+  rateBp_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "VipPositionRate.rateBp", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `details` field in the `VipPositionRate` table.
+  """
+  details_min: Any @fdc_generated(from: "VipPositionRate.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `rateBp` field in the `VipPositionRate` table.
+  """
+  rateBp_min: Int @fdc_generated(from: "VipPositionRate.rateBp", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `updatedAt` field in the `VipPositionRate` table.
+  """
+  updatedAt_min: Timestamp @fdc_generated(from: "VipPositionRate.updatedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `details` field in the `VipPositionRate` table.
+  """
+  details_max: Any @fdc_generated(from: "VipPositionRate.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `rateBp` field in the `VipPositionRate` table.
+  """
+  rateBp_max: Int @fdc_generated(from: "VipPositionRate.rateBp", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `updatedAt` field in the `VipPositionRate` table.
+  """
+  updatedAt_max: Timestamp @fdc_generated(from: "VipPositionRate.updatedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "VipPositionRate.designation,role", purpose: ENTITY_ID)
 }

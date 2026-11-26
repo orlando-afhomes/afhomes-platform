@@ -368,8 +368,12 @@ export async function createScheme(actor: Actor, input: PaymentSchemeInput & { l
   if (!label) throw invalid("A payment plan name is required.", { label: "A payment plan name is required." });
   const schemes = await loadPaymentSchemes();
   if (schemes.some((item) => item.label.toLowerCase() === label.toLowerCase())) throw conflict("scheme_exists", "A payment plan with this name already exists.");
+  // "Plan A" and "Plan-A" share a slug; a suffix keeps the unique key safe instead of a raw 500.
+  const baseKey = `scheme-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || newId()}`;
+  let schemeKey = baseKey;
+  for (let suffix = 2; schemes.some((item) => item.id === schemeKey); suffix += 1) schemeKey = `${baseKey}-${suffix}`;
   const scheme: PaymentScheme = {
-    id: `scheme-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || newId()}`, label, historicalLabel: null,
+    id: schemeKey, label, historicalLabel: null,
     category: input.installmentCount ? "installment" : "cash", paymentCode: input.paymentCode ?? null,
     paymentCodeByTier: input.paymentCodeByTier ?? {}, applicableTiers: input.applicableTiers ?? [],
     reservationCentavos: input.reservationCentavos ?? null, installmentCount: input.installmentCount ?? null,

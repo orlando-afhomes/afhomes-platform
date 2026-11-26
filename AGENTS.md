@@ -69,6 +69,7 @@ An earlier unexplained commit/push on `develop` reinforced this policy. Never tr
 
 Read the relevant documents before implementation; do not load all of them by default.
 
+- **Company source pack — first reference (owner instruction, 2026-11-26):** `C:\Users\SSD-ORLANDO\Documents\AFHomes Document\Business Rules` — NUM v6.2, the IST Commission and Clawback Addendum, the Upgrade Memorandum with the OCT rulings, the Commission System User Manual v2.3, the workbooks and the signed contracts. It is the company's own manual record and is read **first** for any business-rule question. The `docs/business-rules/` documents restate it for the platform; where they disagree, the source wins and the difference is reported to the project owner.
 - Master context: `docs/project.md`.
 - Business rules `docs/business-rules/`: `01-roles-and-permissions`, `02-sales-network-and-genealogy`, `03-ist-ost-accreditation`, `04-customer-management`, `05-vip-products-and-contracts`, `06-vip-card-issuance`, `07-finance-and-payments`, `08-commission-management`, `09-vip-membership-and-stay-points`, `10-redemption`, `11-reports-and-analytics`, `12-audit-logs-and-governance`, `13-sales-performance-reporting`, `14-igp-sales`.
 - Development specs `docs/development/`: `README`, `architecture`, `frontend`, `database`, `backend`, `security`, `testing`, `implementation`, `deployment`, `role-module-permission-matrix-proposal`.

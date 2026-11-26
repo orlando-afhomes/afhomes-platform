@@ -95,6 +95,12 @@ export const SaleCommissionCorrectionBody = z.strictObject({
   reason: z.string().min(1).max(500),
 });
 
+/** The Director-style status change for a sale (Commission System User Manual; doc 08 §14.1). */
+export const SaleStatusChangeBody = z.strictObject({
+  status: z.enum(["rescinded", "downgraded"]),
+  reason: z.string().min(1).max(500),
+});
+
 // ---------------------------------------------------------------- finance lifecycle (F5)
 const paymentMethod = z.enum(PAYMENT_METHODS as unknown as [string, ...string[]]);
 const paymentPurpose = z.enum(PAYMENT_PURPOSES as unknown as [string, ...string[]]);
@@ -498,3 +504,46 @@ export const AccreditedSellerBody = z.strictObject({
   businessEmployer: z.string().max(200).nullable().optional(), businessAddress: z.string().max(300).nullable().optional(), jobPosition: z.string().max(120).nullable().optional(),
   approvedStart: dateOnly, accreditationStatus: z.enum(["pending", "accredited", "cancel", "expired"]), aaMethod: z.enum(["automatic", "manual"]), manualAaSuffix: z.string().max(20).optional(),
 });
+
+// ---------------------------------------------------------------- F6: commissions
+const MONTH = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use the month format YYYY-MM.");
+const AllowanceStretchBody = z.strictObject({
+  days: z.number().int().min(0).max(31),
+  teamTcpCentavos: money,
+  collectionsCentavos: money,
+  assumedCreditCentavos: money,
+});
+const WorkbookTotals = z.strictObject({ baCentavos: money, paCentavos: money, pbCentavos: money });
+
+export const CommissionRateBody = z.strictObject({
+  memberId: idField, product: z.enum(["VIP", "IGP"]), role: z.enum(["DSC", "DRI"]),
+  rateBp: z.number().int().min(0), standardRateBp: z.number().int().min(0).nullable(),
+  reason: z.string().max(500).optional(),
+});
+export const VipPositionRateBody = z.strictObject({
+  designation: z.enum(["SVD", "SSM", "SM", "OST"]), role: z.enum(["DSC", "DRI"]),
+  rateBp: z.number().int().min(0), approvalReference: z.string().min(1).max(200),
+});
+export const ApplyVipPositionRateBody = z.strictObject({
+  memberId: idField,
+  standard: z.strictObject({
+    designation: z.enum(["SVD", "SSM", "SM", "OST"]), role: z.enum(["DSC", "DRI"]),
+    rateBp: z.number().int().min(0), approvalReference: z.string().min(1).max(200),
+  }),
+  serviceTermsReference: z.string().min(1).max(200),
+});
+export const ClawbackAddendumBody = z.strictObject({ memberId: idField, signedDate: dateOnly.nullable() });
+export const PreparePayoutListBody = z.strictObject({ month: MONTH });
+export const ClawbackRecoveryBody = z.strictObject({ amountCentavos: z.number().int().min(1), reference: z.string().min(1).max(200) });
+export const CommissionAdjustBody = z.strictObject({ percentBp: z.number().int().min(1).max(10_000), reason: z.string().min(1).max(500) });
+export const CommissionHoldBody = z.strictObject({ action: z.enum(["keep", "cancel", "restore"]), reason: z.string().min(1).max(500) });
+export const CommissionPayoutBody = z.strictObject({
+  reference: z.string().min(1).max(200), method: z.string().max(40).nullable().optional(),
+  payoutDate: dateOnly, evidenceFileName: z.string().max(200).optional(), evidenceDataUrl: z.string().max(4_000_000).optional(),
+});
+export const AllowanceReviewBody = z.strictObject({
+  month: MONTH, memberId: idField, qualifying: AllowanceStretchBody, extended: AllowanceStretchBody,
+  withholdingReason: z.string().max(300).optional(),
+  workbook: WorkbookTotals.nullable(), workbookDifferenceReason: z.string().max(500).optional(),
+});
+export const AssembleQuery = z.object({ month: MONTH });

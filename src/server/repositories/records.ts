@@ -1,5 +1,7 @@
 import "server-only";
 import type { Contract } from "@/modules/contracts/types";
+import type { Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
+import type { AllowanceReview, AllowanceReviewInput } from "@/modules/commissions/allowances";
 import type { Customer, CustomerStatus } from "@/modules/customers/types";
 import type { Payment, PaymentAdjustment } from "@/modules/finance/types";
 import type { OrgMember } from "@/modules/organization/types";
@@ -274,13 +276,183 @@ export async function loadNumberHolders(number: string): Promise<Array<{ id: str
 }
 
 // ---------------------------------------------------------------- members (full record)
-type FullMemberRow = { id: string; displayName: string; designation: string; branchId: string; status: string; teamName: string | null; referralCode: string | null; aaNumber: string | null; details: Json | null; parent: Ref };
+type FullMemberRow = { id: string; displayName: string; designation: string; branchId: string; status: string; teamName: string | null; referralCode: string | null; aaNumber: string | null; clawbackAddendumSignedDate: string | null; details: Json | null; parent: Ref };
 
 /** Complete member records as the screens expect them. Record scope uses the lighter `loadScopeMembers`. */
 export async function loadMembersFull(): Promise<OrgMember[]> {
-  const rows = await listAll<FullMemberRow>("members", "id displayName designation branchId status teamName referralCode aaNumber details parent { id }");
+  const rows = await listAll<FullMemberRow>("members", "id displayName designation branchId status teamName referralCode aaNumber clawbackAddendumSignedDate details parent { id }");
   return rows.map((row) => ({
     ...(row.details ?? {}), id: row.id, displayName: row.displayName, designation: row.designation, branchId: row.branchId, status: row.status, parentId: row.parent?.id ?? null,
-    teamName: row.teamName, referralCode: row.referralCode, aaNumber: row.aaNumber,
+    teamName: row.teamName, referralCode: row.referralCode, aaNumber: row.aaNumber, clawbackAddendumSignedDate: row.clawbackAddendumSignedDate ?? null,
   })) as unknown as OrgMember[];
+}
+
+// ---------------------------------------------------------------- commissions (F6)
+type CommissionRow = {
+  id: string; product: string; role: string; stage: string; recipientName: string; recipientDesignation: string;
+  basisCentavos: string; percentBp: number; amountCentavos: string; releaseDate: string | null; status: string;
+  approvedAt: string | null; holdTrigger: string | null; holdReason: string | null; releaseRestorable: boolean | null; rereleaseAfter: string | null;
+  payoutReference: string | null; payoutMethod: string | null; payoutDate: string | null; payoutCountedDate: string | null;
+  payoutInitiatedAt: string | null; payoutConfirmedAt: string | null; payoutEvidenceFileName: string | null;
+  payoutEvidence: Json | null; voidedPayouts: Json | null; history: Json | null;
+  sale: Ref; igpSale: Ref; contract: Ref; recipientMember: Ref; approvedBy: Ref; payoutProcessedBy: Ref;
+};
+export const COMMISSION_FIELDS = [
+  "id product role stage recipientName recipientDesignation basisCentavos percentBp amountCentavos releaseDate status approvedAt",
+  "holdTrigger holdReason releaseRestorable rereleaseAfter payoutReference payoutMethod payoutDate payoutCountedDate",
+  "payoutInitiatedAt payoutConfirmedAt payoutEvidenceFileName payoutEvidence voidedPayouts history",
+  "sale { id } igpSale { id } contract { id } recipientMember { id } approvedBy { id } payoutProcessedBy { id }",
+].join(" ");
+
+export function toCommission(row: CommissionRow): Commission {
+  return {
+    id: row.id, saleId: row.sale?.id ?? row.igpSale?.id ?? "", contractId: row.contract?.id ?? "",
+    recipientMemberId: row.recipientMember?.id ?? "", recipientName: row.recipientName, recipientDesignation: row.recipientDesignation,
+    basisCentavos: int64ToCentavos(row.basisCentavos), percentBp: row.percentBp, amountCentavos: int64ToCentavos(row.amountCentavos),
+    product: row.product as Commission["product"], role: row.role as Commission["role"], stage: row.stage as Commission["stage"],
+    ...(row.releaseDate ? { releaseDate: row.releaseDate } : {}),
+    status: row.status as Commission["status"], approvedBy: row.approvedBy?.id ?? "", approvedAt: row.approvedAt ?? "",
+    holdTrigger: (row.holdTrigger as Commission["holdTrigger"]) ?? undefined, holdReason: row.holdReason,
+    ...(row.releaseRestorable ? { releaseRestorable: true } : {}), ...(row.rereleaseAfter ? { rereleaseAfter: row.rereleaseAfter } : {}),
+    payout: row.payoutReference && row.payoutDate ? {
+      reference: row.payoutReference, method: row.payoutMethod, payoutDate: row.payoutDate,
+      ...(row.payoutCountedDate ? { countedDate: row.payoutCountedDate } : {}),
+      processedBy: row.payoutProcessedBy?.id ?? "", initiatedAt: row.payoutInitiatedAt ?? "", confirmedAt: row.payoutConfirmedAt,
+      evidenceFileName: row.payoutEvidenceFileName, evidenceFileDataUrl: (row.payoutEvidence as { dataUrl?: string | null } | null)?.dataUrl ?? null,
+    } : null,
+    previousPayouts: (row.voidedPayouts as unknown as Commission["previousPayouts"]) ?? [],
+    history: (row.history as unknown as Commission["history"]) ?? [],
+  };
+}
+
+/** Database columns for one commission row; domain extras travel in the mapped columns above. */
+export function commissionColumns(commission: Commission) {
+  return {
+    saleId: commission.product === "IGP" ? undefined : commission.saleId,
+    igpSaleId: commission.product === "IGP" ? commission.saleId : undefined,
+    contractId: commission.product === "IGP" ? undefined : commission.contractId,
+    recipientMemberId: commission.recipientMemberId,
+    recipientName: commission.recipientName,
+    recipientDesignation: commission.recipientDesignation,
+    product: commission.product, role: commission.role, stage: commission.stage,
+    basisCentavos: centavosToInt64(commission.basisCentavos), percentBp: commission.percentBp, amountCentavos: centavosToInt64(commission.amountCentavos),
+    releaseDate: commission.releaseDate ?? null,
+    status: commission.status,
+    approvedById: commission.approvedBy || undefined,
+    approvedAt: commission.approvedAt || null,
+    holdTrigger: commission.holdTrigger ?? null,
+    holdReason: commission.holdReason ?? null,
+    releaseRestorable: Boolean(commission.releaseRestorable),
+    rereleaseAfter: commission.rereleaseAfter ?? null,
+    payoutReference: commission.payout?.reference ?? null,
+    payoutMethod: commission.payout?.method ?? null,
+    payoutDate: commission.payout?.payoutDate ?? null,
+    payoutCountedDate: commission.payout?.countedDate ?? null,
+    payoutProcessedById: commission.payout?.processedBy || undefined,
+    payoutInitiatedAt: commission.payout?.initiatedAt ?? null,
+    payoutConfirmedAt: commission.payout?.confirmedAt ?? null,
+    payoutEvidenceFileName: commission.payout?.evidenceFileName ?? null,
+    payoutEvidence: commission.payout?.evidenceFileDataUrl ? { dataUrl: commission.payout.evidenceFileDataUrl } : null,
+    voidedPayouts: commission.previousPayouts ?? [],
+    history: commission.history ?? [],
+  };
+}
+
+export async function loadCommission(id: string): Promise<Commission | null> {
+  const result = await dbRead<{ commission: CommissionRow | null }>(`query($id: UUID!) { commission(id: $id) { ${COMMISSION_FIELDS} } }`, { id });
+  return result.commission ? toCommission(result.commission) : null;
+}
+
+export async function loadCommissionsOfSale(saleId: string): Promise<Commission[]> {
+  const [vip, igp] = await Promise.all([
+    listAll<CommissionRow>("commissions", COMMISSION_FIELDS, { where: "{ sale: { id: { eq: $s } } }", variableDefinitions: "$s: UUID!", variables: { s: saleId } }),
+    listAll<CommissionRow>("commissions", COMMISSION_FIELDS, { where: "{ igpSale: { id: { eq: $s } } }", variableDefinitions: "$s: UUID!", variables: { s: saleId } }),
+  ]);
+  return [...vip, ...igp].map(toCommission);
+}
+
+export async function loadCommissions(): Promise<Commission[]> {
+  return (await listAll<CommissionRow>("commissions", COMMISSION_FIELDS)).map(toCommission);
+}
+
+type RateSettingRow = { id: string; product: string; role: string; rateBp: number; standardRateBp: number | null; member: Ref };
+export async function loadCommissionRateSettings(): Promise<CommissionRateSetting[]> {
+  // The composite-key table has no id column, so the read orders by its updatedAt column instead.
+  const rows = await listAll<RateSettingRow>("commissionRateSettings", "member { id } product role rateBp standardRateBp", { orderBy: "[{ updatedAt: ASC }]" });
+  return rows.map((row) => ({ memberId: row.member?.id ?? "", product: row.product as "VIP" | "IGP", role: row.role as "DSC" | "DRI", rateBp: row.rateBp, standardRateBp: row.standardRateBp }));
+}
+
+type PositionRateRow = { id: string; designation: string; role: string; rateBp: number; approvalReference: string };
+export async function loadVipPositionRates(): Promise<VipPositionRate[]> {
+  const rows = await listAll<PositionRateRow>("vipPositionRates", "designation role rateBp approvalReference", { orderBy: "[{ updatedAt: ASC }]" });
+  return rows.map((row) => ({ designation: row.designation as VipPositionRate["designation"], role: row.role as "DSC" | "DRI", rateBp: row.rateBp, approvalReference: row.approvalReference }));
+}
+
+type ClawbackRow = {
+  id: string; trigger: string; raisedDate: string; amountCentavos: string; refundDueCentavos: string | null;
+  recoveries: CommissionClawback["recoveries"] | null; writeOff: CommissionClawback["writeOff"] | null;
+  commission: Ref; sale: Ref; igpSale: Ref; recipientMember: Ref;
+};
+export const CLAWBACK_FIELDS = "id trigger raisedDate amountCentavos refundDueCentavos recoveries writeOff commission { id } sale { id } igpSale { id } recipientMember { id }";
+
+export function toClawback(row: ClawbackRow): CommissionClawback {
+  return {
+    id: row.id, commissionId: row.commission?.id ?? "", saleId: row.sale?.id ?? row.igpSale?.id ?? "",
+    recipientMemberId: row.recipientMember?.id ?? "", trigger: row.trigger as CommissionClawback["trigger"],
+    raisedDate: row.raisedDate, amountCentavos: int64ToCentavos(row.amountCentavos),
+    recoveries: row.recoveries ?? [], writeOff: row.writeOff ?? null,
+    ...(row.refundDueCentavos != null ? { refundDueCentavos: int64ToCentavos(row.refundDueCentavos) } : {}),
+  };
+}
+
+export async function loadClawback(id: string): Promise<CommissionClawback | null> {
+  const result = await dbRead<{ commissionClawback: ClawbackRow | null }>(`query($id: UUID!) { commissionClawback(id: $id) { ${CLAWBACK_FIELDS} } }`, { id });
+  return result.commissionClawback ? toClawback(result.commissionClawback) : null;
+}
+
+export async function loadCommissionClawbacks(): Promise<CommissionClawback[]> {
+  return (await listAll<ClawbackRow>("commissionClawbacks", CLAWBACK_FIELDS)).map(toClawback);
+}
+
+export async function loadClawbacksOfMember(memberId: string): Promise<CommissionClawback[]> {
+  const rows = await listAll<ClawbackRow>("commissionClawbacks", CLAWBACK_FIELDS, { where: "{ recipientMember: { id: { eq: $m } } }", variableDefinitions: "$m: UUID!", variables: { m: memberId } });
+  return rows.map(toClawback);
+}
+
+type PayoutListRow = {
+  id: string; month: string; entries: CommissionPayoutList["entries"]; approvedCommissionIds: Json | null; offsets: Json | null;
+  preparedBy: Ref; preparedAt: string; approvedBy: Ref; approvedAt: string | null;
+};
+function toPayoutList(row: PayoutListRow): CommissionPayoutList {
+  return {
+    id: row.id, month: row.month, entries: row.entries ?? [],
+    preparedBy: row.preparedBy?.id ?? "", preparedAt: row.preparedAt,
+    approvedBy: row.approvedBy?.id ?? null, approvedAt: row.approvedAt,
+    ...(row.approvedCommissionIds ? { approvedCommissionIds: row.approvedCommissionIds as unknown as string[] } : {}),
+    ...(row.offsets ? { offsets: row.offsets as unknown as NonNullable<CommissionPayoutList["offsets"]> } : {}),
+  };
+}
+
+export async function loadCommissionPayoutLists(): Promise<CommissionPayoutList[]> {
+  const rows = await listAll<PayoutListRow>("commissionPayoutLists", "id month entries approvedCommissionIds offsets preparedBy { id } preparedAt approvedBy { id } approvedAt");
+  return rows.map(toPayoutList);
+}
+
+export async function loadCommissionPayoutList(id: string): Promise<CommissionPayoutList | null> {
+  const result = await dbRead<{ commissionPayoutList: PayoutListRow | null }>(`query($id: UUID!) { commissionPayoutList(id: $id) { id month entries approvedCommissionIds offsets preparedBy { id } preparedAt approvedBy { id } approvedAt } }`, { id });
+  return result.commissionPayoutList ? toPayoutList(result.commissionPayoutList) : null;
+}
+
+type AllowanceReviewRow = { id: string; month: string; result: AllowanceReview["result"]; inputs: AllowanceReviewInput | null; clawbackOffsetCentavos: string | null; reviewedBy: Ref; reviewedAt: string; member: Ref };
+export async function loadAllowanceReviews(): Promise<AllowanceReview[]> {
+  const rows = await listAll<AllowanceReviewRow>("allowanceReviews", "id month result inputs clawbackOffsetCentavos reviewedBy { id } reviewedAt member { id }");
+  return rows.map((row) => {
+    const inputs = (row.inputs ?? {}) as AllowanceReviewInput;
+    return {
+      ...inputs, id: row.id, month: row.month, memberId: row.member?.id ?? "",
+      result: row.result, withholdBa: Boolean(inputs.withholdingReason),
+      ...(row.clawbackOffsetCentavos != null ? { clawbackOffsetCentavos: int64ToCentavos(row.clawbackOffsetCentavos) } : {}),
+      reviewedAt: row.reviewedAt, reviewedBy: row.reviewedBy?.id ?? "",
+    } as AllowanceReview;
+  });
 }

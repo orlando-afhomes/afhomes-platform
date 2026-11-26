@@ -28,6 +28,8 @@ import type { CustomerImportJob } from "@/modules/customers/import";
 import type { Experience } from "@/modules/experiences/types";
 import type { IgpCatalogRepository, IgpCatalog, IgpProjectView, IgpUnitView } from "@/data/contracts/igp-catalog-repository";
 import type { IgpRegister, IgpRepository } from "@/data/contracts/igp-repository";
+import type { CommissionRateDirectory, CommissionRepository, CommissionView } from "@/data/contracts/commission-repository";
+import type { CommissionClawback, CommissionPayoutList } from "@/modules/commissions/types";
 import type { IgpHistoryBatch, IgpSale } from "@/modules/igp/types";
 import type { Department, DepartmentRole, DepartmentRoleOption, OrgMember, StaffMember } from "@/modules/organization/types";
 import type { AccreditedSellerResult, ReferralSponsorVerificationResult } from "@/modules/sales-network/types";
@@ -470,8 +472,54 @@ const reports = (): Partial<ReportRepository> => ({
   },
 });
 
+// F6: the commissions module reads and writes through the /api/v1/commissions routes.
+const commissions = (): Partial<CommissionRepository> => ({
+  list: (options) => (async () => {
+    const page = await apiFetch<{ items: CommissionView[] }>("/commissions", { signal: signalOf(options) });
+    return page.items;
+  })(),
+  rateDirectory: (options) => apiFetch<CommissionRateDirectory>("/commissions/rates", { signal: signalOf(options) }),
+  setRate: async (input) => {
+    await apiFetch("/commissions/rates", { method: "POST", body: input });
+  },
+  setPositionRate: async (input) => {
+    await apiFetch("/commissions/position-rates", { method: "POST", body: input });
+  },
+  applyPositionRate: async (input) => {
+    await apiFetch("/commissions/position-rates/apply", { method: "POST", body: input });
+  },
+  payoutLists: (options) => (async () => {
+    const page = await apiFetch<{ items: CommissionPayoutList[] }>("/commissions/payout-lists", { signal: signalOf(options) });
+    return page.items;
+  })(),
+  preparePayoutList: async (month) => (await apiFetch<{ list: CommissionPayoutList }>("/commissions/payout-lists", { method: "POST", body: { month } })).list,
+  approvePayoutList: async (id) => (await apiFetch<{ list: CommissionPayoutList }>(`/commissions/payout-lists/${id}/approve`, { method: "POST" })).list,
+  clawbacks: (options) => (async () => {
+    const page = await apiFetch<{ items: CommissionClawback[] }>("/commissions/clawbacks", { signal: signalOf(options) });
+    return page.items;
+  })(),
+  setClawbackAddendum: async (memberId, signedDate) => {
+    await apiFetch("/commissions/addendum", { method: "POST", body: { memberId, signedDate } });
+  },
+  recordRecovery: async (id, input) => {
+    await apiFetch(`/commissions/clawbacks/${id}/recovery`, { method: "POST", body: input });
+  },
+  writeOff: async (id, reason) => {
+    await apiFetch(`/commissions/clawbacks/${id}/write-off`, { method: "POST", body: { reason } });
+  },
+  allowanceReviews: (options) => apiFetch<Awaited<ReturnType<CommissionRepository["allowanceReviews"]>>>("/commissions/allowances", { signal: signalOf(options) }),
+  assembleAllowanceInputs: (month, options) => apiFetch<Awaited<ReturnType<CommissionRepository["assembleAllowanceInputs"]>>>(`/commissions/allowances/assemble?month=${encodeURIComponent(month)}`, { signal: signalOf(options) }),
+  saveAllowanceReview: async (input) => (await apiFetch<{ review: Awaited<ReturnType<CommissionRepository["saveAllowanceReview"]>> }>("/commissions/allowances", { method: "POST", body: input })).review,
+  adjust: async (id, percentBp, reason) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/adjust`, { method: "POST", body: { percentBp, reason } })).commission,
+  resolveHold: async (id, action, reason) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/resolve-hold`, { method: "POST", body: { action, reason } })).commission,
+  cancel: async (id, reason) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/cancel`, { method: "POST", body: { reason } })).commission,
+  recordPayout: async (id, input) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/payout`, { method: "POST", body: input })).commission,
+  confirmPayout: async (id) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/confirm`, { method: "POST" })).commission,
+  voidPayout: async (id, reason) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/void`, { method: "POST", body: { reason } })).commission,
+});
+
 const NOT_IN_PILOT = [
-  "audit", "memberQr", "memberships", "commissions", "stayPoints", "redemption",
+  "audit", "memberQr", "memberships", "stayPoints", "redemption",
   "reservations", "promos", "reconciliation",
 ] as const;
 
@@ -493,6 +541,7 @@ export function createHttpRepositories(): Repositories {
     igpCatalog: partial("igpCatalog", igpCatalog()),
     historyImports: partial("historyImports", historyImports()),
     reports: partial("reports", reports()),
+    commissions: partial("commissions", commissions()),
     experiences: partial("experiences", experiences()),
     referenceLists: partial("referenceLists", referenceLists()),
     outlets: partial("outlets", outlets()),

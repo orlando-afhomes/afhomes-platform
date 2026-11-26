@@ -18,10 +18,11 @@ import type { Actor } from "@/server/auth/actor";
 import { loadScopeMembers, requireOperation } from "@/server/auth/authorize";
 import { listAll } from "@/server/db";
 import { centavosToInt64 } from "@/server/money";
-import { contractColumns, loadContract, loadContractsOfCustomer, loadCustomer, loadSaleForContract, loadPaymentsOfContract } from "@/server/repositories/records";
+import { contractColumns, loadContract, loadContractsOfCustomer, loadCustomer, loadCommissionRateSettings, loadSaleForContract, loadPaymentsOfContract } from "@/server/repositories/records";
 import { loadPaymentSchemes, loadProducts } from "@/server/repositories/catalog";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
 import { ApiError } from "@/server/api/errors";
+import { applyCommissionTriggerFx, commissionEffects, issueVipNumberFx, loadSaleCommissionState, vipIssuance } from "@/server/services/commissions";
 
 const isBroad = (actor: Actor) => activeIdentityRoles(actor.identity).some((role) => BROAD_ROLES.has(role));
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -288,21 +289,32 @@ function assertCancellable(contract: Contract): void {
   // shortcut: memberships are built in F7, so the Active-membership guard arrives with that schema.
 }
 
-/** The sale follows the contract's cancellation; a confirmed sale gets a dated reversal in the open month (doc 13 §4.5). */
+/** The sale follows the contract's cancellation; a confirmed sale gets a dated reversal in the open month (doc 13 §4.5).
+ *  Cancellation is a clawback trigger: released unpaid commission is held and paid commission becomes owed (doc 08 §14.1). */
 async function cancelSaleExtra(actor: Actor, contract: Contract): Promise<{ definitions: string; fields: string; variables: Record<string, unknown>; audits: AuditSpec[] } | null> {
   const sale = await loadSaleForContract(contract.id);
   if (!sale || sale.sale.status === "cancelled") return null;
   const reversed = sale.sale.status === "confirmed";
   const closed = reversed ? await listAll<{ month: string }>("closedMonths", "month") : [];
   const date = firstOpenDate(closed, today());
+  const commissionState = await loadSaleCommissionState(sale.sale.id);
+  const fx = commissionEffects();
+  applyCommissionTriggerFx(fx, actor, commissionState, { saleId: sale.sale.id, trigger: "cancellation", date });
   return {
-    definitions: reversed ? "$sid: UUID!, $adjDate: Date!, $adjAmount: Int64!, $adjReason: String!, $actor: UUID!" : "$sid: UUID!",
+    definitions: [
+      reversed ? "$sid: UUID!, $adjDate: Date!, $adjAmount: Int64!, $adjReason: String!, $actor: UUID!" : "$sid: UUID!",
+      ...fx.definitions,
+    ].filter(Boolean).join(", "),
     fields: [
       "sale: sale_update(id: $sid, data: { status: \"cancelled\" })",
       ...(reversed ? ["adjustment: saleAdjustment_insert(data: { saleId: $sid, date: $adjDate, amountCentavos: $adjAmount, kind: \"reversal\", reason: $adjReason, actorId: $actor })"] : []),
+      ...fx.fields,
     ].join("\n"),
-    variables: { sid: sale.sale.id, ...(reversed ? { adjDate: date, adjAmount: centavosToInt64(-sale.sale.valueCentavos), adjReason: "Contract cancelled", actor: actor.userId } : {}) },
-    audits: [{ action: BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, entityType: "sale", entityId: sale.sale.id, details: { module: "sales", previousValue: sale.sale.status, newValue: "cancelled", relatedRecordIds: [contract.id] } }],
+    variables: { sid: sale.sale.id, ...(reversed ? { adjDate: date, adjAmount: centavosToInt64(-sale.sale.valueCentavos), adjReason: "Contract cancelled", actor: actor.userId } : {}), ...fx.variables },
+    audits: [
+      { action: BUSINESS_AUDIT_ACTIONS.SALE_CANCELLED, entityType: "sale", entityId: sale.sale.id, details: { module: "sales", previousValue: sale.sale.status, newValue: "cancelled", relatedRecordIds: [contract.id] } },
+      ...fx.audits,
+    ],
   };
 }
 
@@ -445,9 +457,8 @@ export async function resolvePaymentCode(actor: Actor, id: string, approvalRefer
 }
 
 /**
- * Records the signed Reservation Agreement (doc 06 §1–3). F4 records the date and the
- * remaining issuance blockers; the VIP Number itself is issued in F6 because it needs
- * the frozen commission rates and the verified first scheduled payment.
+ * Records the signed Reservation Agreement (doc 06 §1–3) and issues the VIP Number when every blocker is
+ * already gone: approved sale, signed agreement, verified first scheduled payment and approved rates (F6).
  */
 export async function recordSignedAgreement(actor: Actor, id: string): Promise<Contract> {
   requireOperation(actor, "contracts.approve");
@@ -471,14 +482,34 @@ export async function recordSignedAgreement(actor: Actor, id: string): Promise<C
     contract.history.push({ at: nowIso(), actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, note: null });
     audits.push({ action: BUSINESS_AUDIT_ACTIONS.CONTRACT_RA_RECORDED, entityType: "contract", entityId: contract.id, details: { module: "contracts", newValue: contract.signedAgreementRecordedDate } });
   }
+  let extra: { definitions: string; fields: string; variables: Record<string, unknown> } | undefined;
   if (!contract.vipNumber) {
-    const blockers = [
-      ...(firstScheduledPaid ? [] : ["the first scheduled payment"]),
-      "the commission rates",
-    ];
-    contract.vipNumberIssueBlocker = `The ${blockers.join(" and ")} must be recorded before the VIP Number can be issued.`;
+    const [rateSettings, issued] = await Promise.all([
+      loadCommissionRateSettings(),
+      listAll<{ vipNumber: string | null }>("contracts", "vipNumber"),
+    ]);
+    const issuance = vipIssuance(contract, sale.sale, payments, rateSettings, issued.map((row) => row.vipNumber ?? "").filter(Boolean));
+    if (issuance && "vipNumber" in issuance) {
+      contract.vipNumber = issuance.vipNumber;
+      contract.raNumber ??= issuance.vipNumber;
+      contract.vipNumberIssueBlocker = undefined;
+      contract.history.push({ at: nowIso(), actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.VIP_NUMBER_ISSUED, note: null });
+      const fx = commissionEffects();
+      issueVipNumberFx(fx, actor, contract.id, sale.sale, issuance, contract.raNumber ?? null);
+      audits.push(...fx.audits);
+      extra = { definitions: fx.definitions.join(", "), fields: fx.fields.join("\n"), variables: fx.variables };
+    } else if (issuance && "blocker" in issuance) {
+      contract.vipNumberIssueBlocker = issuance.blocker;
+    } else {
+      // Not due yet: name only the missing pieces (doc 06 §8 step 5), so the text never claims a recorded rate is missing.
+      const rateMissing = !rateSettings.some((rate) => rate.memberId === sale.sale.sellerMemberId && rate.product === "VIP" && rate.role === "DSC") ||
+        Boolean(sale.sale.referrerMemberId && !rateSettings.some((rate) => rate.memberId === sale.sale.referrerMemberId && rate.product === "VIP" && rate.role === "DRI"));
+      const parts = [...(firstScheduledPaid ? [] : ["the first scheduled payment"]), ...(rateMissing ? ["the commission rates"] : [])];
+      const phrase = parts.length ? parts.join(" and ") : "the sale terms";
+      contract.vipNumberIssueBlocker = `${phrase.charAt(0).toUpperCase()}${phrase.slice(1)} must be recorded before the VIP Number can be issued.`;
+    }
   }
-  if (audits.length === 0 && contract.vipNumberIssueBlocker === previousBlocker) return contract;
-  await saveContract(actor, contract, version, audits);
+  if (audits.length === 0 && contract.vipNumberIssueBlocker === previousBlocker && !extra) return contract;
+  await saveContract(actor, contract, version, audits, extra);
   return contract;
 }

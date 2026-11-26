@@ -11,7 +11,8 @@ import type { OrgMember } from "@/modules/organization/types";
 import { tierDisplayName } from "@/modules/vip/tier-options";
 import type { Actor } from "@/server/auth/actor";
 import { listAll, dbRead } from "@/server/db";
-import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCustomer, loadMembersFull, loadPaymentAdjustments, paymentEvidenceOf, toContract, toPayment, toSale, type ContractRow, type PaymentRow, type SaleRow } from "@/server/repositories/records";
+import { CONTRACT_FIELDS, PAYMENT_FIELDS, SALE_FIELDS, loadCommissionRateSettings, loadCustomer, loadMembersFull, loadPaymentAdjustments, paymentEvidenceOf, toContract, toPayment, toSale, type ContractRow, type PaymentRow, type SaleRow } from "@/server/repositories/records";
+import type { CommissionRateSetting } from "@/modules/commissions/types";
 import { loadPaymentSchemes, loadProducts, loadTierLevels } from "@/server/repositories/catalog";
 import type { VipProduct } from "@/modules/vip/types";
 import { notFound } from "@/server/services/common";
@@ -35,12 +36,28 @@ const widen = (fields: string, wider: Record<string, string>) => Object.entries(
 const CONTRACT_VIEW_FIELDS = widen(CONTRACT_FIELDS, { customer: "id displayName", sellerMember: "id displayName" });
 type ContractViewJoin = ContractRow & { customer: { id: string; displayName: string } | null; sellerMember: { id: string; displayName: string } | null };
 
-async function salesByContract(): Promise<Map<string, { id: string; status: string; confirmedDate: string | null; approved: boolean }>> {
-  const rows = await listAll<{ id: string; status: string; confirmedDate: string | null; approvedAt: string | null; contract: { id: string } | null }>("sales", "id status confirmedDate approvedAt contract { id }");
-  return new Map(rows.filter((row) => row.contract).map((row) => [row.contract!.id, { id: row.id, status: row.status, confirmedDate: row.confirmedDate, approved: Boolean(row.approvedAt) }]));
+async function salesByContract(): Promise<Map<string, { id: string; status: string; confirmedDate: string | null; approved: boolean; sellerMemberId: string | null; referrerMemberId: string | null }>> {
+  const rows = await listAll<{ id: string; status: string; confirmedDate: string | null; approvedAt: string | null; contract: { id: string } | null; sellerMember: { id: string } | null; referrerMember: { id: string } | null }>("sales", "id status confirmedDate approvedAt contract { id } sellerMember { id } referrerMember { id }");
+  return new Map(rows.filter((row) => row.contract).map((row) => [row.contract!.id, { id: row.id, status: row.status, confirmedDate: row.confirmedDate, approved: Boolean(row.approvedAt), sellerMemberId: row.sellerMember?.id ?? null, referrerMemberId: row.referrerMember?.id ?? null }]));
 }
 
-function contractViewOf(row: ContractViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>): ContractView {
+/** The approved VIP rates still missing before the contract's number can be issued (doc 08 §9; F6). */
+function missingRatesOf(contract: { vipNumber?: string | null; status: string }, sale: { sellerMemberId: string | null; referrerMemberId: string | null } | undefined, sellerId: string | null, rateSettings: readonly CommissionRateSetting[], memberNames: Map<string, string>): ContractView["missingCommissionRates"] {
+  const missing: ContractView["missingCommissionRates"] = [];
+  if (contract.vipNumber || contract.status === "cancelled") return missing;
+  const recipients = [
+    ["DSC", sale?.sellerMemberId ?? sellerId] as const,
+    ["DRI", sale?.referrerMemberId ?? null] as const,
+  ];
+  for (const [role, memberId] of recipients) {
+    if (memberId && !rateSettings.some((item) => item.memberId === memberId && item.product === "VIP" && item.role === role)) {
+      missing.push({ role, memberName: memberNames.get(memberId) ?? null });
+    }
+  }
+  return missing;
+}
+
+function contractViewOf(row: ContractViewJoin, sales: Awaited<ReturnType<typeof salesByContract>>, rateSettings: readonly CommissionRateSetting[], memberNames: Map<string, string>): ContractView {
   const contract = toContract(row);
   const sale = sales.get(row.id);
   return {
@@ -49,20 +66,26 @@ function contractViewOf(row: ContractViewJoin, sales: Awaited<ReturnType<typeof 
     sellerName: row.sellerMember?.displayName ?? null,
     sale: sale ? { id: sale.id, status: sale.status as never, confirmedDate: sale.confirmedDate } : null,
     holds: finalizationHolds(contract),
-    // shortcut: commission rates are not in the pilot schema, so no rate is ever reported missing.
-    missingCommissionRates: [],
+    missingCommissionRates: missingRatesOf(contract, sale, row.sellerMember?.id ?? null, rateSettings, memberNames),
   } as ContractView;
 }
 
 export async function listContractViews(actor: Actor, query: { limit: number; afterId?: string }) {
-  const [rows, sales] = await Promise.all([listAll<ContractViewJoin>("contracts", CONTRACT_VIEW_FIELDS), salesByContract()]);
-  const views = rows.map((row) => contractViewOf(row, sales)).filter((view) => canSeeContractRecord(actor.identity, view));
+  const [rows, sales, rateSettings, members] = await Promise.all([listAll<ContractViewJoin>("contracts", CONTRACT_VIEW_FIELDS), salesByContract(), loadCommissionRateSettings(), loadMembersFull()]);
+  const memberNames = new Map(members.map((member) => [member.id, member.displayName]));
+  const views = rows.map((row) => contractViewOf(row, sales, rateSettings, memberNames)).filter((view) => canSeeContractRecord(actor.identity, view));
   return pageOf(views, query);
 }
 
 export async function getContractView(actor: Actor, id: string): Promise<ContractView> {
-  const result = await dbRead<{ contract: ContractViewJoin | null }>(`query($id: UUID!) { contract(id: $id) { ${CONTRACT_VIEW_FIELDS} } }`, { id });
-  const view = result.contract ? contractViewOf(result.contract, await salesByContract()) : null;
+  const [result, sales, rateSettings, members] = await Promise.all([
+    dbRead<{ contract: ContractViewJoin | null }>(`query($id: UUID!) { contract(id: $id) { ${CONTRACT_VIEW_FIELDS} } }`, { id }),
+    salesByContract(),
+    loadCommissionRateSettings(),
+    loadMembersFull(),
+  ]);
+  const memberNames = new Map(members.map((member) => [member.id, member.displayName]));
+  const view = result.contract ? contractViewOf(result.contract, sales, rateSettings, memberNames) : null;
   if (!view || !canSeeContractRecord(actor.identity, view)) throw notFound("Contract");
   return view;
 }

@@ -100,7 +100,7 @@ describe.skipIf(!up)("catalog and contract completion (emulators)", () => {
     const used = new Set(contractRows.contracts.map((row) => row.customer?.id));
     const customer = customerRows.customers.find((row) => !used.has(row.id))!;
     expect(customer?.ownerMember?.id).toBeTruthy();
-    const product = products.find((item) => item.code === "S1") ?? products[0];
+    const product = products.find((item) => item.code === productCode) ?? products.find((item) => item.code === "S1") ?? products[0];
     const scheme = schemes.find((item) => item.availability === "available" && item.applicableTiers.includes(product.code));
     expect(scheme).toBeTruthy();
     const price = product.priceCentavos + 10_000_000;
@@ -134,7 +134,8 @@ describe.skipIf(!up)("catalog and contract completion (emulators)", () => {
     await sales.approveSale(admin, sale.id);
     const signed = await contracts.recordSignedAgreement(admin, contract.id);
     expect(signed.vipNumber).toBeUndefined();
-    expect(signed.vipNumberIssueBlocker).toMatch(/before the VIP Number can be issued/i);
+    // F6: the seeded seller carries approved rates, so only the first scheduled payment blocks issuance.
+    expect(signed.vipNumberIssueBlocker).toBe("The first scheduled payment must be recorded before the VIP Number can be issued.");
   }, 60_000);
 
   it("cancels a draft directly and corrects the sale referrer", async () => {
@@ -176,12 +177,11 @@ describe.skipIf(!up)("catalog and contract completion (emulators)", () => {
     if (!nonStandardContractId) return;
     const id = nonStandardContractId;
     const before = (await records.loadContract(id))!;
-    const product = (await catalog.loadProducts()).find((item) => item.code === "S1")!;
-    const changed = await catalogAdmin.updateProduct(superAdmin, "S1", { priceCentavos: product.priceCentavos + 1_000 }, "Immutability test");
+    const product = (await catalog.loadProducts()).find((item) => item.code === productCode)!;
+    const changed = await catalogAdmin.updateProduct(superAdmin, productCode, { priceCentavos: product.priceCentavos + 1_000 }, "Immutability test");
     expect(changed.configVersion).toBe(product.configVersion + 1);
     const after = (await records.loadContract(id))!;
     expect(after.contract.priceCentavos).toBe(before.contract.priceCentavos);
     expect(after.contract.productConfigVersion).toBe(before.contract.productConfigVersion);
-    await catalogAdmin.updateProduct(superAdmin, "S1", { priceCentavos: product.priceCentavos }, "Restore after the immutability test");
   });
 });

@@ -17,6 +17,12 @@ It has the same format as `AccreditationNumber_Key`, but is only used as mutatio
 """
 scalar AccreditationNumber_KeyOutput
 """
+✨ `AllowanceReview_KeyOutput` returns the primary key fields of table type `AllowanceReview`.
+
+It has the same format as `AllowanceReview_Key`, but is only used as mutation return value.
+"""
+scalar AllowanceReview_KeyOutput
+"""
 ✨ `AuditEvent_KeyOutput` returns the primary key fields of table type `AuditEvent`.
 
 It has the same format as `AuditEvent_Key`, but is only used as mutation return value.
@@ -28,6 +34,30 @@ scalar AuditEvent_KeyOutput
 It has the same format as `ClosedMonth_Key`, but is only used as mutation return value.
 """
 scalar ClosedMonth_KeyOutput
+"""
+✨ `Commission_KeyOutput` returns the primary key fields of table type `Commission`.
+
+It has the same format as `Commission_Key`, but is only used as mutation return value.
+"""
+scalar Commission_KeyOutput
+"""
+✨ `CommissionClawback_KeyOutput` returns the primary key fields of table type `CommissionClawback`.
+
+It has the same format as `CommissionClawback_Key`, but is only used as mutation return value.
+"""
+scalar CommissionClawback_KeyOutput
+"""
+✨ `CommissionPayoutList_KeyOutput` returns the primary key fields of table type `CommissionPayoutList`.
+
+It has the same format as `CommissionPayoutList_Key`, but is only used as mutation return value.
+"""
+scalar CommissionPayoutList_KeyOutput
+"""
+✨ `CommissionRateSetting_KeyOutput` returns the primary key fields of table type `CommissionRateSetting`.
+
+It has the same format as `CommissionRateSetting_Key`, but is only used as mutation return value.
+"""
+scalar CommissionRateSetting_KeyOutput
 """
 ✨ `Contract_KeyOutput` returns the primary key fields of table type `Contract`.
 
@@ -226,6 +256,12 @@ scalar UnmatchedReceipt_KeyOutput
 It has the same format as `UserAccount_Key`, but is only used as mutation return value.
 """
 scalar UserAccount_KeyOutput
+"""
+✨ `VipPositionRate_KeyOutput` returns the primary key fields of table type `VipPositionRate`.
+
+It has the same format as `VipPositionRate_Key`, but is only used as mutation return value.
+"""
+scalar VipPositionRate_KeyOutput
 """
 ✨ Generated data input type for table 'AccountStatusEvent'. It includes all necessary fields for creating or upserting rows into table.
 """
@@ -1544,6 +1580,409 @@ input AccreditationNumber_Order {
   sequence_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'AllowanceReview'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input AllowanceReview_Data {
+  """
+  ✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`memberId` of type `UUID!`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `AllowanceReview`.`memberId` of type `UUID!`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedById` of type `UUID!`
+  """
+  reviewedById: UUID
+  """
+  ✨ `_expr` server value variant of `reviewedById` (✨ Generated from Field `AllowanceReview`.`reviewedById` of type `UUID!`)
+  """
+  reviewedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`member` of type `Member!`
+  """
+  member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedBy` of type `UserAccount!`
+  """
+  reviewedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos` of type `Int64`
+  """
+  clawbackOffsetCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `clawbackOffsetCentavos` (✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos` of type `Int64`)
+  """
+  clawbackOffsetCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `clawbackOffsetCentavos` (✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos` of type `Int64`)
+  """
+  clawbackOffsetCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs` of type `Any!`
+  """
+  inputs: Any
+  """
+  ✨ `_expr` server value variant of `inputs` (✨ Generated from Field `AllowanceReview`.`inputs` of type `Any!`)
+  """
+  inputs_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`month` of type `String!`
+  """
+  month: String
+  """
+  ✨ `_expr` server value variant of `month` (✨ Generated from Field `AllowanceReview`.`month` of type `String!`)
+  """
+  month_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`result` of type `Any!`
+  """
+  result: Any
+  """
+  ✨ `_expr` server value variant of `result` (✨ Generated from Field `AllowanceReview`.`result` of type `Any!`)
+  """
+  result_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`
+  """
+  reviewedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `reviewedAt` (✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`)
+  """
+  reviewedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `reviewedAt` (✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`)
+  """
+  reviewedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `reviewedAt` (✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`)
+  """
+  reviewedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'AllowanceReview'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AllowanceReview_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [AllowanceReview_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: AllowanceReview_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [AllowanceReview_Filter!]
+  """
+  ✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`memberId` of type `UUID!`
+  """
+  memberId: UUID_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedById` of type `UUID!`
+  """
+  reviewedById: UUID_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`member` of type `Member!`
+  """
+  member: Member_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedBy` of type `UserAccount!`
+  """
+  reviewedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos` of type `Int64`
+  """
+  clawbackOffsetCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs` of type `Any!`
+  """
+  inputs: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`month` of type `String!`
+  """
+  month: String_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`result` of type `Any!`
+  """
+  result: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`
+  """
+  reviewedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'AllowanceReview'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input AllowanceReview_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [AllowanceReview_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: AllowanceReview_Filter
+}
+"""
+✨ Generated having input type for table 'AllowanceReview'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AllowanceReview_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [AllowanceReview_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: AllowanceReview_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [AllowanceReview_Having!]
+  """
+  ✨ Generated from Field `AllowanceReview`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_count` of type `Int!`
+  """
+  clawbackOffsetCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_count` of type `Int!`
+  """
+  inputs_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`memberId_count` of type `Int!`
+  """
+  memberId_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`month_count` of type `Int!`
+  """
+  month_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_count` of type `Int!`
+  """
+  result_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_count` of type `Int!`
+  """
+  reviewedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedById_count` of type `Int!`
+  """
+  reviewedById_count: Int_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_sum` of type `Int64`
+  """
+  clawbackOffsetCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_avg` of type `Float`
+  """
+  clawbackOffsetCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_min` of type `Int64`
+  """
+  clawbackOffsetCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_min` of type `Any`
+  """
+  inputs_min: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_min` of type `Any`
+  """
+  result_min: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_min` of type `Timestamp`
+  """
+  reviewedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_max` of type `Int64`
+  """
+  clawbackOffsetCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_max` of type `Any`
+  """
+  inputs_max: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_max` of type `Any`
+  """
+  result_max: Any_Filter
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_max` of type `Timestamp`
+  """
+  reviewedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'AllowanceReview'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input AllowanceReview_Key {
+  """
+  ✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'AllowanceReview'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input AllowanceReview_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: AllowanceReview_Filter
+}
+"""
+✨ Generated order input type for table 'AllowanceReview'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input AllowanceReview_Order {
+  """
+  ✨ Generated from Field `AllowanceReview`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`memberId` of type `UUID!`
+  """
+  memberId: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedById` of type `UUID!`
+  """
+  reviewedById: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`member` of type `Member!`
+  """
+  member: Member_Order
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedBy` of type `UserAccount!`
+  """
+  reviewedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos` of type `Int64`
+  """
+  clawbackOffsetCentavos: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs` of type `Any!`
+  """
+  inputs: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`month` of type `String!`
+  """
+  month: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`result` of type `Any!`
+  """
+  result: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt` of type `Timestamp!`
+  """
+  reviewedAt: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_count` of type `Int!`
+  """
+  clawbackOffsetCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_count` of type `Int!`
+  """
+  inputs_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`memberId_count` of type `Int!`
+  """
+  memberId_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`month_count` of type `Int!`
+  """
+  month_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_count` of type `Int!`
+  """
+  result_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_count` of type `Int!`
+  """
+  reviewedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedById_count` of type `Int!`
+  """
+  reviewedById_count: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_sum` of type `Int64`
+  """
+  clawbackOffsetCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_avg` of type `Float`
+  """
+  clawbackOffsetCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_min` of type `Int64`
+  """
+  clawbackOffsetCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_min` of type `Any`
+  """
+  inputs_min: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_min` of type `Any`
+  """
+  result_min: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_min` of type `Timestamp`
+  """
+  reviewedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`clawbackOffsetCentavos_max` of type `Int64`
+  """
+  clawbackOffsetCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`inputs_max` of type `Any`
+  """
+  inputs_max: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`result_max` of type `Any`
+  """
+  result_max: OrderDirection
+  """
+  ✨ Generated from Field `AllowanceReview`.`reviewedAt_max` of type `Timestamp`
+  """
+  reviewedAt_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'AuditEvent'. It includes all necessary fields for creating or upserting rows into table.
 """
 input AuditEvent_Data {
@@ -2150,6 +2589,2642 @@ input ClosedMonth_Order {
   snapshot_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'Commission'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Commission_Data {
+  """
+  ✨ Generated from Field `Commission`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Commission`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID
+  """
+  ✨ `_expr` server value variant of `approvedById` (✨ Generated from Field `Commission`.`approvedById` of type `UUID`)
+  """
+  approvedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`contractId` of type `UUID`
+  """
+  contractId: UUID
+  """
+  ✨ `_expr` server value variant of `contractId` (✨ Generated from Field `Commission`.`contractId` of type `UUID`)
+  """
+  contractId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: UUID
+  """
+  ✨ `_expr` server value variant of `igpSaleId` (✨ Generated from Field `Commission`.`igpSaleId` of type `UUID`)
+  """
+  igpSaleId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedById` of type `UUID`
+  """
+  payoutProcessedById: UUID
+  """
+  ✨ `_expr` server value variant of `payoutProcessedById` (✨ Generated from Field `Commission`.`payoutProcessedById` of type `UUID`)
+  """
+  payoutProcessedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: UUID
+  """
+  ✨ `_expr` server value variant of `recipientMemberId` (✨ Generated from Field `Commission`.`recipientMemberId` of type `UUID!`)
+  """
+  recipientMemberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`saleId` of type `UUID`
+  """
+  saleId: UUID
+  """
+  ✨ `_expr` server value variant of `saleId` (✨ Generated from Field `Commission`.`saleId` of type `UUID`)
+  """
+  saleId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`contract` of type `Contract`
+  """
+  contract: Contract_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedBy` of type `UserAccount`
+  """
+  payoutProcessedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`sale` of type `Sale`
+  """
+  sale: Sale_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `amountCentavos` (✨ Generated from Field `Commission`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `amountCentavos` (✨ Generated from Field `Commission`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `approvedAt` (✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `approvedAt` (✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `approvedAt` (✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos` of type `Int64!`
+  """
+  basisCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `basisCentavos` (✨ Generated from Field `Commission`.`basisCentavos` of type `Int64!`)
+  """
+  basisCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `basisCentavos` (✨ Generated from Field `Commission`.`basisCentavos` of type `Int64!`)
+  """
+  basisCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`history` of type `Any`
+  """
+  history: Any
+  """
+  ✨ `_expr` server value variant of `history` (✨ Generated from Field `Commission`.`history` of type `Any`)
+  """
+  history_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`holdReason` of type `String`
+  """
+  holdReason: String
+  """
+  ✨ `_expr` server value variant of `holdReason` (✨ Generated from Field `Commission`.`holdReason` of type `String`)
+  """
+  holdReason_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`holdTrigger` of type `String`
+  """
+  holdTrigger: String
+  """
+  ✨ `_expr` server value variant of `holdTrigger` (✨ Generated from Field `Commission`.`holdTrigger` of type `String`)
+  """
+  holdTrigger_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`
+  """
+  payoutConfirmedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `payoutConfirmedAt` (✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`)
+  """
+  payoutConfirmedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `payoutConfirmedAt` (✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`)
+  """
+  payoutConfirmedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `payoutConfirmedAt` (✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`)
+  """
+  payoutConfirmedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`
+  """
+  payoutCountedDate: Date
+  """
+  ✨ `_date` server value variant of `payoutCountedDate` (✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`)
+  """
+  payoutCountedDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `payoutCountedDate` (✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`)
+  """
+  payoutCountedDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `payoutCountedDate` (✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`)
+  """
+  payoutCountedDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutDate` of type `Date`
+  """
+  payoutDate: Date
+  """
+  ✨ `_date` server value variant of `payoutDate` (✨ Generated from Field `Commission`.`payoutDate` of type `Date`)
+  """
+  payoutDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `payoutDate` (✨ Generated from Field `Commission`.`payoutDate` of type `Date`)
+  """
+  payoutDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `payoutDate` (✨ Generated from Field `Commission`.`payoutDate` of type `Date`)
+  """
+  payoutDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence` of type `Any`
+  """
+  payoutEvidence: Any
+  """
+  ✨ `_expr` server value variant of `payoutEvidence` (✨ Generated from Field `Commission`.`payoutEvidence` of type `Any`)
+  """
+  payoutEvidence_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidenceFileName` of type `String`
+  """
+  payoutEvidenceFileName: String
+  """
+  ✨ `_expr` server value variant of `payoutEvidenceFileName` (✨ Generated from Field `Commission`.`payoutEvidenceFileName` of type `String`)
+  """
+  payoutEvidenceFileName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`
+  """
+  payoutInitiatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `payoutInitiatedAt` (✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`)
+  """
+  payoutInitiatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `payoutInitiatedAt` (✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`)
+  """
+  payoutInitiatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `payoutInitiatedAt` (✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`)
+  """
+  payoutInitiatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutMethod` of type `String`
+  """
+  payoutMethod: String
+  """
+  ✨ `_expr` server value variant of `payoutMethod` (✨ Generated from Field `Commission`.`payoutMethod` of type `String`)
+  """
+  payoutMethod_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`payoutReference` of type `String`
+  """
+  payoutReference: String
+  """
+  ✨ `_expr` server value variant of `payoutReference` (✨ Generated from Field `Commission`.`payoutReference` of type `String`)
+  """
+  payoutReference_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`percentBp` of type `Int!`
+  """
+  percentBp: Int
+  """
+  ✨ `_expr` server value variant of `percentBp` (✨ Generated from Field `Commission`.`percentBp` of type `Int!`)
+  """
+  percentBp_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `percentBp` (✨ Generated from Field `Commission`.`percentBp` of type `Int!`)
+  """
+  percentBp_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`product` of type `String!`
+  """
+  product: String
+  """
+  ✨ `_expr` server value variant of `product` (✨ Generated from Field `Commission`.`product` of type `String!`)
+  """
+  product_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`recipientDesignation` of type `String!`
+  """
+  recipientDesignation: String
+  """
+  ✨ `_expr` server value variant of `recipientDesignation` (✨ Generated from Field `Commission`.`recipientDesignation` of type `String!`)
+  """
+  recipientDesignation_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`recipientName` of type `String!`
+  """
+  recipientName: String
+  """
+  ✨ `_expr` server value variant of `recipientName` (✨ Generated from Field `Commission`.`recipientName` of type `String!`)
+  """
+  recipientName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`releaseDate` of type `Date`
+  """
+  releaseDate: Date
+  """
+  ✨ `_date` server value variant of `releaseDate` (✨ Generated from Field `Commission`.`releaseDate` of type `Date`)
+  """
+  releaseDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `releaseDate` (✨ Generated from Field `Commission`.`releaseDate` of type `Date`)
+  """
+  releaseDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `releaseDate` (✨ Generated from Field `Commission`.`releaseDate` of type `Date`)
+  """
+  releaseDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`releaseRestorable` of type `Boolean`
+  """
+  releaseRestorable: Boolean
+  """
+  ✨ `_expr` server value variant of `releaseRestorable` (✨ Generated from Field `Commission`.`releaseRestorable` of type `Boolean`)
+  """
+  releaseRestorable_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`
+  """
+  rereleaseAfter: Date
+  """
+  ✨ `_date` server value variant of `rereleaseAfter` (✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`)
+  """
+  rereleaseAfter_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `rereleaseAfter` (✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`)
+  """
+  rereleaseAfter_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `rereleaseAfter` (✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`)
+  """
+  rereleaseAfter_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`role` of type `String!`
+  """
+  role: String
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `Commission`.`role` of type `String!`)
+  """
+  role_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`stage` of type `String!`
+  """
+  stage: String
+  """
+  ✨ `_expr` server value variant of `stage` (✨ Generated from Field `Commission`.`stage` of type `String!`)
+  """
+  stage_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Commission`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts` of type `Any`
+  """
+  voidedPayouts: Any
+  """
+  ✨ `_expr` server value variant of `voidedPayouts` (✨ Generated from Field `Commission`.`voidedPayouts` of type `Any`)
+  """
+  voidedPayouts_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Commission`.`commissionClawbacks_on_commission` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_commission: [CommissionClawback_Data!]
+}
+"""
+✨ Generated filter input type for table 'Commission'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Commission_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Commission_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Commission_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Commission_Filter!]
+  """
+  ✨ Generated from Field `Commission`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`contractId` of type `UUID`
+  """
+  contractId: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedById` of type `UUID`
+  """
+  payoutProcessedById: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`saleId` of type `UUID`
+  """
+  saleId: UUID_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `Commission`.`contract` of type `Contract`
+  """
+  contract: Contract_Filter
+  """
+  ✨ Generated from Field `Commission`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedBy` of type `UserAccount`
+  """
+  payoutProcessedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Filter
+  """
+  ✨ Generated from Field `Commission`.`sale` of type `Sale`
+  """
+  sale: Sale_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos` of type `Int64!`
+  """
+  basisCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`history` of type `Any`
+  """
+  history: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`holdReason` of type `String`
+  """
+  holdReason: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`holdTrigger` of type `String`
+  """
+  holdTrigger: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`
+  """
+  payoutConfirmedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`
+  """
+  payoutCountedDate: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutDate` of type `Date`
+  """
+  payoutDate: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence` of type `Any`
+  """
+  payoutEvidence: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidenceFileName` of type `String`
+  """
+  payoutEvidenceFileName: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`
+  """
+  payoutInitiatedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutMethod` of type `String`
+  """
+  payoutMethod: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutReference` of type `String`
+  """
+  payoutReference: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp` of type `Int!`
+  """
+  percentBp: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`product` of type `String!`
+  """
+  product: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientDesignation` of type `String!`
+  """
+  recipientDesignation: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientName` of type `String!`
+  """
+  recipientName: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseDate` of type `Date`
+  """
+  releaseDate: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseRestorable` of type `Boolean`
+  """
+  releaseRestorable: Boolean_Filter
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`
+  """
+  rereleaseAfter: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`role` of type `String!`
+  """
+  role: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`stage` of type `String!`
+  """
+  stage: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts` of type `Any`
+  """
+  voidedPayouts: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`commissionClawbacks_on_commission` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_commission: CommissionClawback_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Commission'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Commission_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Commission_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Commission_Filter
+}
+"""
+✨ Generated having input type for table 'Commission'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Commission_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Commission_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Commission_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Commission_Having!]
+  """
+  ✨ Generated from Field `Commission`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_count` of type `Int!`
+  """
+  approvedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_count` of type `Int!`
+  """
+  basisCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`contractId_count` of type `Int!`
+  """
+  contractId_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`history_count` of type `Int!`
+  """
+  history_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`holdReason_count` of type `Int!`
+  """
+  holdReason_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`holdTrigger_count` of type `Int!`
+  """
+  holdTrigger_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`igpSaleId_count` of type `Int!`
+  """
+  igpSaleId_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_count` of type `Int!`
+  """
+  payoutConfirmedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_count` of type `Int!`
+  """
+  payoutCountedDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_count` of type `Int!`
+  """
+  payoutDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidenceFileName_count` of type `Int!`
+  """
+  payoutEvidenceFileName_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_count` of type `Int!`
+  """
+  payoutEvidence_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_count` of type `Int!`
+  """
+  payoutInitiatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutMethod_count` of type `Int!`
+  """
+  payoutMethod_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedById_count` of type `Int!`
+  """
+  payoutProcessedById_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutReference_count` of type `Int!`
+  """
+  payoutReference_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp_count` of type `Int!`
+  """
+  percentBp_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`product_count` of type `Int!`
+  """
+  product_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientDesignation_count` of type `Int!`
+  """
+  recipientDesignation_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientMemberId_count` of type `Int!`
+  """
+  recipientMemberId_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`recipientName_count` of type `Int!`
+  """
+  recipientName_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_count` of type `Int!`
+  """
+  releaseDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseRestorable_count` of type `Int!`
+  """
+  releaseRestorable_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_count` of type `Int!`
+  """
+  rereleaseAfter_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`role_count` of type `Int!`
+  """
+  role_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`saleId_count` of type `Int!`
+  """
+  saleId_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`stage_count` of type `Int!`
+  """
+  stage_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_count` of type `Int!`
+  """
+  voidedPayouts_count: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_sum` of type `Int64`
+  """
+  basisCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp_sum` of type `Int`
+  """
+  percentBp_sum: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_avg` of type `Float`
+  """
+  basisCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp_avg` of type `Float`
+  """
+  percentBp_avg: Float_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_min` of type `Timestamp`
+  """
+  approvedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_min` of type `Int64`
+  """
+  basisCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`history_min` of type `Any`
+  """
+  history_min: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_min` of type `Timestamp`
+  """
+  payoutConfirmedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_min` of type `Date`
+  """
+  payoutCountedDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_min` of type `Date`
+  """
+  payoutDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_min` of type `Any`
+  """
+  payoutEvidence_min: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_min` of type `Timestamp`
+  """
+  payoutInitiatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp_min` of type `Int`
+  """
+  percentBp_min: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_min` of type `Date`
+  """
+  releaseDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_min` of type `Date`
+  """
+  rereleaseAfter_min: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_min` of type `Any`
+  """
+  voidedPayouts_min: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_max` of type `Timestamp`
+  """
+  approvedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_max` of type `Int64`
+  """
+  basisCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `Commission`.`history_max` of type `Any`
+  """
+  history_max: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_max` of type `Timestamp`
+  """
+  payoutConfirmedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_max` of type `Date`
+  """
+  payoutCountedDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_max` of type `Date`
+  """
+  payoutDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_max` of type `Any`
+  """
+  payoutEvidence_max: Any_Filter
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_max` of type `Timestamp`
+  """
+  payoutInitiatedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Commission`.`percentBp_max` of type `Int`
+  """
+  percentBp_max: Int_Filter
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_max` of type `Date`
+  """
+  releaseDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_max` of type `Date`
+  """
+  rereleaseAfter_max: Date_Filter
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_max` of type `Any`
+  """
+  voidedPayouts_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'Commission'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Commission_Key {
+  """
+  ✨ Generated from Field `Commission`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Commission`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Commission'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Commission_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Commission_Filter
+}
+"""
+✨ Generated order input type for table 'Commission'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Commission_Order {
+  """
+  ✨ Generated from Field `Commission`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedById` of type `UUID`
+  """
+  approvedById: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`contractId` of type `UUID`
+  """
+  contractId: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedById` of type `UUID`
+  """
+  payoutProcessedById: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`saleId` of type `UUID`
+  """
+  saleId: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `Commission`.`contract` of type `Contract`
+  """
+  contract: Contract_Order
+  """
+  ✨ Generated from Field `Commission`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Order
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedBy` of type `UserAccount`
+  """
+  payoutProcessedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `Commission`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Order
+  """
+  ✨ Generated from Field `Commission`.`sale` of type `Sale`
+  """
+  sale: Sale_Order
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos` of type `Int64!`
+  """
+  basisCentavos: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`history` of type `Any`
+  """
+  history: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`holdReason` of type `String`
+  """
+  holdReason: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`holdTrigger` of type `String`
+  """
+  holdTrigger: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt` of type `Timestamp`
+  """
+  payoutConfirmedAt: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate` of type `Date`
+  """
+  payoutCountedDate: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutDate` of type `Date`
+  """
+  payoutDate: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence` of type `Any`
+  """
+  payoutEvidence: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidenceFileName` of type `String`
+  """
+  payoutEvidenceFileName: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt` of type `Timestamp`
+  """
+  payoutInitiatedAt: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutMethod` of type `String`
+  """
+  payoutMethod: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutReference` of type `String`
+  """
+  payoutReference: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp` of type `Int!`
+  """
+  percentBp: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`product` of type `String!`
+  """
+  product: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientDesignation` of type `String!`
+  """
+  recipientDesignation: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientName` of type `String!`
+  """
+  recipientName: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseDate` of type `Date`
+  """
+  releaseDate: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseRestorable` of type `Boolean`
+  """
+  releaseRestorable: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter` of type `Date`
+  """
+  rereleaseAfter: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`role` of type `String!`
+  """
+  role: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`stage` of type `String!`
+  """
+  stage: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts` of type `Any`
+  """
+  voidedPayouts: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_count` of type `Int!`
+  """
+  approvedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_count` of type `Int!`
+  """
+  basisCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`contractId_count` of type `Int!`
+  """
+  contractId_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`history_count` of type `Int!`
+  """
+  history_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`holdReason_count` of type `Int!`
+  """
+  holdReason_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`holdTrigger_count` of type `Int!`
+  """
+  holdTrigger_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`igpSaleId_count` of type `Int!`
+  """
+  igpSaleId_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_count` of type `Int!`
+  """
+  payoutConfirmedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_count` of type `Int!`
+  """
+  payoutCountedDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_count` of type `Int!`
+  """
+  payoutDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidenceFileName_count` of type `Int!`
+  """
+  payoutEvidenceFileName_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_count` of type `Int!`
+  """
+  payoutEvidence_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_count` of type `Int!`
+  """
+  payoutInitiatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutMethod_count` of type `Int!`
+  """
+  payoutMethod_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutProcessedById_count` of type `Int!`
+  """
+  payoutProcessedById_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutReference_count` of type `Int!`
+  """
+  payoutReference_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp_count` of type `Int!`
+  """
+  percentBp_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`product_count` of type `Int!`
+  """
+  product_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientDesignation_count` of type `Int!`
+  """
+  recipientDesignation_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientMemberId_count` of type `Int!`
+  """
+  recipientMemberId_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`recipientName_count` of type `Int!`
+  """
+  recipientName_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_count` of type `Int!`
+  """
+  releaseDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseRestorable_count` of type `Int!`
+  """
+  releaseRestorable_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_count` of type `Int!`
+  """
+  rereleaseAfter_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`role_count` of type `Int!`
+  """
+  role_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`saleId_count` of type `Int!`
+  """
+  saleId_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`stage_count` of type `Int!`
+  """
+  stage_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_count` of type `Int!`
+  """
+  voidedPayouts_count: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_sum` of type `Int64`
+  """
+  basisCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp_sum` of type `Int`
+  """
+  percentBp_sum: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_avg` of type `Float`
+  """
+  basisCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp_avg` of type `Float`
+  """
+  percentBp_avg: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_min` of type `Timestamp`
+  """
+  approvedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_min` of type `Int64`
+  """
+  basisCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`history_min` of type `Any`
+  """
+  history_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_min` of type `Timestamp`
+  """
+  payoutConfirmedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_min` of type `Date`
+  """
+  payoutCountedDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_min` of type `Date`
+  """
+  payoutDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_min` of type `Any`
+  """
+  payoutEvidence_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_min` of type `Timestamp`
+  """
+  payoutInitiatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp_min` of type `Int`
+  """
+  percentBp_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_min` of type `Date`
+  """
+  releaseDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_min` of type `Date`
+  """
+  rereleaseAfter_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_min` of type `Any`
+  """
+  voidedPayouts_min: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`approvedAt_max` of type `Timestamp`
+  """
+  approvedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`basisCentavos_max` of type `Int64`
+  """
+  basisCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`history_max` of type `Any`
+  """
+  history_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutConfirmedAt_max` of type `Timestamp`
+  """
+  payoutConfirmedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutCountedDate_max` of type `Date`
+  """
+  payoutCountedDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutDate_max` of type `Date`
+  """
+  payoutDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutEvidence_max` of type `Any`
+  """
+  payoutEvidence_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`payoutInitiatedAt_max` of type `Timestamp`
+  """
+  payoutInitiatedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`percentBp_max` of type `Int`
+  """
+  percentBp_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`releaseDate_max` of type `Date`
+  """
+  releaseDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`rereleaseAfter_max` of type `Date`
+  """
+  rereleaseAfter_max: OrderDirection
+  """
+  ✨ Generated from Field `Commission`.`voidedPayouts_max` of type `Any`
+  """
+  voidedPayouts_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'CommissionClawback'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CommissionClawback_Data {
+  """
+  ✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`commissionId` of type `UUID!`
+  """
+  commissionId: UUID
+  """
+  ✨ `_expr` server value variant of `commissionId` (✨ Generated from Field `CommissionClawback`.`commissionId` of type `UUID!`)
+  """
+  commissionId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: UUID
+  """
+  ✨ `_expr` server value variant of `igpSaleId` (✨ Generated from Field `CommissionClawback`.`igpSaleId` of type `UUID`)
+  """
+  igpSaleId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: UUID
+  """
+  ✨ `_expr` server value variant of `recipientMemberId` (✨ Generated from Field `CommissionClawback`.`recipientMemberId` of type `UUID!`)
+  """
+  recipientMemberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`saleId` of type `UUID`
+  """
+  saleId: UUID
+  """
+  ✨ `_expr` server value variant of `saleId` (✨ Generated from Field `CommissionClawback`.`saleId` of type `UUID`)
+  """
+  saleId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`commission` of type `Commission!`
+  """
+  commission: Commission_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`sale` of type `Sale`
+  """
+  sale: Sale_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `amountCentavos` (✨ Generated from Field `CommissionClawback`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `amountCentavos` (✨ Generated from Field `CommissionClawback`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`
+  """
+  raisedDate: Date
+  """
+  ✨ `_date` server value variant of `raisedDate` (✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`)
+  """
+  raisedDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `raisedDate` (✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`)
+  """
+  raisedDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `raisedDate` (✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`)
+  """
+  raisedDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries` of type `Any`
+  """
+  recoveries: Any
+  """
+  ✨ `_expr` server value variant of `recoveries` (✨ Generated from Field `CommissionClawback`.`recoveries` of type `Any`)
+  """
+  recoveries_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos` of type `Int64`
+  """
+  refundDueCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `refundDueCentavos` (✨ Generated from Field `CommissionClawback`.`refundDueCentavos` of type `Int64`)
+  """
+  refundDueCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `refundDueCentavos` (✨ Generated from Field `CommissionClawback`.`refundDueCentavos` of type `Int64`)
+  """
+  refundDueCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`trigger` of type `String!`
+  """
+  trigger: String
+  """
+  ✨ `_expr` server value variant of `trigger` (✨ Generated from Field `CommissionClawback`.`trigger` of type `String!`)
+  """
+  trigger_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff` of type `Any`
+  """
+  writeOff: Any
+  """
+  ✨ `_expr` server value variant of `writeOff` (✨ Generated from Field `CommissionClawback`.`writeOff` of type `Any`)
+  """
+  writeOff_expr: Any_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'CommissionClawback'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionClawback_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CommissionClawback_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CommissionClawback_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CommissionClawback_Filter!]
+  """
+  ✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`commissionId` of type `UUID!`
+  """
+  commissionId: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`saleId` of type `UUID`
+  """
+  saleId: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`commission` of type `Commission!`
+  """
+  commission: Commission_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`sale` of type `Sale`
+  """
+  sale: Sale_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`
+  """
+  raisedDate: Date_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries` of type `Any`
+  """
+  recoveries: Any_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos` of type `Int64`
+  """
+  refundDueCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`trigger` of type `String!`
+  """
+  trigger: String_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff` of type `Any`
+  """
+  writeOff: Any_Filter
+}
+"""
+✨ Generated first-row input type for table 'CommissionClawback'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CommissionClawback_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CommissionClawback_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CommissionClawback_Filter
+}
+"""
+✨ Generated having input type for table 'CommissionClawback'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionClawback_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CommissionClawback_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CommissionClawback_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CommissionClawback_Having!]
+  """
+  ✨ Generated from Field `CommissionClawback`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`commissionId_count` of type `Int!`
+  """
+  commissionId_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSaleId_count` of type `Int!`
+  """
+  igpSaleId_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_count` of type `Int!`
+  """
+  raisedDate_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMemberId_count` of type `Int!`
+  """
+  recipientMemberId_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_count` of type `Int!`
+  """
+  recoveries_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_count` of type `Int!`
+  """
+  refundDueCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`saleId_count` of type `Int!`
+  """
+  saleId_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`trigger_count` of type `Int!`
+  """
+  trigger_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_count` of type `Int!`
+  """
+  writeOff_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_sum` of type `Int64`
+  """
+  refundDueCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_avg` of type `Float`
+  """
+  refundDueCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_min` of type `Date`
+  """
+  raisedDate_min: Date_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_min` of type `Any`
+  """
+  recoveries_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_min` of type `Int64`
+  """
+  refundDueCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_min` of type `Any`
+  """
+  writeOff_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_max` of type `Date`
+  """
+  raisedDate_max: Date_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_max` of type `Any`
+  """
+  recoveries_max: Any_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_max` of type `Int64`
+  """
+  refundDueCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_max` of type `Any`
+  """
+  writeOff_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'CommissionClawback'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CommissionClawback_Key {
+  """
+  ✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CommissionClawback'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CommissionClawback_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CommissionClawback_Filter
+}
+"""
+✨ Generated order input type for table 'CommissionClawback'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CommissionClawback_Order {
+  """
+  ✨ Generated from Field `CommissionClawback`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`commissionId` of type `UUID!`
+  """
+  commissionId: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSaleId` of type `UUID`
+  """
+  igpSaleId: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMemberId` of type `UUID!`
+  """
+  recipientMemberId: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`saleId` of type `UUID`
+  """
+  saleId: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`commission` of type `Commission!`
+  """
+  commission: Commission_Order
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSale` of type `IgpSale`
+  """
+  igpSale: IgpSale_Order
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMember` of type `Member!`
+  """
+  recipientMember: Member_Order
+  """
+  ✨ Generated from Field `CommissionClawback`.`sale` of type `Sale`
+  """
+  sale: Sale_Order
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate` of type `Date!`
+  """
+  raisedDate: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries` of type `Any`
+  """
+  recoveries: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos` of type `Int64`
+  """
+  refundDueCentavos: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`trigger` of type `String!`
+  """
+  trigger: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff` of type `Any`
+  """
+  writeOff: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`commissionId_count` of type `Int!`
+  """
+  commissionId_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`igpSaleId_count` of type `Int!`
+  """
+  igpSaleId_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_count` of type `Int!`
+  """
+  raisedDate_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recipientMemberId_count` of type `Int!`
+  """
+  recipientMemberId_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_count` of type `Int!`
+  """
+  recoveries_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_count` of type `Int!`
+  """
+  refundDueCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`saleId_count` of type `Int!`
+  """
+  saleId_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`trigger_count` of type `Int!`
+  """
+  trigger_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_count` of type `Int!`
+  """
+  writeOff_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_sum` of type `Int64`
+  """
+  refundDueCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_avg` of type `Float`
+  """
+  refundDueCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_min` of type `Date`
+  """
+  raisedDate_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_min` of type `Any`
+  """
+  recoveries_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_min` of type `Int64`
+  """
+  refundDueCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_min` of type `Any`
+  """
+  writeOff_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`raisedDate_max` of type `Date`
+  """
+  raisedDate_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`recoveries_max` of type `Any`
+  """
+  recoveries_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`refundDueCentavos_max` of type `Int64`
+  """
+  refundDueCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionClawback`.`writeOff_max` of type `Any`
+  """
+  writeOff_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'CommissionPayoutList'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CommissionPayoutList_Data {
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID
+  """
+  ✨ `_expr` server value variant of `approvedById` (✨ Generated from Field `CommissionPayoutList`.`approvedById` of type `UUID`)
+  """
+  approvedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedById` of type `UUID`
+  """
+  preparedById: UUID
+  """
+  ✨ `_expr` server value variant of `preparedById` (✨ Generated from Field `CommissionPayoutList`.`preparedById` of type `UUID`)
+  """
+  preparedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedBy` of type `UserAccount`
+  """
+  preparedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `approvedAt` (✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `approvedAt` (✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `approvedAt` (✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`)
+  """
+  approvedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds` of type `Any`
+  """
+  approvedCommissionIds: Any
+  """
+  ✨ `_expr` server value variant of `approvedCommissionIds` (✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds` of type `Any`)
+  """
+  approvedCommissionIds_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries` of type `Any!`
+  """
+  entries: Any
+  """
+  ✨ `_expr` server value variant of `entries` (✨ Generated from Field `CommissionPayoutList`.`entries` of type `Any!`)
+  """
+  entries_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`month` of type `String!`
+  """
+  month: String
+  """
+  ✨ `_expr` server value variant of `month` (✨ Generated from Field `CommissionPayoutList`.`month` of type `String!`)
+  """
+  month_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets` of type `Any`
+  """
+  offsets: Any
+  """
+  ✨ `_expr` server value variant of `offsets` (✨ Generated from Field `CommissionPayoutList`.`offsets` of type `Any`)
+  """
+  offsets_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`
+  """
+  preparedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `preparedAt` (✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`)
+  """
+  preparedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `preparedAt` (✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`)
+  """
+  preparedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `preparedAt` (✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`)
+  """
+  preparedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'CommissionPayoutList'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionPayoutList_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CommissionPayoutList_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CommissionPayoutList_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CommissionPayoutList_Filter!]
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedById` of type `UUID`
+  """
+  preparedById: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedBy` of type `UserAccount`
+  """
+  preparedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds` of type `Any`
+  """
+  approvedCommissionIds: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries` of type `Any!`
+  """
+  entries: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`month` of type `String!`
+  """
+  month: String_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets` of type `Any`
+  """
+  offsets: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`
+  """
+  preparedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'CommissionPayoutList'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CommissionPayoutList_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CommissionPayoutList_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CommissionPayoutList_Filter
+}
+"""
+✨ Generated having input type for table 'CommissionPayoutList'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionPayoutList_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CommissionPayoutList_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CommissionPayoutList_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CommissionPayoutList_Having!]
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_count` of type `Int!`
+  """
+  approvedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_count` of type `Int!`
+  """
+  approvedCommissionIds_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_count` of type `Int!`
+  """
+  entries_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`month_count` of type `Int!`
+  """
+  month_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_count` of type `Int!`
+  """
+  offsets_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_count` of type `Int!`
+  """
+  preparedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedById_count` of type `Int!`
+  """
+  preparedById_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_min` of type `Timestamp`
+  """
+  approvedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_min` of type `Any`
+  """
+  approvedCommissionIds_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_min` of type `Any`
+  """
+  entries_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_min` of type `Any`
+  """
+  offsets_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_min` of type `Timestamp`
+  """
+  preparedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_max` of type `Timestamp`
+  """
+  approvedAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_max` of type `Any`
+  """
+  approvedCommissionIds_max: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_max` of type `Any`
+  """
+  entries_max: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_max` of type `Any`
+  """
+  offsets_max: Any_Filter
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_max` of type `Timestamp`
+  """
+  preparedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'CommissionPayoutList'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CommissionPayoutList_Key {
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CommissionPayoutList'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CommissionPayoutList_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CommissionPayoutList_Filter
+}
+"""
+✨ Generated order input type for table 'CommissionPayoutList'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CommissionPayoutList_Order {
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedById` of type `UUID`
+  """
+  approvedById: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedById` of type `UUID`
+  """
+  preparedById: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedBy` of type `UserAccount`
+  """
+  preparedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt` of type `Timestamp`
+  """
+  approvedAt: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds` of type `Any`
+  """
+  approvedCommissionIds: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries` of type `Any!`
+  """
+  entries: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`month` of type `String!`
+  """
+  month: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets` of type `Any`
+  """
+  offsets: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt` of type `Timestamp!`
+  """
+  preparedAt: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_count` of type `Int!`
+  """
+  approvedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_count` of type `Int!`
+  """
+  approvedCommissionIds_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_count` of type `Int!`
+  """
+  entries_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`month_count` of type `Int!`
+  """
+  month_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_count` of type `Int!`
+  """
+  offsets_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_count` of type `Int!`
+  """
+  preparedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedById_count` of type `Int!`
+  """
+  preparedById_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_min` of type `Timestamp`
+  """
+  approvedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_min` of type `Any`
+  """
+  approvedCommissionIds_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_min` of type `Any`
+  """
+  entries_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_min` of type `Any`
+  """
+  offsets_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_min` of type `Timestamp`
+  """
+  preparedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedAt_max` of type `Timestamp`
+  """
+  approvedAt_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`approvedCommissionIds_max` of type `Any`
+  """
+  approvedCommissionIds_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`entries_max` of type `Any`
+  """
+  entries_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`offsets_max` of type `Any`
+  """
+  offsets_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionPayoutList`.`preparedAt_max` of type `Timestamp`
+  """
+  preparedAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'CommissionRateSetting'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input CommissionRateSetting_Data {
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`
+  """
+  product: String
+  """
+  ✨ `_expr` server value variant of `product` (✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`)
+  """
+  product_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`
+  """
+  role: String
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`)
+  """
+  role_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`member` of type `Member!`
+  """
+  member: Member_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details` of type `Any`
+  """
+  details: Any
+  """
+  ✨ `_expr` server value variant of `details` (✨ Generated from Field `CommissionRateSetting`.`details` of type `Any`)
+  """
+  details_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp` of type `Int!`
+  """
+  rateBp: Int
+  """
+  ✨ `_expr` server value variant of `rateBp` (✨ Generated from Field `CommissionRateSetting`.`rateBp` of type `Int!`)
+  """
+  rateBp_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `rateBp` (✨ Generated from Field `CommissionRateSetting`.`rateBp` of type `Int!`)
+  """
+  rateBp_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp` of type `Int`
+  """
+  standardRateBp: Int
+  """
+  ✨ `_expr` server value variant of `standardRateBp` (✨ Generated from Field `CommissionRateSetting`.`standardRateBp` of type `Int`)
+  """
+  standardRateBp_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `standardRateBp` (✨ Generated from Field `CommissionRateSetting`.`standardRateBp` of type `Int`)
+  """
+  standardRateBp_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'CommissionRateSetting'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionRateSetting_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [CommissionRateSetting_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: CommissionRateSetting_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [CommissionRateSetting_Filter!]
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`
+  """
+  memberId: UUID_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`
+  """
+  product: String_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`
+  """
+  role: String_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`member` of type `Member!`
+  """
+  member: Member_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details` of type `Any`
+  """
+  details: Any_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp` of type `Int!`
+  """
+  rateBp: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp` of type `Int`
+  """
+  standardRateBp: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'CommissionRateSetting'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input CommissionRateSetting_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [CommissionRateSetting_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: CommissionRateSetting_Filter
+}
+"""
+✨ Generated having input type for table 'CommissionRateSetting'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input CommissionRateSetting_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [CommissionRateSetting_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: CommissionRateSetting_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [CommissionRateSetting_Having!]
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_count` of type `Int!`
+  """
+  details_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId_count` of type `Int!`
+  """
+  memberId_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product_count` of type `Int!`
+  """
+  product_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_count` of type `Int!`
+  """
+  rateBp_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role_count` of type `Int!`
+  """
+  role_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_count` of type `Int!`
+  """
+  standardRateBp_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_sum` of type `Int`
+  """
+  rateBp_sum: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_sum` of type `Int`
+  """
+  standardRateBp_sum: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_avg` of type `Float`
+  """
+  rateBp_avg: Float_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_avg` of type `Float`
+  """
+  standardRateBp_avg: Float_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_min` of type `Any`
+  """
+  details_min: Any_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_min` of type `Int`
+  """
+  rateBp_min: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_min` of type `Int`
+  """
+  standardRateBp_min: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_max` of type `Any`
+  """
+  details_max: Any_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_max` of type `Int`
+  """
+  rateBp_max: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_max` of type `Int`
+  """
+  standardRateBp_max: Int_Filter
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'CommissionRateSetting'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input CommissionRateSetting_Key {
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`
+  """
+  memberId: UUID
+  """
+  ✨ `_expr` server value variant of `memberId` (✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`)
+  """
+  memberId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`
+  """
+  product: String
+  """
+  ✨ `_expr` server value variant of `product` (✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`)
+  """
+  product_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`
+  """
+  role: String
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`)
+  """
+  role_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'CommissionRateSetting'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input CommissionRateSetting_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: CommissionRateSetting_Filter
+}
+"""
+✨ Generated order input type for table 'CommissionRateSetting'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input CommissionRateSetting_Order {
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId` of type `UUID!`
+  """
+  memberId: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product` of type `String!`
+  """
+  product: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role` of type `String!`
+  """
+  role: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`member` of type `Member!`
+  """
+  member: Member_Order
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details` of type `Any`
+  """
+  details: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp` of type `Int!`
+  """
+  rateBp: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp` of type `Int`
+  """
+  standardRateBp: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_count` of type `Int!`
+  """
+  details_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`memberId_count` of type `Int!`
+  """
+  memberId_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`product_count` of type `Int!`
+  """
+  product_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_count` of type `Int!`
+  """
+  rateBp_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`role_count` of type `Int!`
+  """
+  role_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_count` of type `Int!`
+  """
+  standardRateBp_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_sum` of type `Int`
+  """
+  rateBp_sum: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_sum` of type `Int`
+  """
+  standardRateBp_sum: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_avg` of type `Float`
+  """
+  rateBp_avg: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_avg` of type `Float`
+  """
+  standardRateBp_avg: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_min` of type `Any`
+  """
+  details_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_min` of type `Int`
+  """
+  rateBp_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_min` of type `Int`
+  """
+  standardRateBp_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`details_max` of type `Any`
+  """
+  details_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`rateBp_max` of type `Int`
+  """
+  rateBp_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`standardRateBp_max` of type `Int`
+  """
+  standardRateBp_max: OrderDirection
+  """
+  ✨ Generated from Field `CommissionRateSetting`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'Contract'. It includes all necessary fields for creating or upserting rows into table.
 """
 input Contract_Data {
@@ -2290,6 +5365,10 @@ input Contract_Data {
   """
   vipNumber_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Contract`.`commissions_on_contract` of type `[Commission!]!`
+  """
+  commissions_on_contract: [Commission_Data!]
+  """
   ✨ Generated from Field `Contract`.`payments_on_contract` of type `[Payment!]!`
   """
   payments_on_contract: [Payment_Data!]
@@ -2374,6 +5453,10 @@ input Contract_Filter {
   ✨ Generated from Field `Contract`.`vipNumber` of type `String`
   """
   vipNumber: String_Filter
+  """
+  ✨ Generated from Field `Contract`.`commissions_on_contract` of type `[Commission!]!`
+  """
+  commissions_on_contract: Commission_ListFilter
   """
   ✨ Generated from Field `Contract`.`payments_on_contract` of type `[Payment!]!`
   """
@@ -6894,6 +9977,14 @@ input IgpSale_Data {
   """
   termMonths_update: [Int_Update!] @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `IgpSale`.`commissions_on_igpSale` of type `[Commission!]!`
+  """
+  commissions_on_igpSale: [Commission_Data!]
+  """
+  ✨ Generated from Field `IgpSale`.`commissionClawbacks_on_igpSale` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_igpSale: [CommissionClawback_Data!]
+  """
   ✨ Generated from Field `IgpSale`.`igpBuyerMemberships_on_sale` of type `[IgpBuyerMembership!]!`
   """
   igpBuyerMemberships_on_sale: [IgpBuyerMembership_Data!]
@@ -7010,6 +10101,14 @@ input IgpSale_Filter {
   ✨ Generated from Field `IgpSale`.`termMonths` of type `Int!`
   """
   termMonths: Int_Filter
+  """
+  ✨ Generated from Field `IgpSale`.`commissions_on_igpSale` of type `[Commission!]!`
+  """
+  commissions_on_igpSale: Commission_ListFilter
+  """
+  ✨ Generated from Field `IgpSale`.`commissionClawbacks_on_igpSale` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_igpSale: CommissionClawback_ListFilter
   """
   ✨ Generated from Field `IgpSale`.`igpBuyerMemberships_on_sale` of type `[IgpBuyerMembership!]!`
   """
@@ -8015,6 +11114,22 @@ input Member_Data {
   """
   branchId_expr: String_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`
+  """
+  clawbackAddendumSignedDate: Date
+  """
+  ✨ `_date` server value variant of `clawbackAddendumSignedDate` (✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`)
+  """
+  clawbackAddendumSignedDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `clawbackAddendumSignedDate` (✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`)
+  """
+  clawbackAddendumSignedDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `clawbackAddendumSignedDate` (✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`)
+  """
+  clawbackAddendumSignedDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `Member`.`designation` of type `String!`
   """
   designation: String
@@ -8090,6 +11205,22 @@ input Member_Data {
   ✨ Generated from Field `Member`.`accreditationNumbers_on_member` of type `[AccreditationNumber!]!`
   """
   accreditationNumbers_on_member: [AccreditationNumber_Data!]
+  """
+  ✨ Generated from Field `Member`.`allowanceReviews_on_member` of type `[AllowanceReview!]!`
+  """
+  allowanceReviews_on_member: [AllowanceReview_Data!]
+  """
+  ✨ Generated from Field `Member`.`commissions_on_recipientMember` of type `[Commission!]!`
+  """
+  commissions_on_recipientMember: [Commission_Data!]
+  """
+  ✨ Generated from Field `Member`.`commissionClawbacks_on_recipientMember` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_recipientMember: [CommissionClawback_Data!]
+  """
+  ✨ Generated from Field `Member`.`commissionRateSettings_on_member` of type `[CommissionRateSetting!]!`
+  """
+  commissionRateSettings_on_member: [CommissionRateSetting_Data!]
   """
   ✨ Generated from Field `Member`.`contracts_on_sellerMember` of type `[Contract!]!`
   """
@@ -8180,6 +11311,10 @@ input Member_Filter {
   """
   branchId: String_Filter
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`
+  """
+  clawbackAddendumSignedDate: Date_Filter
+  """
   ✨ Generated from Field `Member`.`designation` of type `String!`
   """
   designation: String_Filter
@@ -8219,6 +11354,22 @@ input Member_Filter {
   ✨ Generated from Field `Member`.`accreditationNumbers_on_member` of type `[AccreditationNumber!]!`
   """
   accreditationNumbers_on_member: AccreditationNumber_ListFilter
+  """
+  ✨ Generated from Field `Member`.`allowanceReviews_on_member` of type `[AllowanceReview!]!`
+  """
+  allowanceReviews_on_member: AllowanceReview_ListFilter
+  """
+  ✨ Generated from Field `Member`.`commissions_on_recipientMember` of type `[Commission!]!`
+  """
+  commissions_on_recipientMember: Commission_ListFilter
+  """
+  ✨ Generated from Field `Member`.`commissionClawbacks_on_recipientMember` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_recipientMember: CommissionClawback_ListFilter
+  """
+  ✨ Generated from Field `Member`.`commissionRateSettings_on_member` of type `[CommissionRateSetting!]!`
+  """
+  commissionRateSettings_on_member: CommissionRateSetting_ListFilter
   """
   ✨ Generated from Field `Member`.`contracts_on_sellerMember` of type `[Contract!]!`
   """
@@ -8318,6 +11469,10 @@ input Member_Having {
   """
   branchId_count: Int_Filter
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_count` of type `Int!`
+  """
+  clawbackAddendumSignedDate_count: Int_Filter
+  """
   ✨ Generated from Field `Member`.`designation_count` of type `Int!`
   """
   designation_count: Int_Filter
@@ -8366,6 +11521,10 @@ input Member_Having {
   """
   rowVersion_avg: Float_Filter
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_min` of type `Date`
+  """
+  clawbackAddendumSignedDate_min: Date_Filter
+  """
   ✨ Generated from Field `Member`.`details_min` of type `Any`
   """
   details_min: Any_Filter
@@ -8377,6 +11536,10 @@ input Member_Having {
   ✨ Generated from Field `Member`.`rowVersion_min` of type `Int`
   """
   rowVersion_min: Int_Filter
+  """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_max` of type `Date`
+  """
+  clawbackAddendumSignedDate_max: Date_Filter
   """
   ✨ Generated from Field `Member`.`details_max` of type `Any`
   """
@@ -8441,6 +11604,10 @@ input Member_Order {
   """
   branchId: OrderDirection
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate` of type `Date`
+  """
+  clawbackAddendumSignedDate: OrderDirection
+  """
   ✨ Generated from Field `Member`.`designation` of type `String!`
   """
   designation: OrderDirection
@@ -8484,6 +11651,10 @@ input Member_Order {
   ✨ Generated from Field `Member`.`branchId_count` of type `Int!`
   """
   branchId_count: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_count` of type `Int!`
+  """
+  clawbackAddendumSignedDate_count: OrderDirection
   """
   ✨ Generated from Field `Member`.`designation_count` of type `Int!`
   """
@@ -8533,6 +11704,10 @@ input Member_Order {
   """
   rowVersion_avg: OrderDirection
   """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_min` of type `Date`
+  """
+  clawbackAddendumSignedDate_min: OrderDirection
+  """
   ✨ Generated from Field `Member`.`details_min` of type `Any`
   """
   details_min: OrderDirection
@@ -8544,6 +11719,10 @@ input Member_Order {
   ✨ Generated from Field `Member`.`rowVersion_min` of type `Int`
   """
   rowVersion_min: OrderDirection
+  """
+  ✨ Generated from Field `Member`.`clawbackAddendumSignedDate_max` of type `Date`
+  """
+  clawbackAddendumSignedDate_max: OrderDirection
   """
   ✨ Generated from Field `Member`.`details_max` of type `Any`
   """
@@ -14384,6 +17563,14 @@ input Sale_Data {
   """
   valueCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `Sale`.`commissions_on_sale` of type `[Commission!]!`
+  """
+  commissions_on_sale: [Commission_Data!]
+  """
+  ✨ Generated from Field `Sale`.`commissionClawbacks_on_sale` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_sale: [CommissionClawback_Data!]
+  """
   ✨ Generated from Field `Sale`.`saleAdjustments_on_sale` of type `[SaleAdjustment!]!`
   """
   saleAdjustments_on_sale: [SaleAdjustment_Data!]
@@ -14484,6 +17671,14 @@ input Sale_Filter {
   ✨ Generated from Field `Sale`.`valueCentavos` of type `Int64!`
   """
   valueCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `Sale`.`commissions_on_sale` of type `[Commission!]!`
+  """
+  commissions_on_sale: Commission_ListFilter
+  """
+  ✨ Generated from Field `Sale`.`commissionClawbacks_on_sale` of type `[CommissionClawback!]!`
+  """
+  commissionClawbacks_on_sale: CommissionClawback_ListFilter
   """
   ✨ Generated from Field `Sale`.`saleAdjustments_on_sale` of type `[SaleAdjustment!]!`
   """
@@ -17238,6 +20433,10 @@ input UserAccount_Data {
   """
   accountStatusEvents_on_actor: [AccountStatusEvent_Data!]
   """
+  ✨ Generated from Field `UserAccount`.`allowanceReviews_on_reviewedBy` of type `[AllowanceReview!]!`
+  """
+  allowanceReviews_on_reviewedBy: [AllowanceReview_Data!]
+  """
   ✨ Generated from Field `UserAccount`.`auditEvents_on_actor` of type `[AuditEvent!]!`
   """
   auditEvents_on_actor: [AuditEvent_Data!]
@@ -17245,6 +20444,22 @@ input UserAccount_Data {
   ✨ Generated from Field `UserAccount`.`closedMonths_on_closedBy` of type `[ClosedMonth!]!`
   """
   closedMonths_on_closedBy: [ClosedMonth_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`commissions_on_approvedBy` of type `[Commission!]!`
+  """
+  commissions_on_approvedBy: [Commission_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`commissions_on_payoutProcessedBy` of type `[Commission!]!`
+  """
+  commissions_on_payoutProcessedBy: [Commission_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`commissionPayoutLists_on_approvedBy` of type `[CommissionPayoutList!]!`
+  """
+  commissionPayoutLists_on_approvedBy: [CommissionPayoutList_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`commissionPayoutLists_on_preparedBy` of type `[CommissionPayoutList!]!`
+  """
+  commissionPayoutLists_on_preparedBy: [CommissionPayoutList_Data!]
   """
   ✨ Generated from Field `UserAccount`.`customerImportJobs_on_actor` of type `[CustomerImportJob!]!`
   """
@@ -17399,6 +20614,10 @@ input UserAccount_Filter {
   """
   accountStatusEvents_on_actor: AccountStatusEvent_ListFilter
   """
+  ✨ Generated from Field `UserAccount`.`allowanceReviews_on_reviewedBy` of type `[AllowanceReview!]!`
+  """
+  allowanceReviews_on_reviewedBy: AllowanceReview_ListFilter
+  """
   ✨ Generated from Field `UserAccount`.`auditEvents_on_actor` of type `[AuditEvent!]!`
   """
   auditEvents_on_actor: AuditEvent_ListFilter
@@ -17406,6 +20625,22 @@ input UserAccount_Filter {
   ✨ Generated from Field `UserAccount`.`closedMonths_on_closedBy` of type `[ClosedMonth!]!`
   """
   closedMonths_on_closedBy: ClosedMonth_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`commissions_on_approvedBy` of type `[Commission!]!`
+  """
+  commissions_on_approvedBy: Commission_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`commissions_on_payoutProcessedBy` of type `[Commission!]!`
+  """
+  commissions_on_payoutProcessedBy: Commission_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`commissionPayoutLists_on_approvedBy` of type `[CommissionPayoutList!]!`
+  """
+  commissionPayoutLists_on_approvedBy: CommissionPayoutList_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`commissionPayoutLists_on_preparedBy` of type `[CommissionPayoutList!]!`
+  """
+  commissionPayoutLists_on_preparedBy: CommissionPayoutList_ListFilter
   """
   ✨ Generated from Field `UserAccount`.`customerImportJobs_on_actor` of type `[CustomerImportJob!]!`
   """
@@ -17703,4 +20938,327 @@ input UserAccount_Order {
   ✨ Generated from Field `UserAccount`.`createdAt_max` of type `Timestamp`
   """
   createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'VipPositionRate'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input VipPositionRate_Data {
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation` of type `String!`
+  """
+  designation: String
+  """
+  ✨ `_expr` server value variant of `designation` (✨ Generated from Field `VipPositionRate`.`designation` of type `String!`)
+  """
+  designation_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`role` of type `String!`
+  """
+  role: String
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `VipPositionRate`.`role` of type `String!`)
+  """
+  role_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`approvalReference` of type `String!`
+  """
+  approvalReference: String
+  """
+  ✨ `_expr` server value variant of `approvalReference` (✨ Generated from Field `VipPositionRate`.`approvalReference` of type `String!`)
+  """
+  approvalReference_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`details` of type `Any`
+  """
+  details: Any
+  """
+  ✨ `_expr` server value variant of `details` (✨ Generated from Field `VipPositionRate`.`details` of type `Any`)
+  """
+  details_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp` of type `Int!`
+  """
+  rateBp: Int
+  """
+  ✨ `_expr` server value variant of `rateBp` (✨ Generated from Field `VipPositionRate`.`rateBp` of type `Int!`)
+  """
+  rateBp_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `rateBp` (✨ Generated from Field `VipPositionRate`.`rateBp` of type `Int!`)
+  """
+  rateBp_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `updatedAt` (✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `updatedAt` (✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `updatedAt` (✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`)
+  """
+  updatedAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'VipPositionRate'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input VipPositionRate_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [VipPositionRate_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: VipPositionRate_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [VipPositionRate_Filter!]
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation` of type `String!`
+  """
+  designation: String_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`role` of type `String!`
+  """
+  role: String_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`approvalReference` of type `String!`
+  """
+  approvalReference: String_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`details` of type `Any`
+  """
+  details: Any_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp` of type `Int!`
+  """
+  rateBp: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'VipPositionRate'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input VipPositionRate_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [VipPositionRate_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: VipPositionRate_Filter
+}
+"""
+✨ Generated having input type for table 'VipPositionRate'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input VipPositionRate_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [VipPositionRate_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: VipPositionRate_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [VipPositionRate_Having!]
+  """
+  ✨ Generated from Field `VipPositionRate`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`approvalReference_count` of type `Int!`
+  """
+  approvalReference_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation_count` of type `Int!`
+  """
+  designation_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_count` of type `Int!`
+  """
+  details_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_count` of type `Int!`
+  """
+  rateBp_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`role_count` of type `Int!`
+  """
+  role_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_sum` of type `Int`
+  """
+  rateBp_sum: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_avg` of type `Float`
+  """
+  rateBp_avg: Float_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_min` of type `Any`
+  """
+  details_min: Any_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_min` of type `Int`
+  """
+  rateBp_min: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_max` of type `Any`
+  """
+  details_max: Any_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_max` of type `Int`
+  """
+  rateBp_max: Int_Filter
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'VipPositionRate'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input VipPositionRate_Key {
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation` of type `String!`
+  """
+  designation: String
+  """
+  ✨ `_expr` server value variant of `designation` (✨ Generated from Field `VipPositionRate`.`designation` of type `String!`)
+  """
+  designation_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `VipPositionRate`.`role` of type `String!`
+  """
+  role: String
+  """
+  ✨ `_expr` server value variant of `role` (✨ Generated from Field `VipPositionRate`.`role` of type `String!`)
+  """
+  role_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'VipPositionRate'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input VipPositionRate_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: VipPositionRate_Filter
+}
+"""
+✨ Generated order input type for table 'VipPositionRate'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input VipPositionRate_Order {
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation` of type `String!`
+  """
+  designation: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`role` of type `String!`
+  """
+  role: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`approvalReference` of type `String!`
+  """
+  approvalReference: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`details` of type `Any`
+  """
+  details: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp` of type `Int!`
+  """
+  rateBp: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt` of type `Timestamp!`
+  """
+  updatedAt: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`approvalReference_count` of type `Int!`
+  """
+  approvalReference_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`designation_count` of type `Int!`
+  """
+  designation_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_count` of type `Int!`
+  """
+  details_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_count` of type `Int!`
+  """
+  rateBp_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`role_count` of type `Int!`
+  """
+  role_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_count` of type `Int!`
+  """
+  updatedAt_count: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_sum` of type `Int`
+  """
+  rateBp_sum: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_avg` of type `Float`
+  """
+  rateBp_avg: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_min` of type `Any`
+  """
+  details_min: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_min` of type `Int`
+  """
+  rateBp_min: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_min` of type `Timestamp`
+  """
+  updatedAt_min: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`details_max` of type `Any`
+  """
+  details_max: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`rateBp_max` of type `Int`
+  """
+  rateBp_max: OrderDirection
+  """
+  ✨ Generated from Field `VipPositionRate`.`updatedAt_max` of type `Timestamp`
+  """
+  updatedAt_max: OrderDirection
 }

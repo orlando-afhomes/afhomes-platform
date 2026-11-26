@@ -36,6 +36,20 @@ extend type AccreditationNumber {
   """
   memberId: UUID! @fdc_generated(from: "AccreditationNumber.member", purpose: IMPLICIT_REF_FIELD)
 }
+extend type AllowanceReview {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "AllowanceReview", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AllowanceReview`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID! @fdc_generated(from: "AllowanceReview.member", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AllowanceReview`.`reviewedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  reviewedById: UUID! @fdc_generated(from: "AllowanceReview.reviewedBy", purpose: IMPLICIT_REF_FIELD)
+}
 extend type AuditEvent {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -55,6 +69,78 @@ extend type ClosedMonth {
   ✨ Implicit foreign key field based on `ClosedMonth`.`closedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
   """
   closedById: UUID @fdc_generated(from: "ClosedMonth.closedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Commission {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Commission", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`approvedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  approvedById: UUID @fdc_generated(from: "Commission.approvedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`contract`. It must match the value of `Contract`.`id`. See `@ref` for how to customize it.
+  """
+  contractId: UUID @fdc_generated(from: "Commission.contract", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`igpSale`. It must match the value of `IgpSale`.`id`. See `@ref` for how to customize it.
+  """
+  igpSaleId: UUID @fdc_generated(from: "Commission.igpSale", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`payoutProcessedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  payoutProcessedById: UUID @fdc_generated(from: "Commission.payoutProcessedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`recipientMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  recipientMemberId: UUID! @fdc_generated(from: "Commission.recipientMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Commission`.`sale`. It must match the value of `Sale`.`id`. See `@ref` for how to customize it.
+  """
+  saleId: UUID @fdc_generated(from: "Commission.sale", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CommissionClawback {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "CommissionClawback", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionClawback`.`commission`. It must match the value of `Commission`.`id`. See `@ref` for how to customize it.
+  """
+  commissionId: UUID! @fdc_generated(from: "CommissionClawback.commission", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionClawback`.`igpSale`. It must match the value of `IgpSale`.`id`. See `@ref` for how to customize it.
+  """
+  igpSaleId: UUID @fdc_generated(from: "CommissionClawback.igpSale", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionClawback`.`recipientMember`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  recipientMemberId: UUID! @fdc_generated(from: "CommissionClawback.recipientMember", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionClawback`.`sale`. It must match the value of `Sale`.`id`. See `@ref` for how to customize it.
+  """
+  saleId: UUID @fdc_generated(from: "CommissionClawback.sale", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CommissionPayoutList {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "CommissionPayoutList", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionPayoutList`.`approvedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  approvedById: UUID @fdc_generated(from: "CommissionPayoutList.approvedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `CommissionPayoutList`.`preparedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  preparedById: UUID @fdc_generated(from: "CommissionPayoutList.preparedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type CommissionRateSetting {
+  """
+  ✨ Implicit foreign key field based on `CommissionRateSetting`.`member`. It must match the value of `Member`.`id`. See `@ref` for how to customize it.
+  """
+  memberId: UUID! @fdc_generated(from: "CommissionRateSetting.member", purpose: IMPLICIT_REF_FIELD)
 }
 extend type Contract {
   """

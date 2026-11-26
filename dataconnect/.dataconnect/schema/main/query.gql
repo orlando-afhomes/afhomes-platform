@@ -57,6 +57,25 @@ extend type Query {
     first: AccreditationNumber_FirstRow
   ): AccreditationNumber @fdc_generated(from: "AccreditationNumber", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `AllowanceReview` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  allowanceReview(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AllowanceReview_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AllowanceReview_FirstRow
+  ): AllowanceReview @fdc_generated(from: "AllowanceReview", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `AuditEvent` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   auditEvent(
@@ -94,6 +113,77 @@ extend type Query {
     """
     first: ClosedMonth_FirstRow
   ): ClosedMonth @fdc_generated(from: "ClosedMonth", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Commission` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  commission(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Commission_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Commission_FirstRow
+  ): Commission @fdc_generated(from: "Commission", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CommissionClawback` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  commissionClawback(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionClawback_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionClawback_FirstRow
+  ): CommissionClawback @fdc_generated(from: "CommissionClawback", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CommissionPayoutList` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  commissionPayoutList(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionPayoutList_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionPayoutList_FirstRow
+  ): CommissionPayoutList @fdc_generated(from: "CommissionPayoutList", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `CommissionRateSetting` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  commissionRateSetting(
+    """
+    The key used to identify the object.
+    """
+    key: CommissionRateSetting_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionRateSetting_FirstRow
+  ): CommissionRateSetting @fdc_generated(from: "CommissionRateSetting", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `Contract` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -712,6 +802,20 @@ extend type Query {
     first: UserAccount_FirstRow
   ): UserAccount @fdc_generated(from: "UserAccount", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `VipPositionRate` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  vipPositionRate(
+    """
+    The key used to identify the object.
+    """
+    key: VipPositionRate_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VipPositionRate_FirstRow
+  ): VipPositionRate @fdc_generated(from: "VipPositionRate", purpose: QUERY_SINGLE)
+  """
   ✨ List `AccountStatusEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   accountStatusEvents(
@@ -814,6 +918,40 @@ extend type Query {
     having: AccreditationNumber_Having
   ): [AccreditationNumber!]! @fdc_generated(from: "AccreditationNumber", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `AllowanceReview` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  allowanceReviews(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AllowanceReview_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AllowanceReview_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AllowanceReview_Having
+  ): [AllowanceReview!]! @fdc_generated(from: "AllowanceReview", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `AuditEvent` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   auditEvents(
@@ -881,6 +1019,142 @@ extend type Query {
     """
     having: ClosedMonth_Having
   ): [ClosedMonth!]! @fdc_generated(from: "ClosedMonth", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Commission` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  commissions(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Commission_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Commission_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Commission_Having
+  ): [Commission!]! @fdc_generated(from: "Commission", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CommissionClawback` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  commissionClawbacks(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionClawback_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionClawback_Having
+  ): [CommissionClawback!]! @fdc_generated(from: "CommissionClawback", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CommissionPayoutList` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  commissionPayoutLists(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionPayoutList_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionPayoutList_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionPayoutList_Having
+  ): [CommissionPayoutList!]! @fdc_generated(from: "CommissionPayoutList", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `CommissionRateSetting` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  commissionRateSettings(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: CommissionRateSetting_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [CommissionRateSetting_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: CommissionRateSetting_Having
+  ): [CommissionRateSetting!]! @fdc_generated(from: "CommissionRateSetting", purpose: QUERY_MULTIPLE)
   """
   ✨ List `Contract` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
@@ -2003,4 +2277,38 @@ extend type Query {
     """
     having: UserAccount_Having
   ): [UserAccount!]! @fdc_generated(from: "UserAccount", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `VipPositionRate` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  vipPositionRates(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: VipPositionRate_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [VipPositionRate_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: VipPositionRate_Having
+  ): [VipPositionRate!]! @fdc_generated(from: "VipPositionRate", purpose: QUERY_MULTIPLE)
 }

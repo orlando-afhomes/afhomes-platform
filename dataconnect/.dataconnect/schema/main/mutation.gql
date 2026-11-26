@@ -27,6 +27,15 @@ extend type Mutation {
     data: AccreditationNumber_Data!
   ): AccreditationNumber_KeyOutput! @fdc_generated(from: "AccreditationNumber", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `AllowanceReview` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  allowanceReview_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: AllowanceReview_Data!
+  ): AllowanceReview_KeyOutput! @fdc_generated(from: "AllowanceReview", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `AuditEvent` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   auditEvent_insert(
@@ -44,6 +53,42 @@ extend type Mutation {
     """
     data: ClosedMonth_Data!
   ): ClosedMonth_KeyOutput! @fdc_generated(from: "ClosedMonth", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Commission` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commission_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Commission_Data!
+  ): Commission_KeyOutput! @fdc_generated(from: "Commission", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CommissionClawback` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionClawback_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CommissionClawback_Data!
+  ): CommissionClawback_KeyOutput! @fdc_generated(from: "CommissionClawback", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CommissionPayoutList` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionPayoutList_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CommissionPayoutList_Data!
+  ): CommissionPayoutList_KeyOutput! @fdc_generated(from: "CommissionPayoutList", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `CommissionRateSetting` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionRateSetting_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: CommissionRateSetting_Data!
+  ): CommissionRateSetting_KeyOutput! @fdc_generated(from: "CommissionRateSetting", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `Contract` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -342,6 +387,15 @@ extend type Mutation {
     data: UserAccount_Data!
   ): UserAccount_KeyOutput! @fdc_generated(from: "UserAccount", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `VipPositionRate` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vipPositionRate_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: VipPositionRate_Data!
+  ): VipPositionRate_KeyOutput! @fdc_generated(from: "VipPositionRate", purpose: INSERT_SINGLE)
+  """
   ✨ Insert `AccountStatusEvent` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   accountStatusEvent_insertMany(
@@ -369,6 +423,15 @@ extend type Mutation {
     data: [AccreditationNumber_Data!]!
   ): [AccreditationNumber_KeyOutput!]! @fdc_generated(from: "AccreditationNumber", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `AllowanceReview` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  allowanceReview_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [AllowanceReview_Data!]!
+  ): [AllowanceReview_KeyOutput!]! @fdc_generated(from: "AllowanceReview", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `AuditEvent` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   auditEvent_insertMany(
@@ -386,6 +449,42 @@ extend type Mutation {
     """
     data: [ClosedMonth_Data!]!
   ): [ClosedMonth_KeyOutput!]! @fdc_generated(from: "ClosedMonth", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Commission` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commission_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Commission_Data!]!
+  ): [Commission_KeyOutput!]! @fdc_generated(from: "Commission", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CommissionClawback` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionClawback_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CommissionClawback_Data!]!
+  ): [CommissionClawback_KeyOutput!]! @fdc_generated(from: "CommissionClawback", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CommissionPayoutList` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionPayoutList_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CommissionPayoutList_Data!]!
+  ): [CommissionPayoutList_KeyOutput!]! @fdc_generated(from: "CommissionPayoutList", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `CommissionRateSetting` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  commissionRateSetting_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [CommissionRateSetting_Data!]!
+  ): [CommissionRateSetting_KeyOutput!]! @fdc_generated(from: "CommissionRateSetting", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `Contract` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -684,6 +783,15 @@ extend type Mutation {
     data: [UserAccount_Data!]!
   ): [UserAccount_KeyOutput!]! @fdc_generated(from: "UserAccount", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `VipPositionRate` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  vipPositionRate_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [VipPositionRate_Data!]!
+  ): [VipPositionRate_KeyOutput!]! @fdc_generated(from: "VipPositionRate", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert or update a single `AccountStatusEvent` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AccountStatusEvent`.
   """
   accountStatusEvent_upsert(
@@ -711,6 +819,15 @@ extend type Mutation {
     data: AccreditationNumber_Data!
   ): AccreditationNumber_KeyOutput! @fdc_generated(from: "AccreditationNumber", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `AllowanceReview` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AllowanceReview`.
+  """
+  allowanceReview_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: AllowanceReview_Data!
+  ): AllowanceReview_KeyOutput! @fdc_generated(from: "AllowanceReview", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `AuditEvent` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
   """
   auditEvent_upsert(
@@ -728,6 +845,42 @@ extend type Mutation {
     """
     data: ClosedMonth_Data!
   ): ClosedMonth_KeyOutput! @fdc_generated(from: "ClosedMonth", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Commission` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Commission`.
+  """
+  commission_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Commission_Data!
+  ): Commission_KeyOutput! @fdc_generated(from: "Commission", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CommissionClawback` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionClawback`.
+  """
+  commissionClawback_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CommissionClawback_Data!
+  ): CommissionClawback_KeyOutput! @fdc_generated(from: "CommissionClawback", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CommissionPayoutList` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionPayoutList`.
+  """
+  commissionPayoutList_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CommissionPayoutList_Data!
+  ): CommissionPayoutList_KeyOutput! @fdc_generated(from: "CommissionPayoutList", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `CommissionRateSetting` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionRateSetting`.
+  """
+  commissionRateSetting_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: CommissionRateSetting_Data!
+  ): CommissionRateSetting_KeyOutput! @fdc_generated(from: "CommissionRateSetting", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `Contract` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
   """
@@ -1026,6 +1179,15 @@ extend type Mutation {
     data: UserAccount_Data!
   ): UserAccount_KeyOutput! @fdc_generated(from: "UserAccount", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `VipPositionRate` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VipPositionRate`.
+  """
+  vipPositionRate_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: VipPositionRate_Data!
+  ): VipPositionRate_KeyOutput! @fdc_generated(from: "VipPositionRate", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update `AccountStatusEvent` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AccountStatusEvent`.
   """
   accountStatusEvent_upsertMany(
@@ -1053,6 +1215,15 @@ extend type Mutation {
     data: [AccreditationNumber_Data!]!
   ): [AccreditationNumber_KeyOutput!]! @fdc_generated(from: "AccreditationNumber", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `AllowanceReview` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AllowanceReview`.
+  """
+  allowanceReview_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [AllowanceReview_Data!]!
+  ): [AllowanceReview_KeyOutput!]! @fdc_generated(from: "AllowanceReview", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `AuditEvent` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AuditEvent`.
   """
   auditEvent_upsertMany(
@@ -1070,6 +1241,42 @@ extend type Mutation {
     """
     data: [ClosedMonth_Data!]!
   ): [ClosedMonth_KeyOutput!]! @fdc_generated(from: "ClosedMonth", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Commission` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Commission`.
+  """
+  commission_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Commission_Data!]!
+  ): [Commission_KeyOutput!]! @fdc_generated(from: "Commission", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CommissionClawback` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionClawback`.
+  """
+  commissionClawback_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CommissionClawback_Data!]!
+  ): [CommissionClawback_KeyOutput!]! @fdc_generated(from: "CommissionClawback", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CommissionPayoutList` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionPayoutList`.
+  """
+  commissionPayoutList_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CommissionPayoutList_Data!]!
+  ): [CommissionPayoutList_KeyOutput!]! @fdc_generated(from: "CommissionPayoutList", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `CommissionRateSetting` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `CommissionRateSetting`.
+  """
+  commissionRateSetting_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [CommissionRateSetting_Data!]!
+  ): [CommissionRateSetting_KeyOutput!]! @fdc_generated(from: "CommissionRateSetting", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `Contract` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Contract`.
   """
@@ -1368,6 +1575,15 @@ extend type Mutation {
     data: [UserAccount_Data!]!
   ): [UserAccount_KeyOutput!]! @fdc_generated(from: "UserAccount", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `VipPositionRate` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VipPositionRate`.
+  """
+  vipPositionRate_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [VipPositionRate_Data!]!
+  ): [VipPositionRate_KeyOutput!]! @fdc_generated(from: "VipPositionRate", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Update a single `AccountStatusEvent` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AccountStatusEvent` or `null` if not found.
   """
   accountStatusEvent_update(
@@ -1440,6 +1656,30 @@ extend type Mutation {
     data: AccreditationNumber_Data!
   ): AccreditationNumber_KeyOutput @fdc_generated(from: "AccreditationNumber", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `AllowanceReview` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AllowanceReview` or `null` if not found.
+  """
+  allowanceReview_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AllowanceReview_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AllowanceReview_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: AllowanceReview_Data!
+  ): AllowanceReview_KeyOutput @fdc_generated(from: "AllowanceReview", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `AuditEvent` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AuditEvent` or `null` if not found.
   """
   auditEvent_update(
@@ -1487,6 +1727,97 @@ extend type Mutation {
     """
     data: ClosedMonth_Data!
   ): ClosedMonth_KeyOutput @fdc_generated(from: "ClosedMonth", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Commission` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Commission` or `null` if not found.
+  """
+  commission_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Commission_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Commission_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Commission_Data!
+  ): Commission_KeyOutput @fdc_generated(from: "Commission", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CommissionClawback` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CommissionClawback` or `null` if not found.
+  """
+  commissionClawback_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionClawback_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionClawback_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CommissionClawback_Data!
+  ): CommissionClawback_KeyOutput @fdc_generated(from: "CommissionClawback", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CommissionPayoutList` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CommissionPayoutList` or `null` if not found.
+  """
+  commissionPayoutList_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionPayoutList_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionPayoutList_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CommissionPayoutList_Data!
+  ): CommissionPayoutList_KeyOutput @fdc_generated(from: "CommissionPayoutList", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `CommissionRateSetting` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `CommissionRateSetting` or `null` if not found.
+  """
+  commissionRateSetting_update(
+    """
+    The key used to identify the object.
+    """
+    key: CommissionRateSetting_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionRateSetting_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: CommissionRateSetting_Data!
+  ): CommissionRateSetting_KeyOutput @fdc_generated(from: "CommissionRateSetting", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `Contract` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Contract` or `null` if not found.
   """
@@ -2270,6 +2601,25 @@ extend type Mutation {
     data: UserAccount_Data!
   ): UserAccount_KeyOutput @fdc_generated(from: "UserAccount", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `VipPositionRate` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `VipPositionRate` or `null` if not found.
+  """
+  vipPositionRate_update(
+    """
+    The key used to identify the object.
+    """
+    key: VipPositionRate_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VipPositionRate_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: VipPositionRate_Data!
+  ): VipPositionRate_KeyOutput @fdc_generated(from: "VipPositionRate", purpose: UPDATE_SINGLE)
+  """
   ✨ Update `AccountStatusEvent` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   accountStatusEvent_updateMany(
@@ -2327,6 +2677,25 @@ extend type Mutation {
     data: AccreditationNumber_Data!
   ): Int! @fdc_generated(from: "AccreditationNumber", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `AllowanceReview` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  allowanceReview_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: AllowanceReview_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: AllowanceReview_Data!
+  ): Int! @fdc_generated(from: "AllowanceReview", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `AuditEvent` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   auditEvent_updateMany(
@@ -2364,6 +2733,82 @@ extend type Mutation {
     """
     data: ClosedMonth_Data!
   ): Int! @fdc_generated(from: "ClosedMonth", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Commission` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  commission_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Commission_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Commission_Data!
+  ): Int! @fdc_generated(from: "Commission", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CommissionClawback` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  commissionClawback_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CommissionClawback_Data!
+  ): Int! @fdc_generated(from: "CommissionClawback", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CommissionPayoutList` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  commissionPayoutList_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CommissionPayoutList_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CommissionPayoutList_Data!
+  ): Int! @fdc_generated(from: "CommissionPayoutList", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `CommissionRateSetting` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  commissionRateSetting_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: CommissionRateSetting_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: CommissionRateSetting_Data!
+  ): Int! @fdc_generated(from: "CommissionRateSetting", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `Contract` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -2992,6 +3437,25 @@ extend type Mutation {
     data: UserAccount_Data!
   ): Int! @fdc_generated(from: "UserAccount", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `VipPositionRate` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  vipPositionRate_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: VipPositionRate_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: VipPositionRate_Data!
+  ): Int! @fdc_generated(from: "VipPositionRate", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Delete a single `AccountStatusEvent` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   accountStatusEvent_delete(
@@ -3049,6 +3513,25 @@ extend type Mutation {
     first: AccreditationNumber_FirstRow
   ): AccreditationNumber_KeyOutput @fdc_generated(from: "AccreditationNumber", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `AllowanceReview` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  allowanceReview_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: AllowanceReview_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AllowanceReview_FirstRow
+  ): AllowanceReview_KeyOutput @fdc_generated(from: "AllowanceReview", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `AuditEvent` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   auditEvent_delete(
@@ -3086,6 +3569,77 @@ extend type Mutation {
     """
     first: ClosedMonth_FirstRow
   ): ClosedMonth_KeyOutput @fdc_generated(from: "ClosedMonth", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Commission` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  commission_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Commission_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Commission_FirstRow
+  ): Commission_KeyOutput @fdc_generated(from: "Commission", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CommissionClawback` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  commissionClawback_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionClawback_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionClawback_FirstRow
+  ): CommissionClawback_KeyOutput @fdc_generated(from: "CommissionClawback", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CommissionPayoutList` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  commissionPayoutList_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: CommissionPayoutList_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionPayoutList_FirstRow
+  ): CommissionPayoutList_KeyOutput @fdc_generated(from: "CommissionPayoutList", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `CommissionRateSetting` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  commissionRateSetting_delete(
+    """
+    The key used to identify the object.
+    """
+    key: CommissionRateSetting_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: CommissionRateSetting_FirstRow
+  ): CommissionRateSetting_KeyOutput @fdc_generated(from: "CommissionRateSetting", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `Contract` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -3704,6 +4258,20 @@ extend type Mutation {
     first: UserAccount_FirstRow
   ): UserAccount_KeyOutput @fdc_generated(from: "UserAccount", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `VipPositionRate` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  vipPositionRate_delete(
+    """
+    The key used to identify the object.
+    """
+    key: VipPositionRate_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VipPositionRate_FirstRow
+  ): VipPositionRate_KeyOutput @fdc_generated(from: "VipPositionRate", purpose: DELETE_SINGLE)
+  """
   ✨ Delete `AccountStatusEvent` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   accountStatusEvent_deleteMany(
@@ -3746,6 +4314,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "AccreditationNumber", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `AllowanceReview` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  allowanceReview_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: AllowanceReview_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "AllowanceReview", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `AuditEvent` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   auditEvent_deleteMany(
@@ -3773,6 +4355,62 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "ClosedMonth", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Commission` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  commission_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Commission_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Commission", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CommissionClawback` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  commissionClawback_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CommissionClawback_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionClawback", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CommissionPayoutList` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  commissionPayoutList_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CommissionPayoutList_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionPayoutList", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `CommissionRateSetting` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  commissionRateSetting_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: CommissionRateSetting_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "CommissionRateSetting", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `Contract` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
@@ -4235,4 +4873,18 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "UserAccount", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `VipPositionRate` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  vipPositionRate_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: VipPositionRate_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "VipPositionRate", purpose: DELETE_MULTIPLE)
 }

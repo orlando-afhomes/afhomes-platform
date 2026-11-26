@@ -98,6 +98,8 @@ type Member @table {
   teamName: String
   referralCode: String
   aaNumber: String
+  # The day the IST signed the Commission and Clawback Addendum (doc 08 section 14.3); never for an OST.
+  clawbackAddendumSignedDate: Date
   details: Any
   # Append-only create/transfer/status history for this member (doc 02 section 6).
   parentHistory: Any
@@ -151,7 +153,7 @@ type Sale @table {
   recordedDate: Date!
   sellerMember: Member
   referrerMember: Member
-  # pending | confirmed | defaulted | cancelled | rejected
+  # pending | confirmed | defaulted | cancelled | rejected | rescinded | downgraded
   status: String!
   approvedBy: UserAccount
   approvedAt: Timestamp
@@ -226,6 +228,112 @@ type SaleAdjustment @table {
   reason: String!
   actor: UserAccount
   createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Approved per-person commission rate (doc 08 section 9); one row per seller, product and role.
+type CommissionRateSetting @table(key: ["member", "product", "role"]) {
+  member: Member!
+  # VIP | IGP
+  product: String!
+  # DSC | DRI
+  role: String!
+  rateBp: Int!
+  standardRateBp: Int
+  details: Any
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# An Admin-approved VIP position standard (doc 08 section 9.1 follow-up of 2026-11-15).
+type VipPositionRate @table(key: ["designation", "role"]) {
+  # SVD | SSM | SM | OST
+  designation: String!
+  # DSC | DRI
+  role: String!
+  rateBp: Int!
+  approvalReference: String!
+  details: Any
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# One released commission stage for one role on one sale (doc 08 sections 8, 10 and 12).
+type Commission @table {
+  # The VIP sale. Null on an IGP row.
+  sale: Sale
+  # The IGP sale. Null on a VIP row.
+  igpSale: IgpSale
+  contract: Contract
+  recipientMember: Member!
+  recipientName: String!
+  recipientDesignation: String!
+  # VIP | IGP
+  product: String!
+  # DSC | DRI
+  role: String!
+  # stage1 | full
+  stage: String!
+  basisCentavos: Int64!
+  percentBp: Int!
+  amountCentavos: Int64!
+  releaseDate: Date
+  # released | approved | on_hold | paid | cancelled
+  status: String!
+  approvedBy: UserAccount
+  approvedAt: Timestamp
+  holdTrigger: String
+  holdReason: String
+  releaseRestorable: Boolean @default(value: false)
+  rereleaseAfter: Date
+  # Initiated payout. Paid needs the confirmed disbursement (doc 08 sections 11 and 12).
+  payoutReference: String
+  payoutMethod: String
+  payoutDate: Date
+  payoutCountedDate: Date
+  payoutProcessedBy: UserAccount
+  payoutInitiatedAt: Timestamp
+  payoutConfirmedAt: Timestamp
+  payoutEvidenceFileName: String
+  payoutEvidence: Any
+  # Voided payouts stay beside the row (doc 08 section 11.6).
+  voidedPayouts: Any
+  history: Any
+}
+
+# Clawback of a paid commission raised by a sale event (doc 08 section 14); history is never deleted.
+type CommissionClawback @table {
+  commission: Commission!
+  sale: Sale
+  igpSale: IgpSale
+  recipientMember: Member!
+  # cancellation | rescission | downgrade | default | returned_cheque
+  trigger: String!
+  raisedDate: Date!
+  amountCentavos: Int64!
+  recoveries: Any
+  writeOff: Any
+  refundDueCentavos: Int64
+}
+
+# The DSC and DRI payout list of a closed month, prepared by the system at month close (doc 08 section 11).
+type CommissionPayoutList @table {
+  month: String!
+  entries: Any!
+  preparedBy: UserAccount
+  preparedAt: Timestamp!
+  approvedBy: UserAccount
+  approvedAt: Timestamp
+  approvedCommissionIds: Any
+  offsets: Any
+}
+
+# Saved monthly BA/PA/PB review for an IST leader (doc 08 section 15); workbook comparison during the parallel run.
+type AllowanceReview @table {
+  month: String!
+  member: Member!
+  result: Any!
+  inputs: Any!
+  clawbackOffsetCentavos: Int64
+  reviewedBy: UserAccount!
+  reviewedAt: Timestamp!
 }
 
 type Payment @table {

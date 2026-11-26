@@ -24,7 +24,6 @@ import { ProductDialog } from "../components/vip-product-dialogs";
 import { ADMIN_AREA_TABS } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
 import { LIST_TABS, ListsPage, type ListTabId } from "./lists-page";
-import { RedemptionHolidaysPanel, RedemptionPointsTablePanel, RedemptionVenuesPanel } from "./redemption-points-table-page";
 import { TierLevelsPanel } from "./tier-codes-page";
 
 function SettingsPanelLoading() {
@@ -37,13 +36,10 @@ const ExperiencesPanel = dynamic(() => import("./experiences-page").then((module
 const IgpProjectsTab = dynamic(() => import("./igp-projects-page").then((module) => module.IgpProjectsTab), { loading: SettingsPanelLoading });
 
 /** Header button per tab: the label and the operation that allows it. */
-const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "redemption.configure" | "igp.manage" | "experiences.manage" }>> = {
+const ADD_BUTTONS: Partial<Record<string, { label: string; operation: "vip-products.manage" | "igp.manage" | "experiences.manage" }>> = {
   products: { label: "New product", operation: "vip-products.manage" },
   schemes: { label: "New payment plan", operation: "vip-products.manage" },
   "tier-codes": { label: "Add card level", operation: "vip-products.manage" },
-  "points-table": { label: "Update points table", operation: "redemption.configure" },
-  holidays: { label: "Add holiday", operation: "redemption.configure" },
-  venues: { label: "Add venue", operation: "redemption.configure" },
   "igp-projects": { label: "Add project", operation: "igp.manage" },
   experiences: { label: "New experience", operation: "experiences.manage" },
 };
@@ -57,7 +53,6 @@ export function VipProductsAreaPage() {
   const access = useAdminAreaTabAccess("vip-products");
   const operations = {
     "vip-products.manage": useOperation("vip-products.manage"),
-    "redemption.configure": useOperation("redemption.configure"),
     "igp.manage": useOperation("igp.manage"),
     "experiences.manage": useOperation("experiences.manage"),
   };
@@ -71,7 +66,7 @@ export function VipProductsAreaPage() {
 
   return (
     <AreaPage
-      anyOf={["vip-products", "redemption", "departments", "reports", "sales", "finance", "experiences"]}
+      anyOf={["vip-products", "departments", "reports", "sales", "finance", "experiences"]}
       title="Settings"
       actions={(tab) => {
         if (tab === "lists" && canManageLists) {
@@ -90,14 +85,10 @@ export function VipProductsAreaPage() {
         label,
         allowed: access[value],
         render: () => {
-          const createProps = { createOpen: open(value), onCreateClose: close };
           switch (value) {
             case "products": return <VipProductsTab creating={operations["vip-products.manage"] && open(value)} onCloseCreate={close} />;
             case "schemes": return <PaymentSchemesTab creating={operations["vip-products.manage"] && open(value)} onCloseCreate={close} />;
             case "tier-codes": return <TierLevelsPanel adding={operations["vip-products.manage"] && open(value)} onCloseAdd={close} />;
-            case "points-table": return <RedemptionPointsTablePanel {...createProps} />;
-            case "holidays": return <RedemptionHolidaysPanel {...createProps} />;
-            case "venues": return <RedemptionVenuesPanel {...createProps} />;
             case "lists": return <ListsPage embedded list={list} onListChange={setList} adding={addingListItem} onAddingChange={setAddingListItem} />;
             case "historical-import": return <ReceiptHistoryExportPanel />;
             case "igp-projects": return <IgpProjectsTab adding={open(value)} onAddingClose={close} />;

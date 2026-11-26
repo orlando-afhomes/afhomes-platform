@@ -6,7 +6,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { AdminNavList } from "./components/admin-nav-list";
-import { getDevIdentity } from "@/data/mock/dev-identities";
+import { getDevIdentity } from "@/data/seed/dev-identities";
 import { getRoleAwareAdminNavigation } from "@/panels/admin/navigation";
 
 const queryClient = new QueryClient();

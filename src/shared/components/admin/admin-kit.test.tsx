@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render as renderDom, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { SessionIdentityProvider } from "@/shared/providers/session-identity-provider";
+import { stubApi } from "@/test/api-harness";
 import { AdminPage } from "./admin-page";
 import { AdminStatCard, AdminStatGrid, fitValueSize } from "./admin-stat";
 import { Clock } from "lucide-react";
@@ -23,9 +23,7 @@ function Wrapper({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
-        <DevIdentityProvider initialIdentityId="dev-super-admin">{children}</DevIdentityProvider>
-      </MockStoreProvider>
+      <SessionIdentityProvider>{children}</SessionIdentityProvider>
     </QueryClientProvider>
   );
 }
@@ -34,7 +32,11 @@ function render(node: ReactNode) {
   return renderToStaticMarkup(createElement(Wrapper, null, node));
 }
 
-afterEach(cleanup);
+beforeEach(() => stubApi("dev-super-admin"));
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 // AdminPage shows "Checking access…" until the access snapshot resolves, so it needs a client render that waits.
 async function renderReady(node: ReactNode) {

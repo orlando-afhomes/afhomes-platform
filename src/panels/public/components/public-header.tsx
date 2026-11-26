@@ -1,4 +1,4 @@
-import { Crown, LogIn } from "lucide-react";
+import { Crown } from "lucide-react";
 import { SiteHeader, type SiteHeaderAction, type SiteNavItem } from "@/shared/components/site";
 import { EXPERIENCE_LINKS, MAIN_NAV } from "@/modules/public-site/content/site";
 
@@ -24,9 +24,8 @@ const NAV_ITEMS: SiteNavItem[] = [
   MAIN_NAV[6], // Contact stays a top-level link (owner, 2026-11-18)
 ];
 
-/** Customer Login is the secondary action; Join VIP is the main call to action. Verify Accreditation sits in the Explore menu (03-ist-ost-accreditation: header and Home). */
+/** Join VIP is the main call to action. Verify Accreditation sits in the Explore menu (03-ist-ost-accreditation: header and Home). */
 const ACTIONS: SiteHeaderAction[] = [
-  { href: "/portal", label: "Customer Login", variant: "outline", icon: <LogIn aria-hidden="true" /> },
   { href: "/vip-privilege#cards", label: "Join VIP", variant: "primary", icon: <Crown aria-hidden="true" /> },
 ];
 

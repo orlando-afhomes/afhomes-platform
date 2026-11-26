@@ -6,8 +6,8 @@ import { manilaToday } from "@/shared/lib/dates";
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 describe.skipIf(!up)("commissions end to end (emulators)", () => {
   let contracts: typeof import("@/server/services/contracts");
@@ -60,7 +60,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
   }, 60_000);
 
   afterAll(async () => {
-    // Own records only, foreign keys first: clawbacks → commissions → payments → sales → contracts → rates/reviews → members.
+    // Own records only, foreign keys first: clawbacks â†’ commissions â†’ payments â†’ sales â†’ contracts â†’ rates/reviews â†’ members.
     for (const saleId of createdSaleIds) {
       const rows = await db.dbRead<{ commissions: Array<{ id: string }> }>(`query($s: UUID!) { commissions(where: { sale: { id: { eq: $s } } }) { id } }`, { s: saleId }).catch(() => ({ commissions: [] }));
       const ids = rows.commissions.map((row) => row.id);
@@ -168,7 +168,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     expect(signed.vipNumberIssueBlocker).toBeTruthy();
 
     // Verify the reservation and then the balance: spot cash settles in full, and the receipt that covers
-    // the first scheduled payment also issues the number and freezes the rates (doc 06 §8 step 5).
+    // the first scheduled payment also issues the number and freezes the rates (doc 06 Â§8 step 5).
     const required = (await records.loadContract(contract.id))!.contract.requiredInitialCentavos ?? 1_000_000;
     await payAndVerify(contract.id, { purpose: "reservation", amountCentavos: 1_000_000, paidDate: `${lastMonthKey}-01`, tag: "res" });
     let issued = (await records.loadContract(contract.id))!.contract;
@@ -184,7 +184,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
       { memberId: referrerMemberId, role: "DRI", rateBp: 200 },
     ]);
 
-    // The receipt that first reaches 40% of the TCP releases the stage-1 commissions in its month (doc 08 §8.2).
+    // The receipt that first reaches 40% of the TCP releases the stage-1 commissions in its month (doc 08 Â§8.2).
     const released = await records.loadCommissionsOfSale(sale.id);
     expect(released).toHaveLength(2);
     const sellerCommission = released.find((item) => item.role === "DSC")!;
@@ -200,8 +200,8 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     payoutListIds.push(list.id);
     expect(list.entries.map((entry) => entry.commissionId).sort()).toEqual(released.map((item) => item.id).sort());
 
-    // Approval, then one bulk payout instruction and one bulk confirmation (doc 08 §11.6):
-    // Approved is not Paid until disbursement is confirmed (doc 08 §12).
+    // Approval, then one bulk payout instruction and one bulk confirmation (doc 08 Â§11.6):
+    // Approved is not Paid until disbursement is confirmed (doc 08 Â§12).
     const approvedList = await commissions.approvePayoutList(finance, list.id);
     expect(approvedList.approvedCommissionIds).toHaveLength(2);
     const afterApprove = await records.loadCommissionsOfSale(sale.id);
@@ -219,7 +219,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
       expect(commission.payout?.confirmedAt).toBeTruthy();
     }
 
-    // Cancelling the sale after the payout takes the paid commission back as clawbacks owed (doc 08 §14.1).
+    // Cancelling the sale after the payout takes the paid commission back as clawbacks owed (doc 08 Â§14.1).
     const ground = (await import("@/modules/contracts/types")).CANCELLATION_GROUNDS[0];
     await contracts.requestCancellation(admin, contract.id, ground, "F6 test cancellation ground");
     await contracts.decideCancellation(admin, contract.id, "confirm", "F6 test cancellation decision");
@@ -246,10 +246,10 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     const balance = (await records.loadPaymentsOfContract(contract.id, sale.id)).find((item) => item.purpose !== "reservation")!;
     expect((await records.loadCommissionsOfSale(sale.id)).length).toBe(2);
 
-    // Once any commission on the sale is released, the referrer and rates can never change (doc 08 §9.3).
+    // Once any commission on the sale is released, the referrer and rates can never change (doc 08 Â§9.3).
     await expect(sales.correctSaleCommission(admin, sale.id, { reason: "Too late" })).rejects.toMatchObject({ code: "commission_released" });
 
-    // Reversing the balance receipt drops the sale to Pending and holds the unpaid commission (doc 08 §13).
+    // Reversing the balance receipt drops the sale to Pending and holds the unpaid commission (doc 08 Â§13).
     await payments.adjustPayment(finance, balance.id, { kind: "reversal", amountCentavos: balance.amountCentavos, reason: "F6 test reversal" });
     const after = await records.loadSale(sale.id);
     expect(after!.status).toBe("pending");
@@ -257,7 +257,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     expect(held.length).toBe(2);
     expect(held.every((item) => item.status === "on_hold")).toBe(true);
 
-    // A replacement receipt reconfirms the sale and restores the held commission (doc 08 §13).
+    // A replacement receipt reconfirms the sale and restores the held commission (doc 08 Â§13).
     const replacement = await payAndVerify(contract.id, { purpose: "installment", amountCentavos: balance.amountCentavos, paidDate: todayISO, tag: "repl" });
     void replacement;
     const restored = await records.loadCommissionsOfSale(sale.id);
@@ -293,12 +293,12 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     }
     expect((await records.loadCommissionsOfSale(sale.id)).length).toBe(2);
 
-    // Clawback Addendum §2(d): a contract can only be rescinded ninety days after booking.
+    // Clawback Addendum Â§2(d): a contract can only be rescinded ninety days after booking.
     await expect(sales.changeSaleStatus(admin, sale.id, { status: "rescinded", reason: "Too early" }))
       .rejects.toMatchObject({ code: "rescission_early" });
 
     // Backdate the test sale's own booking date, then rescind: the Closed Deal is removed, a dated reversal is
-    // recorded, and the unpaid released commission is held (doc 08 §14.1, OCT R32).
+    // recorded, and the unpaid released commission is held (doc 08 Â§14.1, OCT R32).
     const backdated = new Date(Date.parse(todayISO) - 100 * 86_400_000).toISOString().slice(0, 10);
     await db.dbWrite(`mutation($id: UUID!, $d: Date!) { sale_update(id: $id, data: { recordedDate: $d }) }`, { id: sale.id, d: backdated });
     const rescinded = await sales.changeSaleStatus(admin, sale.id, { status: "rescinded", reason: "Legal rescission after the ninety-day window." });
@@ -307,7 +307,7 @@ describe.skipIf(!up)("commissions end to end (emulators)", () => {
     const heldByRescission = await records.loadCommissionsOfSale(sale.id);
     expect(heldByRescission.every((item) => item.status === "on_hold" && item.holdTrigger === "rescission")).toBe(true);
 
-    // Downgrade: the buyer revised to a lower purchasing amount; the repurchase is a new sale from zero (doc 08 §14.1).
+    // Downgrade: the buyer revised to a lower purchasing amount; the repurchase is a new sale from zero (doc 08 Â§14.1).
     const second = await openContract({ schemeId: fixtures.schemeId, customerId: await freshCustomerId() });
     await contracts.recordSignedAgreement(admin, second.contract.id);
     await payAndVerify(second.contract.id, { purpose: "reservation", amountCentavos: 1_000_000, paidDate: todayISO, tag: "res4" });

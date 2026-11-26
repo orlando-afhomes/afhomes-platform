@@ -20,7 +20,7 @@ import {
   useUpdateAccountStatus,
   useUpdateLinkedAccountStatus,
 } from "@/data/queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { RoleBadge } from "@/shared/components/business/role-badge";
 import { DataTable, type ColumnDef, type DataTableColumnMeta } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";

@@ -5,19 +5,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { DevIdentity } from "@/modules/identity/types";
 import { clearProtectedQueries } from "@/data/protected-cache";
 import { SESSION_EXPIRED_EVENT } from "@/data/http/client";
-import { DevIdentityContext, type DevIdentityContextValue } from "@/shared/providers/dev-identity-provider";
+import { IdentityContext, type IdentityContextValue } from "@/shared/providers/identity-provider";
 
 /** Holds no roles and no access. Shown while loading and after sign-out. */
 const NO_IDENTITY: DevIdentity = { id: "signed-out", displayName: "", roles: [], memberId: null, branchId: null, status: "inactive" };
 
 /**
- * api mode: the identity comes from the server session cookie (GET /api/v1/session),
- * never from browser storage. It supplies the same context the screens already read.
+ * The identity comes from the server session cookie (GET /api/v1/session), never from
+ * browser storage. It supplies the same context the screens already read.
  */
 export function SessionIdentityProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [identity, setIdentity] = useState<DevIdentity>(NO_IDENTITY);
-  const [status, setStatus] = useState<DevIdentityContextValue["status"]>("loading");
+  const [status, setStatus] = useState<IdentityContextValue["status"]>("loading");
 
   const reload = useCallback(async () => {
     try {
@@ -54,10 +54,10 @@ export function SessionIdentityProvider({ children }: { children: ReactNode }) {
     void fetch("/api/v1/session", { method: "DELETE", keepalive: true });
   }, [queryClient]);
 
-  const value = useMemo<DevIdentityContextValue>(
+  const value = useMemo<IdentityContextValue>(
     () => ({ identity, identities: [identity], setIdentityId: () => undefined, status, signIn: () => undefined, signOut, reload }),
     [identity, status, signOut, reload],
   );
 
-  return <DevIdentityContext.Provider value={value}>{children}</DevIdentityContext.Provider>;
+  return <IdentityContext.Provider value={value}>{children}</IdentityContext.Provider>;
 }

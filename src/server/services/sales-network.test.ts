@@ -2,12 +2,13 @@
 // F2: sales network hierarchy, accreditation numbers and the OST registration flow on the local emulators.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
+import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibility";
 import { manilaToday } from "@/shared/lib/dates";
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
   let network: typeof import("@/server/services/sales-network");
@@ -111,7 +112,12 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
   it("verifies publicly with a restricted projection and no validity date", async () => {
     expect(createdAccreditationIds.length).toBeGreaterThan(0);
     const records = await accreditation.listAccreditations(admin);
-    const active = records.find((record) => record.adminStatus === "active" && record.aaNumber);
+    // Only a member's CURRENT record is publicly verifiable; an older number is superseded.
+    const visibleRecords = new Map<string, typeof records>();
+    for (const record of records) visibleRecords.set(record.memberId, [...(visibleRecords.get(record.memberId) ?? []), record]);
+    const active = [...visibleRecords.values()]
+      .map((memberRecords) => getCurrentAccreditationRecord(memberRecords))
+      .find((record) => record?.adminStatus === "active" && record.aaNumber);
     expect(active).toBeTruthy();
     const publicRoute = await import("@/app/api/v1/public/accreditation/route");
     const found = await call(publicRoute.GET, { path: `/api/v1/public/accreditation?number=${active!.aaNumber}` });

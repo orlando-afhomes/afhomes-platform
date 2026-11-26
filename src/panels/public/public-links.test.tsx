@@ -5,8 +5,6 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactElement, type ReactNode } from "react";
-import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
 import { ABOUT } from "@/modules/public-site/content/about";
 import { BLOG_PAGE, BLOG_POSTS, BLOG_POST_PAGE } from "@/modules/public-site/content/blog";
 import { COMPLIANCE_DOCUMENT_IMAGES, COMPLIANCE_PAGE } from "@/modules/public-site/content/compliance";
@@ -24,13 +22,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => navState.pathname }));
 
 function SiteProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
-  return (
-    <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
-        <DevIdentityProvider initialIdentityId="dev-super-admin">{children}</DevIdentityProvider>
-      </MockStoreProvider>
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
 function renderSite(ui: ReactElement) {
@@ -47,14 +39,13 @@ const routeExists = (href: string) =>
 const publicFile = (src: string) => existsSync(join(process.cwd(), "public", src));
 
 describe("public sign-in and verification links", () => {
-  it("shows Customer Login in the header and Verify Accreditation on the home page", () => {
+  it("shows Join VIP in the header and Verify Accreditation on the home page", () => {
     renderSite(
       <>
         <PublicHeader />
         <PublicHomePage />
       </>,
     );
-    expect(screen.getByRole("link", { name: "Customer Login" })).toHaveAttribute("href", "/portal");
     // The header and the Home hero both offer Join VIP; both go to the card comparison.
     for (const link of screen.getAllByRole("link", { name: "Join VIP" })) expect(link).toHaveAttribute("href", "/vip-privilege#cards");
     expect(screen.getByRole("link", { name: "Verify now" })).toHaveAttribute("href", "/verify");
@@ -72,7 +63,7 @@ describe("public sign-in and verification links", () => {
     const note = container.querySelector(".site-footer__access-note");
     expect(note?.textContent).toContain("Staff Login and Sales Sign-In");
     const links = [...container.querySelectorAll(".site-footer__access-nav > a")].map((link) => link.textContent);
-    expect(links).toEqual(["Customer Login", "Verify Accreditation", "Staff Login", "Sales Sign-In"]);
+    expect(links).toEqual(["Verify Accreditation", "Staff Login", "Sales Sign-In"]);
     expect(note?.previousElementSibling?.textContent).toBe("Sales Sign-In");
   });
 

@@ -6,43 +6,37 @@ import { useEffect, useId, useState, type CSSProperties, type FormEvent, type Re
 import { Radio } from "@base-ui/react/radio";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
-import { authenticateMock, type MockPortal } from "@/data/mock/mock-credentials";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { RadioGroup } from "@/shared/ui/radio-group";
 import { safeReturnPath } from "@/shared/lib/safe-return-path";
-import { DATA_MODE } from "@/shared/lib/data-mode";
 import { signInThroughApi } from "@/shared/lib/api-sign-in";
 import { ForgotPasswordPanel } from "./forgot-password-panel";
 import { validateEmail } from "./login-validation";
 
-export type LoginPortalOption = { value: MockPortal; label: string };
+export type LoginPortal = "admin" | "staff" | "sales";
+export type LoginPortalOption = { value: LoginPortal; label: string };
 
 type Props = {
   portals: LoginPortalOption[];
-  defaultPortal: MockPortal;
+  defaultPortal: LoginPortal;
   /** Subcopy under the heading. */
   description: string;
   /** Extra links shown beside "Back to website" (for example "Register as OST"). */
   extraLinks?: ReactNode;
 };
 
-// shortcut: mock sign-in latency and credentials; remove with src/data/mock/mock-credentials.ts when real auth is built.
-const MOCK_LATENCY_MS = 400;
-
 export function LoginForm({ portals, defaultPortal, description, extraLinks }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   // Page the user asked for before being sent to sign in; the 403 view covers a page their role cannot open.
   const returnTo = safeReturnPath(useSearchParams()?.get("next"));
-  const { status, signIn, reload } = useDevIdentity();
-  const store = useMockStore();
+  const { status, reload } = useDevIdentity();
   const id = useId();
   const [view, setView] = useState<"login" | "forgot">("login");
-  const [portal, setPortal] = useState<MockPortal>(defaultPortal);
+  const [portal, setPortal] = useState<LoginPortal>(defaultPortal);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -83,28 +77,14 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
     if (next.email || next.password) return;
 
     setSubmitting(true);
-    if (DATA_MODE === "api") {
-      const outcome = await signInThroughApi(email.trim(), password, portal);
-      if (!outcome.ok) {
-        setAuthError(outcome.error);
-        setSubmitting(false);
-        return;
-      }
-      setPassword("");
-      await reload();
-      queryClient.clear();
-      router.replace(returnTo);
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
-    const result = authenticateMock(email.trim(), password, portal, store);
-    if (!result.ok) {
-      setAuthError(result.error);
+    const outcome = await signInThroughApi(email.trim(), password, portal);
+    if (!outcome.ok) {
+      setAuthError(outcome.error);
       setSubmitting(false);
       return;
     }
     setPassword("");
-    signIn(result.identityId);
+    await reload();
     queryClient.clear();
     router.replace(returnTo);
   }
@@ -132,7 +112,7 @@ export function LoginForm({ portals, defaultPortal, description, extraLinks }: P
             aria-labelledby={`${id}-portal`}
             value={portal}
             onValueChange={(value) => {
-              setPortal(value as MockPortal);
+              setPortal(value as LoginPortal);
               setAuthError(null);
             }}
             className="login-form__segment-group"

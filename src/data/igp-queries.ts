@@ -3,12 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { IgpAction } from "@/data/contracts/igp-repository";
 import type { IgpHistoryRecord } from "@/modules/igp/history-import";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 export function useIgpRegister(enabled: boolean) {
-  const { igp } = useMockRepositories();
+  const { igp } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("igp", identity.id),
@@ -18,7 +18,7 @@ export function useIgpRegister(enabled: boolean) {
 }
 
 export function useIgpAction() {
-  const { igp } = useMockRepositories();
+  const { igp } = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (action: IgpAction) => igp.act(action),
@@ -30,7 +30,7 @@ export function useIgpAction() {
 }
 
 export function useIgpHistoryImport() {
-  const { igp } = useMockRepositories();
+  const { igp } = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { fileName: string; records: IgpHistoryRecord[]; declaration: boolean }) =>

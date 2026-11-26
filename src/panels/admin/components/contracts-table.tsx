@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Hourglass } from "lucide-react";
 import { useApproveDeal, useContracts, useMemberships, useOperation, usePayments } from "@/data/business-queries";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { StatusPill } from "@/shared/components/admin";

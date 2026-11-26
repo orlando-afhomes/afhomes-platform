@@ -125,8 +125,6 @@ export const ADMIN_AREA_TABS = {
     { value: "welcome-gift", label: "Annual Points", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "resort-bills", label: "Pending Bills", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
     { value: "waivers", label: "Special Cases", formerHref: "/admin/stay-points", rule: { grants: ["stay-points"] } },
-    { value: "promos", label: "Promotions", formerHref: "/admin/promos", rule: { grants: ["stay-points"] } },
-    { value: "promo-points", label: "Promo History", formerHref: "/admin/promos/points", rule: { grants: ["stay-points"] } },
   ],
   redemption: [
     { value: "bookings", label: "Stay Bookings", formerHref: "/admin/redemption", rule: { grants: ["redemption"] } },
@@ -137,9 +135,6 @@ export const ADMIN_AREA_TABS = {
     { value: "products", label: "Products", formerHref: "/admin/vip-products", rule: { grants: ["vip-products"] } },
     { value: "schemes", label: "Payment Plans", formerHref: "/admin/vip-products/schemes", rule: { grants: ["vip-products"] } },
     { value: "tier-codes", label: "Card Levels", formerHref: "/admin/vip-products/tier-codes", rule: { grants: ["vip-products"] } },
-    { value: "points-table", label: "Night Rates", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
-    { value: "holidays", label: "Holidays", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
-    { value: "venues", label: "Venues", formerHref: "/admin/redemption/points-table", rule: { grants: ["redemption"], operation: "redemption.configure" } },
     { value: "lists", label: "Reference Lists", formerHref: "/admin/settings/lists", rule: { grants: ["departments"], operation: "settings.lists.manage" } },
     { value: "historical-import", label: "Receipt History", formerHref: "/admin/reports/historical-import", rule: { grants: ["reports"], operation: "history-import.manage" } },
     { value: "igp-projects", label: "Projects", formerHref: "/admin/vip-products", rule: { grants: ["sales", "finance"], operation: "igp.manage" } },
@@ -164,7 +159,6 @@ export const ADMIN_AREA_TABS = {
     { value: "commissions", label: "Commissions", formerHref: "/admin/reports/commissions", rule: { grants: ["reports"] } },
     { value: "membership", label: "Membership", formerHref: "/admin/reports/membership", rule: { grants: ["reports"] } },
     { value: "stay-points", label: "Stay Points", formerHref: "/admin/reports/stay-points", rule: { grants: ["reports"] } },
-    { value: "promo-points", label: "Promo Points", formerHref: "/admin/reports/promo-points", rule: { grants: ["reports"] } },
   ],
 } as const satisfies Record<string, readonly AdminAreaTabRule[]>;
 
@@ -209,7 +203,6 @@ export const adminNavigation: AdminNavItem[] = [
   areaItem("commissions", "Commissions"),
   areaItem("membership", "Membership"),
   areaItem("stay-points", "Stay Points"),
-  areaItem("redemption", "Redemption"),
   areaItem("vip-products", "Settings"),
   areaItem("sales-network", "Sales Network"),
   areaItem("organization", "Organization"),

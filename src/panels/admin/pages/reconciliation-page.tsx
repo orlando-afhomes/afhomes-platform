@@ -18,7 +18,7 @@ import { MoneyField, SelectField, TextAreaField } from "@/shared/forms/modern";
 import { manilaToday } from "@/shared/lib/dates";
 import { formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { Button } from "@/shared/ui/button";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 
 /** The last 24 months, newest first, as YYYY-MM options. */

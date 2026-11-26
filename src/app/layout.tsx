@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/shared/providers/query-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
-import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
 import { SessionIdentityProvider } from "@/shared/providers/session-identity-provider";
-import { DATA_MODE } from "@/shared/lib/data-mode";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable}`}>
       <body className="root-body">
         <QueryProvider>
-          <MockStoreProvider>
-            {DATA_MODE === "api" ? <SessionIdentityProvider>{children}</SessionIdentityProvider> : <DevIdentityProvider>{children}</DevIdentityProvider>}
-          </MockStoreProvider>
+          <SessionIdentityProvider>{children}</SessionIdentityProvider>
         </QueryProvider>
       </body>
     </html>

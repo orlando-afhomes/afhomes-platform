@@ -6,7 +6,7 @@ import { ApiRequestError } from "@/data/http/client";
 import { Button } from "@/shared/ui/button";
 import type { ReactNode } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { AdminShellSkeleton } from "@/shared/components/modern/skeletons";
 import { StatusLink, StatusPage } from "@/shared/components/status/status-page";
 import { safeReturnPath } from "@/shared/lib/safe-return-path";

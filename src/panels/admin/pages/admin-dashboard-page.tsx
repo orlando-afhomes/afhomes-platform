@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createMockStore } from "@/data/mock/seed";
+import { createSeedStore } from "@/data/seed/store";
 import { sellerUpline } from "./attribution";
 
 describe("closing seller upline", () => {
-  const { members } = createMockStore();
+  const { members } = createSeedStore();
 
   it("reads SM, SSM and SVD from the Sales Network for an OST", () => {
     const upline = sellerUpline(members, "mem-ost-a1");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getDevIdentity } from "@/data/mock/dev-identities";
+import { getDevIdentity } from "@/data/seed/dev-identities";
 import {
   EMPTY_APPLICANT,
   canDecideRegistrations,

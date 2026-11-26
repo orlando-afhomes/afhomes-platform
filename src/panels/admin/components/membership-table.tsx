@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CreditCard, FileText, PackageCheck, Power, QrCode } from "lucide-react";
+import { CreditCard, FileText, PackageCheck, Power } from "lucide-react";
 import { toast } from "sonner";
 import { useActivateMembership, useMemberships, useOperation, useRecordCardClaim } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
@@ -9,7 +9,6 @@ import type { TableOrder } from "@/shared/lib/table-order";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { EMPTY } from "@/shared/lib/empty-value";
-import { MemberQrDialog } from "./member-qr";
 import { DetailActions } from "@/shared/components/modern/detail-actions";
 import { RecordDetailsSheet } from "@/shared/components/modern/record-details-sheet";
 import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/row-actions-menu";
@@ -39,8 +38,6 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
   const memberships = useMemberships();
   const activate = useActivateMembership();
   const claim = useRecordCardClaim();
-  const canShowQr = useOperation("customers.lookup");
-  const [qrMembershipId, setQrMembershipId] = useState<string | null>(null);
   const canActivate = useOperation("membership.activate");
   const canService = useOperation("contracts.approve");
   const { confirmRun, dialog } = useConfirmRun();
@@ -109,10 +106,9 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         { label: "Status filter", value: statusFilter, onChange: setStatusFilter, options: statusOptions },
       ]} />
       <DataTable data={visible} columns={columns} getRowId={(row) => row.id} emptyText={data.length === 0 ? emptyText : "No memberships match the filters."} caption={caption} orderBy={MEMBERSHIP_ORDER} {...tableProps} />
-      {canShowQr && qrMembershipId && detail?.id === qrMembershipId && detail.status === "active" && detail.cardId ? <MemberQrDialog key={qrMembershipId} membershipId={qrMembershipId} close={() => setQrMembershipId(null)} /> : null}
       <RecordDetailsSheet
         open={detail !== null}
-        onClose={() => { setQrMembershipId(null); setDetailId(null); }}
+        onClose={() => { setDetailId(null); }}
         title={detail?.customerName ?? "Membership"}
         subtitle={detail?.productName}
         badge={detail ? <MembershipStatusBadge item={detail} /> : undefined}
@@ -137,7 +133,6 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         }
         footer={detail ? <DetailActions actions={[
           ...activateItem(detail).map((item) => ({ ...item, next: true, variant: item.tone === "success" ? "success" as const : "default" as const })),
-          canShowQr && detail.status === "active" && Boolean(detail.cardId) && { key: "qr", label: "Show QR", next: true, variant: "info", icon: QrCode, onClick: () => setQrMembershipId(detail.id) },
           { key: "contract", label: "Open Contract", next: true, variant: "indigo", icon: FileText, href: contractHref(detail.contractId) },
         ]} /> : undefined}
       />

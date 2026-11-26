@@ -5,8 +5,8 @@ import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/ser
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 type SessionBody = { modules: string[]; operations: string[] };
 type Key = { id: string };

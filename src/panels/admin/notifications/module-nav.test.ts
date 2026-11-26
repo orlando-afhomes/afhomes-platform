@@ -55,7 +55,8 @@ describe("notificationDestination", () => {
     expect(notificationDestination({ module: "organization", action: "OUTLET_CREATED" })).toEqual({ area: "vip-products", tab: "lists" });
     expect(notificationDestination({ module: "finance", action: "RECEIPT_IMPORT_CREATED" })).toEqual({ area: "vip-products", tab: "historical-import" });
     expect(notificationDestination({ module: "sales", action: "IGP_PROJECT_CREATED" })).toEqual({ area: "vip-products", tab: "igp-projects" });
-    expect(notificationDestination({ module: "stay-points", action: "REDEMPTION_HOLIDAY_ADDED" })).toEqual({ area: "vip-products", tab: "holidays" });
+    // The redemption prototype is retired (2026-11-26); its events fall back to the Stay Points area.
+    expect(notificationDestination({ module: "stay-points", action: "REDEMPTION_HOLIDAY_ADDED" })).toEqual({ area: "stay-points", tab: "welcome-gift" });
     expect(notificationDestination({ module: "finance", action: "FINANCIAL_HOLD_APPLIED" })).toEqual({ area: "finance", tab: "collections" });
   });
 
@@ -63,10 +64,11 @@ describe("notificationDestination", () => {
     expect(notificationDestination({ module: "experiences", action: "EXPERIENCE_CREATED" })).toEqual({ area: "vip-products", tab: "experiences" });
   });
 
-  it("separates bills, waivers and promo ledger entries in Stay Points", () => {
+  it("separates bills and waivers in Stay Points and retires the promo ledger", () => {
     expect(notificationDestination({ module: "stay-points", action: "RESORT_BILL_ENTERED" })).toEqual({ area: "stay-points", tab: "resort-bills" });
     expect(notificationDestination({ module: "stay-points", action: "COMPASSIONATE_WAIVER_REQUESTED" })).toEqual({ area: "stay-points", tab: "waivers" });
-    expect(notificationDestination({ module: "stay-points", action: "PROMO_POINTS_EARNED" })).toEqual({ area: "stay-points", tab: "promo-points" });
+    // Owner decision 2026-11-26: promo points are retired; a stored promo event falls back to the main Stay Points view.
+    expect(notificationDestination({ module: "stay-points", action: "PROMO_POINTS_EARNED" })).toEqual({ area: "stay-points", tab: "welcome-gift" });
   });
 });
 

@@ -11,7 +11,7 @@ import {
   normalizePath,
   getAdminBreadcrumbs,
 } from "./navigation";
-import { getDevIdentity } from "@/data/mock/dev-identities";
+import { getDevIdentity } from "@/data/seed/dev-identities";
 import { getGrantedModuleIds, getGrantedOperations } from "@/modules/identity/permissions";
 import { ADMIN_NAV_ICONS } from "./components/admin-nav-icons";
 
@@ -25,11 +25,11 @@ function tabAccess(identityId: string, area: keyof typeof ADMIN_AREA_TABS) {
   return Object.keys(access).filter((tab) => access[tab]);
 }
 
-const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
+const ALL_AREAS = ["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "vip-products", "sales-network", "organization", "reports", "audit-logs"];
 const SELLER_AREAS = ["dashboard", "customers", "sales", "commissions", "membership", "stay-points", "sales-network", "reports"];
 
 describe("admin navigation", () => {
-  it("is a flat list of 14 pages with no groups", () => {
+  it("is a flat list of 13 pages with no groups", () => {
     const items = getAvailableAdminNavigation();
     expect(items.map((item) => item.href)).toEqual([
       "/admin",
@@ -40,7 +40,6 @@ describe("admin navigation", () => {
       "/admin/commissions",
       "/admin/membership",
       "/admin/stay-points",
-      "/admin/redemption",
       "/admin/vip-products",
       "/admin/sales-network",
       "/admin/organization",
@@ -48,8 +47,8 @@ describe("admin navigation", () => {
       "/admin/audit-logs",
     ]);
     expect(items.every((item) => !item.children?.length)).toBe(true);
-    // Owner authorized Redemption on 2026-11-13; doc 10 defines no separate Services workflow, so none is listed.
-    expect(JSON.stringify(items).toLowerCase()).not.toMatch(/services/);
+    // Owner decision 2026-11-26: the redemption, promo, member-QR and reservation prototypes are retired with the mock layer.
+    expect(JSON.stringify(items).toLowerCase()).not.toMatch(/services|redemption|promo/);
   });
 
   it("uses one unique key and href per navigation item", () => {
@@ -79,13 +78,12 @@ describe("admin navigation", () => {
   });
 
   it("shows Finance its own areas, property sales (IGP) and reports", () => {
-    expect(visibleIds("dev-finance")).toEqual(["dashboard", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "reports"]);
+    expect(visibleIds("dev-finance")).toEqual(["dashboard", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "reports"]);
     expect(tabAccess("dev-finance", "customers")).toEqual([]);
     expect(tabAccess("dev-finance", "sales")).toEqual(["igp"]);
     expect(tabAccess("dev-finance", "finance")).toEqual(["verification", "collections", "cancellations", "month-end-close", "reconciliation"]);
     // Payouts joined the Commissions tab as its month-end payout bar.
     expect(tabAccess("dev-finance", "commissions")).toEqual(["commissions", "recovery", "allowances"]);
-    expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
     expect(tabAccess("dev-finance", "reports")).toContain("collections");
   });
 
@@ -110,7 +108,7 @@ describe("admin navigation", () => {
   });
 
   it("shows Settings only to roles with a setup tab and keeps the Payment Plans in Sales for sellers and the Clerk", () => {
-    const SETTINGS_TABS = ["products", "schemes", "tier-codes", "points-table", "holidays", "venues", "lists", "historical-import", "igp-projects", "experiences"];
+    const SETTINGS_TABS = ["products", "schemes", "tier-codes", "lists", "historical-import", "igp-projects", "experiences"];
     expect(tabAccess("dev-admin", "vip-products")).toEqual(SETTINGS_TABS);
     expect(tabAccess("dev-super-admin", "vip-products")).toEqual(SETTINGS_TABS);
     for (const identityId of ["dev-svd-a", "dev-ost-a1", "dev-clerk", "dev-finance", "dev-hr"]) {
@@ -149,14 +147,12 @@ describe("admin navigation", () => {
     expect(ids(["reconciliation.manage"])).toContain("finance");
   });
 
-  it("shows the Settings table tabs (moved from Redemption) only with redemption.configure", () => {
-    // Finance holds the redemption module but not the configure operation (owner ruling: permissions unchanged).
-    expect(tabAccess("dev-finance", "redemption")).toEqual(["bookings", "cardholder-points"]);
-    expect(tabAccess("dev-admin", "redemption")).toEqual(["bookings", "cardholder-points"]);
-    const modules = new Set(["redemption"] as const);
-    const access = (ops: string[]) => getAdminAreaTabAccess("vip-products", modules, new Set(ops as never[]));
-    expect(access([])).toMatchObject({ "points-table": false, holidays: false, venues: false });
-    expect(access(["redemption.configure"])).toMatchObject({ "points-table": true, holidays: true, venues: true });
+  it("no longer lists the retired redemption area or its settings tabs", () => {
+    expect(adminNavigation.find((item) => item.id === "redemption")).toBeUndefined();
+    const access = getAdminAreaTabAccess("vip-products", new Set(["redemption"] as const), new Set(["redemption.configure"] as never[]));
+    expect(access).not.toHaveProperty("points-table");
+    expect(access).not.toHaveProperty("holidays");
+    expect(access).not.toHaveProperty("venues");
   });
 
   it("grants Contracts to sales or vip-products holders and the Payment Plans to either", () => {
@@ -178,7 +174,8 @@ describe("admin navigation", () => {
     expect(isAdminNavItemActive(item, "/admin/sales-reports")).toBe(false);
     expect(isAdminNavItemActive(item, "/admin")).toBe(false);
     const stayPoints = adminNavigation.find((entry) => entry.id === "stay-points")!;
-    expect(isAdminNavItemActive(stayPoints, "/admin/promos/points")).toBe(true);
+    // The retired promo routes are no longer part of the Stay Points page.
+    expect(isAdminNavItemActive(stayPoints, "/admin/promos/points")).toBe(false);
     const finance = adminNavigation.find((entry) => entry.id === "finance")!;
     expect(finance.matchPaths).toEqual(["/admin/reports/period-close", "/admin/reports/reconciliation"]);
   });

@@ -2,7 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { ChevronDown, Search, ShieldAlert, ShieldCheck } from "lucide-react";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import type { PublicAccreditationResult } from "@/data/contracts/accreditation-repository";
 import { validateExistingAaIdentifier } from "@/modules/accreditation/identifiers";
 import { VERIFY_PRIVACY_NOTICE_PARAGRAPHS } from "@/modules/public-site/privacy-notice";
@@ -27,7 +27,7 @@ type Phase = "idle" | "privacy" | "contact" | "done";
  * visitor contact details, then the result. Exact AA number only; one generic failure message.
  */
 export function AccreditationVerificationPage() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const [value, setValue] = useState("");
   const [invalid, setInvalid] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");

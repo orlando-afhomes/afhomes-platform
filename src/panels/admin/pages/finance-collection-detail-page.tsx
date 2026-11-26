@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useContractAction, useOperation } from "@/data/business-queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Button } from "@/shared/ui/button";
 import { canConfirmNonStandard, confirmNonStandardConfirm } from "../actions/sales-contract-actions";

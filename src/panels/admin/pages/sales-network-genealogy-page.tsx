@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CalendarClock, ChevronRight, Eye, IdCard, Network, Search, UserRound, UsersRound } from "lucide-react";
 import { formatDate } from "@/shared/lib/format-date";
 import type { OrgMember } from "@/modules/organization/types";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useAccessSnapshot } from "@/data/access-snapshot";
 import { useMembers, useSeatVacancies } from "@/data/queries";
 import { openVacancyStartByMember } from "@/modules/sales-network/vacancy";

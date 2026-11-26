@@ -14,7 +14,7 @@ This document defines the complete implementation roadmap for the AFHomes Platfo
 
 ## 2. Current Project Status
 
-The repository contains a frontend prototype with typed browser-memory records, mock sign-in, and Vitest tests. Backend handlers, a database schema, real sign-in, and hosted environments are planned. The [feature index](../implementation/README.md) and its FP1–FP16 records give the current per-feature evidence and dependencies. Recheck the code before reporting any implementation status.
+The repository contains the completed local full-stack build: the Next.js app, server services, the Data Connect schema and the local emulator seeds. The browser-memory mock layer was removed in F9 (session-based identity and HTTP repositories only). Staging and production environments are planned. The [feature index](../implementation/README.md) and its FP1–FP16 records give the current per-feature evidence and dependencies. Recheck the code before reporting any implementation status.
 
 ---
 

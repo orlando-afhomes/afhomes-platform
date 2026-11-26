@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { findOpenKeys, findSelectedKeys } from "./admin-nav-match";
 import { getRoleAwareAdminNavigation } from "../navigation";
-import { getDevIdentity } from "@/data/mock/dev-identities";
+import { getDevIdentity } from "@/data/seed/dev-identities";
 
 describe("admin navigation matching", () => {
   it("lists the authorized areas as a flat list without a separate Accounts entry", () => {
     const items = getRoleAwareAdminNavigation(getDevIdentity("dev-admin"));
-    expect(items.map((item) => item.id)).toEqual(["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "redemption", "vip-products", "sales-network", "organization", "reports", "audit-logs"]);
+    expect(items.map((item) => item.id)).toEqual(["dashboard", "customers", "customer-lookup", "sales", "finance", "commissions", "membership", "stay-points", "vip-products", "sales-network", "organization", "reports", "audit-logs"]);
     expect(items.some((item) => item.id === ("accreditation" as string))).toBe(false);
     expect(items.some((item) => item.id === ("insights-group" as string))).toBe(false);
   });
@@ -20,8 +20,6 @@ describe("admin navigation matching", () => {
     expect(findSelectedKeys(items, "/admin/vip-products/schemes")).toEqual(["vip-products"]);
     expect(findSelectedKeys(items, "/admin/commissions/payouts")).toEqual(["commissions"]);
     expect(findSelectedKeys(items, "/admin/stay-points")).toEqual(["stay-points"]);
-    expect(findSelectedKeys(items, "/admin/promos")).toEqual(["stay-points"]);
-    expect(findSelectedKeys(items, "/admin/promos/points")).toEqual(["stay-points"]);
     expect(findSelectedKeys(items, "/admin/settings/lists")).toEqual(["vip-products"]);
     expect(findSelectedKeys(items, "/admin/reports/stay-points")).toEqual(["reports"]);
     // Former Reports pages that moved to Finance (or Settings) highlight their new area, not Reports.

@@ -1,4 +1,4 @@
-﻿// @vitest-environment node
+// @vitest-environment node
 // F5: receipt decisions, counted dates, reversals/refunds, month close, unmatched receipts and import batches.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
@@ -6,8 +6,8 @@ import { manilaToday } from "@/shared/lib/dates";
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 describe.skipIf(!up)("finance receipt decisions and closed months (emulators)", () => {
   let payments: typeof import("@/server/services/payments");

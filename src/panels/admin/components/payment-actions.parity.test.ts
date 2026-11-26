@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PaymentView } from "@/data/contracts/payment-repository";
-import { canCorrectPayment } from "@/data/mock/scope";
+import { canCorrectPayment } from "@/modules/identity/record-scope";
 import { adjustableCentavos } from "@/modules/finance/rules";
 import type { DevIdentity } from "@/modules/identity/types";
 import type { PaymentStatus } from "@/modules/finance/types";

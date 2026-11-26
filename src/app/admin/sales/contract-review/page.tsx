@@ -1,6 +1,6 @@
 import { redirectToContractsReview, type AreaRedirectPageProps } from "@/panels/admin/area-redirect";
 
-// shortcut: the client-only mock auth gate drops this page from instant-navigation validation; remove with the mock login.
+// The admin shell authenticates client-side, so segments are not validated at instant-navigation time.
 export const instant = false;
 
 export default async function Page({ searchParams }: AreaRedirectPageProps) {

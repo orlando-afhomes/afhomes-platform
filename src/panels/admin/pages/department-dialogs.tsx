@@ -4,9 +4,8 @@ import { useId, useState } from "react";
 import { toast } from "sonner";
 import type { Department } from "@/modules/organization/types";
 import { useCreateDepartment, useRoleOptions, useUpdateDepartment } from "@/data/queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { hasActiveSystemRole } from "@/data/mock/authorization";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
+import { activeRoles } from "@/modules/identity/active-roles";
 import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
 import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Button } from "@/shared/ui/button";
@@ -105,7 +104,6 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
   const updateDepartment = useUpdateDepartment();
   const rolesQuery = useRoleOptions();
   const { identity } = useDevIdentity();
-  const store = useMockStore();
   const nameId = useId();
   const nameErrorId = useId();
   const [name, setName] = useState(editDept?.name ?? "");
@@ -119,7 +117,7 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
   const holdsProtectedRole = editDept
     ? (rolesQuery.data ?? []).some((role) => role.departmentId === editDept.id && role.isProtected)
     : false;
-  const statusLocked = holdsProtectedRole && !hasActiveSystemRole(store, identity, "super_admin");
+  const statusLocked = holdsProtectedRole && !activeRoles(identity).includes("super_admin");
 
   const validate = (): string | null => {
     const trimmed = name.trim();

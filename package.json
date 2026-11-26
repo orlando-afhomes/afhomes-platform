@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev-api.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint && node scripts/check-architecture.mjs",
@@ -12,8 +12,7 @@
     "test:architecture": "node --test scripts/check-architecture.test.mjs",
     "emulators": "firebase emulators:start --only auth,dataconnect,storage --project demo-afhomes",
     "db:seed": "node --env-file=scripts/api-local.env node_modules/vite-node/vite-node.mjs -c vitest.config.ts scripts/seed-local-db.ts",
-    "db:seed:clean": "node --env-file=scripts/api-local.env node_modules/vite-node/vite-node.mjs -c vitest.config.ts scripts/seed-local-db.ts --clean",
-    "dev:api": "node scripts/dev-api.mjs"
+    "db:seed:clean": "node --env-file=scripts/api-local.env node_modules/vite-node/vite-node.mjs -c vitest.config.ts scripts/seed-local-db.ts --clean"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PromoInput, RecordPromoUseInput } from "@/data/contracts/promo-repository";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /**
  * Promo Points hooks. Keys sit under the business prefix, so every business mutation
@@ -20,14 +20,14 @@ function useInvalidatePromos() {
 }
 
 export function usePromos() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({ queryKey: queryKeys.business.list("promos", identity.id), queryFn: ({ signal }) => promos.list({ signal }) });
 }
 
 /** The saved public projection of one promo, even while it is a draft; read-only. */
 export function usePromoPreview(id: string | null) {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: [...queryKeys.business.list("promo-preview", identity.id), id],
@@ -40,19 +40,19 @@ export function usePromoPreview(id: string | null) {
 export { usePublicOffers } from "./public-content-queries";
 
 export function usePromoLedger() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({ queryKey: queryKeys.business.list("promo-ledger", identity.id), queryFn: ({ signal }) => promos.ledger({ signal }) });
 }
 
 export function usePromoBalances(scannedCode?: string) {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({ queryKey: [...queryKeys.business.list("promo-balances", identity.id), scannedCode ?? null], queryFn: ({ signal }) => promos.balances({ signal, scannedCode }) });
 }
 
 export function useSavePromo() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const invalidate = useInvalidatePromos();
   return useMutation({
     mutationFn: (input: { id?: string; promo: PromoInput }) => (input.id ? promos.update(input.id, input.promo) : promos.create(input.promo)),
@@ -61,25 +61,25 @@ export function useSavePromo() {
 }
 
 export function useEndPromo() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const invalidate = useInvalidatePromos();
   return useMutation({ mutationFn: (id: string) => promos.end(id), onSuccess: invalidate });
 }
 
 export function useDeletePromo() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const invalidate = useInvalidatePromos();
   return useMutation({ mutationFn: (id: string) => promos.delete(id), onSuccess: invalidate });
 }
 
 export function useRecordPromoUse() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const invalidate = useInvalidatePromos();
   return useMutation({ mutationFn: (input: RecordPromoUseInput) => promos.recordUse(input), onSuccess: invalidate });
 }
 
 export function useVoidPromoUse() {
-  const { promos } = useMockRepositories();
+  const { promos } = useRepositories();
   const invalidate = useInvalidatePromos();
   return useMutation({ mutationFn: (input: { entryId: string; reason: string }) => promos.voidUse(input.entryId, input.reason), onSuccess: invalidate });
 }

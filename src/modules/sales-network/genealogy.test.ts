@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createMockStore } from "@/data/mock/seed";
+import { createSeedStore } from "@/data/seed/store";
 import {
   validateSalesParent,
   getDirectDownlineCount,
@@ -8,18 +8,18 @@ import {
 
 describe("sales network genealogy", () => {
   it("allows SVD to be a root", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     expect(validateSalesParent("SVD", null, store.members).ok).toBe(true);
   });
 
   it("rejects a parent for SVD", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-svd-a")!;
     expect(validateSalesParent("SVD", parent, store.members).ok).toBe(false);
   });
 
   it("requires SSM to have an SVD parent", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-svd-a")!;
     expect(validateSalesParent("SSM", parent, store.members).ok).toBe(true);
     const wrong = store.members.find((member) => member.id === "mem-sm-a")!;
@@ -27,13 +27,13 @@ describe("sales network genealogy", () => {
   });
 
   it("requires SM to have an SSM parent", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-ssm-a")!;
     expect(validateSalesParent("SM", parent, store.members).ok).toBe(true);
   });
 
   it("allows OST to attach directly to SVD, SSM, or SM", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     for (const parentId of ["mem-svd-a", "mem-ssm-a", "mem-sm-a"]) {
       const parent = store.members.find((member) => member.id === parentId)!;
       expect(validateSalesParent("OST", parent, store.members).ok).toBe(true);
@@ -41,13 +41,13 @@ describe("sales network genealogy", () => {
   });
 
   it("rejects OST under OST", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-ost-a1")!;
     expect(validateSalesParent("OST", parent, store.members).ok).toBe(false);
   });
 
   it("rejects self-parenting and cycles", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const member = store.members.find((member) => member.id === "mem-sm-a")!;
     expect(validateSalesParent("SM", member, store.members, "mem-sm-a").ok).toBe(false);
     const descendant = store.members.find((member) => member.id === "mem-ost-a1")!;
@@ -56,7 +56,7 @@ describe("sales network genealogy", () => {
   });
 
   it("rejects an inactive or ineligible receiving manager", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-svd-a")!;
     parent.status = "inactive";
     expect(validateSalesParent("SSM", parent, store.members).ok).toBe(false);
@@ -66,7 +66,7 @@ describe("sales network genealogy", () => {
   });
 
   it("accepts an expired receiving manager but refuses a suspended or departed one (doc 03 section 9)", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const parent = store.members.find((member) => member.id === "mem-svd-a")!;
     const record = store.accreditations.find((item) => item.memberId === parent.id)!;
     record.adminStatus = "active";
@@ -82,7 +82,7 @@ describe("sales network genealogy", () => {
   });
 
   it("counts direct and total descendants", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     expect(getDirectDownlineCount("mem-svd-a", store.members)).toBe(2);
     // SSM A, SM A, OST A1 to A4.
     expect(getTotalDescendantCount("mem-svd-a", store.members)).toBe(6);

@@ -2,14 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { BookingInput, TableVersionInput, VenueInput } from "@/data/contracts/redemption-repository";
-import type { MockRepositories } from "@/data/mock/repositories";
-import { useMockRepositories } from "@/data/queries";
+import type { Repositories } from "@/data/contracts/repositories";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /** Redemption hooks: keys are partitioned by the active dev identity; every mutation refreshes the business and audit views. */
 export function useRedemption(scannedCode?: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: [...queryKeys.business.list("redemption", identity.id), scannedCode ?? null],
@@ -17,8 +17,8 @@ export function useRedemption(scannedCode?: string) {
   });
 }
 
-function useRedemptionMutation<V, R>(run: (repositories: MockRepositories, variables: V) => Promise<R>) {
-  const repositories = useMockRepositories();
+function useRedemptionMutation<V, R>(run: (repositories: Repositories, variables: V) => Promise<R>) {
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: V) => run(repositories, variables),

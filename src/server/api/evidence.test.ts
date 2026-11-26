@@ -7,8 +7,8 @@ import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor, storageEmula
 configureEmulatorEnv();
 const up = await emulatorsUp();
 const storageUp = await storageEmulatorUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=", "base64");
 const PDF = Buffer.from("%PDF-1.7\n%test\n", "latin1");

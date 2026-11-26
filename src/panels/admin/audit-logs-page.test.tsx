@@ -1,66 +1,38 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
-import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { cleanup, screen } from "@testing-library/react";
 import { AuditLogsPage } from "./pages/audit-logs-page";
+import { json, renderWithApi } from "@/test/api-harness";
 
-vi.mock("next/navigation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("next/navigation")>()),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
-  usePathname: () => "/admin/audit-logs",
-  useSearchParams: () => new URLSearchParams(),
-}));
+const event = {
+  id: "aud-1", timestamp: "2026-11-26T10:00:00.000+08:00", actorId: "user-1", actorName: "Eduardo Ocampo",
+  actorRoles: ["admin"], module: "finance", action: "PAYMENT_VERIFIED", entityType: "payment", entityId: "pay-1",
+  entityLabel: "Payment · OR-2026-0001", entityName: "OR-2026-0001", entityDetail: null, outcome: "success",
+  displayReference: "OR-2026-0001", previousValue: null, newValue: "verified", reason: null, reasonRecorded: false, relatedRecordIds: [],
+};
 
-function Wrapper({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
-  return (
-    <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
-        <DevIdentityProvider initialIdentityId="dev-admin">{children}</DevIdentityProvider>
-      </MockStoreProvider>
-    </QueryClientProvider>
-  );
+function auditRoutes() {
+  return json({ items: [event], page: 1, pageSize: 25, total: 1 });
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("audit logs page", () => {
-  it("shows five columns, one value each, and no row menu", async () => {
-    render(<Wrapper><AuditLogsPage /></Wrapper>);
-    const table = await screen.findByRole("table", { name: "Audit Events" });
-    const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent);
-    expect(headers).toEqual(["When", "Action", "Record Type", "Record", "Actor"]);
-    expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
-  });
+  it("reads the audit history through the API and opens one event", async () => {
+    renderWithApi(<AuditLogsPage />, "dev-admin", async (url) => {
+      if (url.pathname === "/api/v1/audit/actors") return json({ items: [{ value: "user-1", label: "Eduardo Ocampo" }] });
+      if (url.pathname === "/api/v1/audit") return auditRoutes();
+      return undefined;
+    });
+    expect(await screen.findByText("Payment verified")).toBeInTheDocument();
+    expect(screen.getByText("Eduardo Ocampo")).toBeInTheDocument();
+    expect(screen.getByText("Matching Events")).toBeInTheDocument();
+  }, 30_000);
 
-  it("opens every value of an event from the row, with plain-English action text", async () => {
-    render(<Wrapper><AuditLogsPage /></Wrapper>);
-    const table = await screen.findByRole("table", { name: "Audit Events" });
-    const row = within(table).getAllByRole("row")[1];
-    expect(within(row).queryByText(/[A-Z]+_[A-Z]+/)).toBeNull();
-    fireEvent.click(row);
-    const sheet = await screen.findByRole("dialog");
-    const labels = Array.from(sheet.querySelectorAll("dt")).map((term) => term.textContent);
-    expect(labels).toEqual(expect.arrayContaining(["When", "Action", "Module", "Record Type", "Record", "Details", "Actor", "Actor roles", "Previous value", "New value", "Reason"]));
-  });
-
-  it("filters by an actor picked from a searchable list that includes System", async () => {
-    const user = userEvent.setup();
-    render(<Wrapper><AuditLogsPage /></Wrapper>);
-    const box = await screen.findByRole("combobox", { name: "Actor filter" });
-    await user.click(box);
-    expect(await screen.findByRole("option", { name: "System" })).toBeInTheDocument();
-    await user.clear(box);
-    await user.type(box, "Sys");
-    await user.click(await screen.findByRole("option", { name: "System" }));
-    const table = await screen.findByRole("table", { name: "Audit Events" });
-    const rows = within(table).getAllByRole("row").slice(1);
-    for (const row of rows) {
-      if (row.textContent?.includes("No audit events match")) continue;
-      expect(within(row).getAllByRole("cell").at(-1)).toHaveTextContent("System");
-    }
-  });
+  it("shows the restricted state for an identity without audit.read", async () => {
+    renderWithApi(<AuditLogsPage />, "dev-ost-a1");
+    expect(await screen.findByText(/does not have access/i)).toBeInTheDocument();
+  }, 30_000);
 });

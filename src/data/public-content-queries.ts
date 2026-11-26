@@ -1,28 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createPublicContentRepository } from "@/data/mock/public-content-repository";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { PUBLIC_EXPERIENCES, PUBLIC_OFFERS, PUBLIC_VIP_PRODUCTS } from "@/data/public-content";
 
-/** Public reads share the browser store but never construct staff repositories. */
-function usePublicContent() {
-  const store = useMockStore();
-  const delayMs = Number(process.env.NEXT_PUBLIC_MOCK_DELAY_MS) || 0;
-  return useMemo(() => createPublicContentRepository(store, { delayMs }), [store, delayMs]);
-}
-
+/** Public reads use the confirmed catalog snapshot; no staff records or repositories. */
 export function usePublicExperiences() {
-  const repository = usePublicContent();
-  return useQuery({ queryKey: ["public-experiences"], queryFn: ({ signal }) => repository.experiences({ signal }) });
+  return useQuery({ queryKey: ["public-experiences"], queryFn: async () => PUBLIC_EXPERIENCES });
 }
 
 export function usePublicOffers() {
-  const repository = usePublicContent();
-  return useQuery({ queryKey: ["public-offers"], queryFn: ({ signal }) => repository.offers({ signal }) });
+  return useQuery({ queryKey: ["public-offers"], queryFn: async () => PUBLIC_OFFERS });
 }
 
 export function usePublicVipProducts() {
-  const repository = usePublicContent();
-  return useQuery({ queryKey: ["public-vip-products"], queryFn: ({ signal }) => repository.vipProducts({ signal }) });
+  return useQuery({ queryKey: ["public-vip-products"], queryFn: async () => PUBLIC_VIP_PRODUCTS });
 }

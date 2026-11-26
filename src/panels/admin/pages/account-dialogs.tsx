@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Ban, CircleCheck, Clock, LockKeyhole, X } from "lucide-react";
 import type { Account, AccountActionPolicy, AccountStatus } from "@/modules/accounts/types";
-import { LINKED_ACCOUNT_RESTRICTION } from "@/data/mock/account-repository";
+import { LINKED_ACCOUNT_RESTRICTION } from "@/modules/accounts/types";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { StatusBadge } from "@/shared/components/modern/status-badge";

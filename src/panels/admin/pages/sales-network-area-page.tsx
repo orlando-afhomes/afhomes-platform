@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Handshake, UserPlus } from "lucide-react";
 import { hasOperationPermission } from "@/modules/identity/permissions";
 import { AreaPage } from "@/shared/components/admin";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { Button } from "@/shared/ui/button";
 import { ADMIN_AREA_TABS, type AdminAreaTabValue } from "../navigation";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";

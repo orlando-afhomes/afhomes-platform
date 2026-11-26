@@ -28,7 +28,7 @@ import { RowActionsMenu, type RowActionItem } from "@/shared/components/modern/r
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { StandardDateField } from "@/shared/forms/modern";
 import { formatDate } from "@/shared/lib/format-date";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { RegistrationCompletionDialog } from "./registration-completion-dialog";
 import type { TableOrder } from "@/shared/lib/table-order";
 

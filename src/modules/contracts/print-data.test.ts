@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canPrintGrant, firstPaymentSummary, supportedPrintTier, templateKeyFor } from "./print-data";
-import { createMockStore } from "@/data/mock/seed";
+import { createSeedStore } from "@/data/seed/store";
 import { displayPriceFor } from "@/modules/vip/pricing";
 import type { Contract } from "./types";
 import type { Payment } from "@/modules/finance/types";
@@ -34,7 +34,7 @@ describe("printable VIP documents", () => {
   });
 
   it("keeps the Grant template prices equal to the configured four-month prices", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const scheme = store.paymentSchemes.find((item) => item.id === "scheme-installment-4m")!;
     for (const code of ["B1", "S1", "G1"]) {
       const product = store.products.find((item) => item.code === code)!;

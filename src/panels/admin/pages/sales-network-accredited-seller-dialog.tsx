@@ -6,9 +6,8 @@ import { useVipProducts } from "@/data/business-queries";
 import { useReferenceOptions } from "@/data/settings-queries";
 import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
 import { isValidTierCode, type VipTierCode } from "@/modules/vip/types";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { designationLabel, teamDisplayName } from "@/modules/sales-network/display";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
 import { manilaToday } from "@/modules/accreditation/dates";
 import {
   ACCREDITATION_STATUS_OPTIONS,
@@ -109,7 +108,6 @@ export function AccreditedSellerDialog({
   onCreated?: (memberKey: string) => void;
 }) {
   const { identity } = useDevIdentity();
-  const store = useMockStore();
   const createSeller = useCreateAccreditedSeller();
   const staffQuery = useStaff();
   const accountsQuery = useAccounts();
@@ -182,7 +180,7 @@ export function AccreditedSellerDialog({
     const accounts = accountsQuery.data ?? [];
     const accountById = new Map(accounts.map((account) => [account.id, account]));
     const linkedAccountIds = new Set(
-      store.members.map((member) => member.accountId).filter((id): id is string => Boolean(id)),
+      (membersQuery.data ?? []).map((member) => member.accountId).filter((id): id is string => Boolean(id)),
     );
     return staff
       .filter((member) => member.status === "active" && member.accountId)
@@ -194,7 +192,7 @@ export function AccreditedSellerDialog({
           disabled: linkedAccountIds.has(member.accountId as string),
         };
       });
-  }, [staffQuery.data, accountsQuery.data, store.members]);
+  }, [staffQuery.data, accountsQuery.data, membersQuery.data]);
 
   const expiryPreview = calculateApprovedExpiry(approvedStart);
   const leapDay = isLeapDayStart(approvedStart);

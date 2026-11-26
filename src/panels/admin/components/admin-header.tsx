@@ -7,7 +7,7 @@ import { AdminMobileNav } from "./admin-mobile-nav";
 import { NotificationsMenu } from "./notifications-menu";
 import { useLogout } from "../use-logout";
 import { useAdminUser } from "../use-admin-user";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
+import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/shared/ui/dropdown-menu";
 
@@ -69,7 +69,6 @@ export function AdminHeader({
             }
           >
             <Avatar className="tw:size-9 tw:bg-primary tw:text-xs tw:text-primary-foreground">
-              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
               <AvatarFallback className="tw:bg-primary tw:text-primary-foreground">{user.initials}</AvatarFallback>
             </Avatar>
             <span className="tw:hidden tw:min-w-0 tw:flex-col tw:leading-tight tw:md:flex">

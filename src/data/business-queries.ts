@@ -13,7 +13,7 @@ import type { SubmitUnmatchedReceiptInput } from "@/modules/finance/types";
 import { CUSTOMER_LOOKUP_MIN_LENGTH } from "@/data/contracts/membership-repository";
 import type { StayPointsAction } from "@/data/contracts/stay-points-repository";
 import type { Repositories } from "@/data/contracts/repositories";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ContractCancellationGround } from "@/modules/contracts/types";
 import { approveDeal } from "@/modules/contracts/application/approve-deal";
@@ -23,7 +23,7 @@ import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { VipTierCode } from "@/modules/vip/types";
 import type { CardServiceInput } from "@/modules/membership/types";
 import { type AdminOperation } from "@/modules/identity/permissions";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /**
  * Business-module hooks (customers through stay points). Every query key is
@@ -38,7 +38,7 @@ function invalidateBusiness(queryClient: QueryClient) {
 }
 
 function useBusinessQuery<T>(namespace: string, load: (repositories: Repositories, signal?: AbortSignal) => Promise<T>) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list(namespace, identity.id),
@@ -47,7 +47,7 @@ function useBusinessQuery<T>(namespace: string, load: (repositories: Repositorie
 }
 
 function useBusinessMutation<V, R>(run: (repositories: Repositories, variables: V) => Promise<R>) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: V) => run(repositories, variables),
@@ -57,7 +57,7 @@ function useBusinessMutation<V, R>(run: (repositories: Repositories, variables: 
 
 // Customers
 export function useRegisterCustomer() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CustomerRegistrationInput) => registerCustomer(repositories, input),
@@ -165,7 +165,7 @@ export function useContractAction() {
 }
 /** Approve the customer and sale, record the signed agreement, and finalize when nothing is held. */
 export function useApproveDeal() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: { contractId: string; approvalReference?: string }) => approveDeal(repositories, input.contractId, input.approvalReference),
@@ -231,7 +231,7 @@ export function useMemberships() {
 }
 /** Staff Customer Search (UI21): runs only from the minimum search length. */
 export function useCustomerLookup(term: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   const trimmed = term.trim();
   return useQuery({
@@ -255,7 +255,7 @@ export function useCommissions() {
   return useBusinessQuery("commissions", (r, signal) => r.commissions.list({ signal }));
 }
 function useCommissionQuery<T>(namespace: string, enabled: boolean, load: (r: Repositories, signal: AbortSignal) => Promise<T>) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list(namespace, identity.id),

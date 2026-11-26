@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Customer → contract → sale → receipt approval → collections, through the real Route Handlers.
+// Customer â†’ contract â†’ sale â†’ receipt approval â†’ collections, through the real Route Handlers.
 // Runs against the LOCAL emulators (npm run emulators, then npm run db:seed). Skipped when they are not running.
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
@@ -7,8 +7,8 @@ import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/ser
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -91,12 +91,12 @@ describe.skipIf(!up)("pilot API: customer, contract, receipt approval, collectio
     const v1 = await verify(payment1.id);
     expect(v1.status, JSON.stringify(v1.body)).toBe(200);
     expect(v1.body.payment.status).toBe("verified");
-    expect(v1.body.saleStatus).toBe("pending"); // ₱10,000 is under 25% of ₱54,000
+    expect(v1.body.saleStatus).toBe("pending"); // â‚±10,000 is under 25% of â‚±54,000
 
     const second = await submitReceipt(contractId, 500_000, { purpose: "down_payment" });
     const v2 = await verify(second.body.payment.id);
     expect(v2.status, JSON.stringify(v2.body)).toBe(200);
-    expect(v2.body.saleStatus).toBe("confirmed"); // ₱15,000 reaches 25% (₱13,500)
+    expect(v2.body.saleStatus).toBe("confirmed"); // â‚±15,000 reaches 25% (â‚±13,500)
     const state = await saleState(saleId);
     expect(state.sale.status).toBe("confirmed");
     expect(state.saleAdjustments.map((item) => item.kind)).toEqual(["confirmation"]);
@@ -153,7 +153,7 @@ query @redact { x: contract(id: $c) @check(expr: "response.bump == 99", message:
 
   it("confirms the sale exactly once when two receipts are approved at the same moment", async () => {
     const { contractId, saleId } = await approvedSale();
-    // Each receipt alone is under 25% (₱13,500); together they reach it. The amounts differ so the "possible duplicate" rule stays out of the way.
+    // Each receipt alone is under 25% (â‚±13,500); together they reach it. The amounts differ so the "possible duplicate" rule stays out of the way.
     const a = (await submitReceipt(contractId, 700_000)).body.payment as Json;
     const b = (await submitReceipt(contractId, 710_000, { purpose: "down_payment" })).body.payment as Json;
     const [ra, rb] = await Promise.all([verify(a.id), verify(b.id)]);

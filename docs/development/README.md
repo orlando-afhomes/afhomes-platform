@@ -2,7 +2,7 @@
 
 > Authoritative development documentation index and governance guide for the AFHomes Platform.
 > Read `docs/project.md` for project context and `docs/development/architecture.md` for system architecture.
-> The repository holds a working frontend prototype on typed in-memory mock data. There is no backend, database, real authentication or deployment yet. Trust the code and `package.json` over any older status line in these documents.
+> The repository holds the completed local full-stack build: the Next.js app runs against the local Firebase emulators (Auth, Data Connect/PostgreSQL, Storage) through `/api/v1`. The browser-memory mock layer was removed in F9; `db:seed` loads synthetic local records and `db:seed:clean` starts from the confirmed reference data. Hosted environments are planned. Trust the code and `package.json` over any older status line in these documents.
 
 ---
 
@@ -41,7 +41,7 @@ This directory (`docs/development/`) contains the authoritative development arch
 | Additional styling | None (no CSS Modules, no new project-authored CSS-in-JS) |
 | Validation | Zod (approved; not yet used in `src/`) |
 | Client asynchronous state | TanStack Query |
-| Initial frontend data | Browser-scoped in-memory mock store |
+| Initial frontend data | Local emulator PostgreSQL seed (`db:seed` / `db:seed:clean`); the browser mock layer was removed in F9 |
 | API | Versioned REST `/api/v1` |
 | Backend | Domain services within Next.js |
 | Authentication | Firebase Auth with server-verified sessions |
@@ -69,7 +69,7 @@ Next.js renders the existing panels and provides REST `/api/v1`. Shared domain s
 
 ## 6. Local Development to Cloud Strategy
 
-- **Localhost:** Start with the existing browser-memory prototype, then use the Firebase emulators for the local backend, API, and file integration.
+- **Localhost:** Start the Firebase emulators, seed the local database (`npm run db:seed` or `npm run db:seed:clean`), and run the app through the local API (`npm run dev`).
 - **Staging:** Optional Vercel prototype preview, followed by an isolated Firebase project and the SQL Connect Spark pilot. Rehearse the selected Google host and approved imports.
 - **Production:** Company-owned Blaze project with the verified app host, Firebase Auth, SQL Connect, private files, monitoring, and backups. Import approved production records only.
 
@@ -278,7 +278,7 @@ Refer to `security.md`. Do not attempt to reproduce the entire threat model in t
 
 ## 16. Verified Current Project Status
 
-The repository contains a working frontend prototype with browser-memory sample data. The API, real authentication, cloud databases, and hosting integrations are planned. Verify the manifest, source, configurations, and external environments before reporting an implemented or deployed status.
+The repository contains the completed local full-stack build (F9): the Next.js app reads and writes only the local emulator database through `/api/v1`, seeded by `db:seed` (synthetic) or `db:seed:clean` (confirmed reference data). Real authentication runs against the Firebase Auth emulator with server sessions. Cloud databases, hosting and external environments are planned. Verify the manifest, source, configurations, and external environments before reporting an implemented or deployed status.
 
 Status categories: documentation, application, local emulators, staged data and hosting, production provisioning, and actual test evidence.
 

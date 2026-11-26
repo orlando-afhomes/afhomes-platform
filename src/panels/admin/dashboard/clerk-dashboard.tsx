@@ -3,7 +3,7 @@
 import { FileText, ReceiptText, Users } from "lucide-react";
 import { useContracts, usePayments } from "@/data/business-queries";
 import { useCustomers } from "@/data/queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { DashboardHeader } from "@/shared/components/dashboard/dashboard-layout";
 import { DashboardPendingActions, DashboardPendingItem } from "@/shared/components/dashboard/dashboard-pending-actions";
 

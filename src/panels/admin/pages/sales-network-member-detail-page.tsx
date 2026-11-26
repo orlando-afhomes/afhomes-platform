@@ -6,12 +6,12 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRightLeft, BadgeCheck, Briefcase, CalendarDays, FileText, History, Home, Layers, MapPin, Network, Pencil, Phone, RefreshCw, User, UserCheck, UserX, Users, type LucideIcon } from "lucide-react";
 import type { OrgMember } from "@/modules/organization/types";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useMembers, useSalesNetworkMemberByKey, useMemberAccreditations, useSeatVacancies, useChangeSalesNetworkMemberStatus, useIssuePendingAccreditation } from "@/data/queries";
 import { hasOperationPermission } from "@/modules/identity/permissions";
-import { resolveEffectiveModules } from "@/data/mock/authorization";
-import { getDescendantIds } from "@/data/mock/scope";
+import { useAccessSnapshot } from "@/data/access-snapshot";
+import { getDescendantIds } from "@/modules/identity/record-scope";
+import { useProducts, useAccounts } from "@/data/queries";
 import { buildAuthorizedGenealogyTree } from "@/modules/sales-network/genealogy";
 import { resolveEffectiveAccreditationEligibility, getCurrentAccreditationRecord, hasAmbiguousAccreditation } from "@/modules/accreditation/eligibility";
 import { ACCREDITATION_REMINDER_LABELS, getAccreditationReminder, manilaToday } from "@/modules/accreditation/dates";
@@ -45,7 +45,6 @@ import { AccreditationRenewAction } from "../components/accreditation-renew-acti
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
 import { GenealogyTree } from "./sales-network-genealogy-page";
 import { humanize } from "@/shared/lib/humanize";
-import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
 
 function collectKeys(nodes: ReturnType<typeof buildAuthorizedGenealogyTree>): string[] {
   const keys: string[] = [];
@@ -63,8 +62,10 @@ export function SalesNetworkMemberDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? "";
   const { identity } = useDevIdentity();
-  const store = useMockStore();
-  const granted = resolveEffectiveModules(store, identity);
+  const access = useAccessSnapshot();
+  const granted = access.modules;
+  const productsQuery = useProducts();
+  const accountsQuery = useAccounts();
   const memberQuery = useSalesNetworkMemberByKey(id);
   const membersQuery = useMembers();
   const accreditationsQuery = useMemberAccreditations(memberQuery.data?.id ?? "");
@@ -110,7 +111,7 @@ export function SalesNetworkMemberDetailPage() {
   const expandedKeys = useMemo(() => collectKeys(downlineTree).filter((key) => !collapsed.includes(key)), [downlineTree, collapsed]);
   const memberNameById = useMemo(() => new Map(members.map((item) => [item.id, item.displayName])), [members]);
   const parentLabel = (id: string | null | undefined) => (id ? (memberNameById.get(id) ?? EMPTY) : EMPTY);
-  const actorLabel = (id: string) => DEV_IDENTITIES.find((identity) => identity.id === id)?.displayName ?? memberNameById.get(id) ?? "System";
+  const actorLabel = (id: string) => accountsQuery.data?.find((account) => account.id === id)?.displayName ?? memberNameById.get(id) ?? "System";
   const historyColumns = useMemo<ColumnDef<NonNullable<OrgMember["parentHistory"]>[number], unknown>[]>(
     () => [
       { id: "operation", header: "Operation", cell: ({ row }) => humanize(row.original.operation) },
@@ -427,7 +428,7 @@ export function SalesNetworkMemberDetailPage() {
                 {profile.tin ? <InfoItem term="TIN">{profile.tin}</InfoItem> : null}
                 <InfoItem term="Date of Card Application">{formatDate(profile.cardApplicationDate)}</InfoItem>
                 <InfoItem term="Program Category">{programCategoryLabel(profile.programCategory, programCategoryLabels)}</InfoItem>
-                <InfoItem term="VIP Card Level">{store.products.find((product) => product.code === profile.vipCardLevel)?.name ?? profile.vipCardLevel}</InfoItem>
+                <InfoItem term="VIP Card Level">{productsQuery.data?.find((product) => product.code === profile.vipCardLevel)?.name ?? profile.vipCardLevel}</InfoItem>
                 <InfoItem term="Seller Source">Manual admin creation</InfoItem>
               </InfoGrid>
             </AdminSection>

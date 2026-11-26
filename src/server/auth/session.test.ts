@@ -25,8 +25,8 @@ async function up(url: string) {
 const emulatorsUp = (await up(AUTH)) && (await up(DB));
 
 // Sample sign-in password comes from the seed's own account list, never typed here.
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 async function idTokenFor(email: string, password: string): Promise<string> {
   const response = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo`, {

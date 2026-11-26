@@ -2,15 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TierLevelInput } from "@/data/contracts/tier-level-repository";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { TierLevel } from "@/modules/vip/types";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /** Admin-managed VIP tier levels. Keys are partitioned by identity like every business query. */
 
 export function useTierLevels() {
-  const { tierLevels } = useMockRepositories();
+  const { tierLevels } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("tier-levels", identity.id),
@@ -19,19 +19,19 @@ export function useTierLevels() {
 }
 
 export function useCreateTierLevel() {
-  const { tierLevels } = useMockRepositories();
+  const { tierLevels } = useRepositories();
   const invalidate = useInvalidateTierLevels();
   return useMutation({ mutationFn: (input: TierLevelInput) => tierLevels.create(input), onSuccess: invalidate });
 }
 
 export function useUpdateTierLevel() {
-  const { tierLevels } = useMockRepositories();
+  const { tierLevels } = useRepositories();
   const invalidate = useInvalidateTierLevels();
   return useMutation({ mutationFn: (input: { id: string } & Partial<TierLevelInput> & { status?: TierLevel["status"] }) => tierLevels.update(input.id, { name: input.name, colorKey: input.colorKey, sortOrder: input.sortOrder, status: input.status }), onSuccess: invalidate });
 }
 
 export function useDeleteTierLevel() {
-  const { tierLevels } = useMockRepositories();
+  const { tierLevels } = useRepositories();
   const invalidate = useInvalidateTierLevels();
   return useMutation({ mutationFn: (id: string) => tierLevels.delete(id), onSuccess: invalidate });
 }

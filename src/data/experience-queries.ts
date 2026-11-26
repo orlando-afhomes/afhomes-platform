@@ -2,15 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ExperienceInput } from "@/data/contracts/experience-repository";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /** Public Experiences list; no identity partition because only published content is returned. */
 export { usePublicExperiences } from "./public-content-queries";
 
 export function useExperiences() {
-  const { experiences } = useMockRepositories();
+  const { experiences } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({ queryKey: queryKeys.business.list("experiences", identity.id), queryFn: ({ signal }) => experiences.list({ signal }) });
 }
@@ -25,7 +25,7 @@ function useInvalidateExperiences() {
 }
 
 export function useSaveExperience() {
-  const { experiences } = useMockRepositories();
+  const { experiences } = useRepositories();
   const invalidate = useInvalidateExperiences();
   return useMutation({
     mutationFn: (input: { id?: string; experience: ExperienceInput }) =>
@@ -35,7 +35,7 @@ export function useSaveExperience() {
 }
 
 export function useSetExperiencePublished() {
-  const { experiences } = useMockRepositories();
+  const { experiences } = useRepositories();
   const invalidate = useInvalidateExperiences();
   return useMutation({
     mutationFn: (input: { id: string; published: boolean }) => experiences.setPublished(input.id, input.published),

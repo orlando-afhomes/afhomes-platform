@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { BadgeCheck, ChartColumn, Coins, FilePenLine, Hourglass, Layers, UserPen, UserPlus, UsersRound } from "lucide-react";
-import { useCustomers, useEffectiveModuleIds, useMembers, useMockRepositories } from "@/data/queries";
+import { useCustomers, useEffectiveModuleIds, useMembers, useRepositories } from "@/data/queries";
 import { useContracts, useOperation, useSales, useVipProducts } from "@/data/business-queries";
 import { useIgpRegister } from "@/data/igp-queries";
 import { igpSalesReportRows } from "@/modules/igp/rules";
@@ -55,7 +55,7 @@ export function SalesDashboard({ identity }: { identity: DevIdentity }) {
   const products = useVipProducts();
   const customers = useCustomers();
   const members = useMembers();
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const uplines = useQuery({
     queryKey: ["uplines", identity.id],
     queryFn: () => repositories.members.listUplineSummaries(),

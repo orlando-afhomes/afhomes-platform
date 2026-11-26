@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createMockStore } from "@/data/mock/seed";
+import { createSeedStore } from "@/data/seed/store";
 import { approvedCollectionMilestone, isFullySettled } from "../rules";
 import { collectionState } from "./collection-state";
 
 describe("collection state characterization", () => {
   it("preserves existing thresholds and settlement without modifying records", () => {
-    const store = createMockStore();
+    const store = createSeedStore();
     const before = JSON.stringify(store);
     for (const contract of store.contracts) {
       const payments = store.payments.filter((payment) => payment.contractId === contract.id);

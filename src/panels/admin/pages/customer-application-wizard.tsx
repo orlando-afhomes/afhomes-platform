@@ -58,8 +58,7 @@ import { PaymentOptionGrid, type PaymentOption } from "../components/payment-opt
 import { schemeCardContent } from "../components/scheme-card-content";
 import { VipCardChoiceGrid } from "../components/vip-card-choice";
 import { VipPrintControl, applicationPrintKey, linkPreparedApplication, salePrintContacts } from "../documents/vip-print-controls";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useAdminSidebar } from "../layouts/admin-sidebar-context";
 
 // Back shows no fill: just a border, with a light wash on hover. Save Draft is blue and Continue is green, so the three never share a color.
@@ -180,7 +179,6 @@ function ReviewBlock({ title, icon: Icon, tone, onEdit, children }: { title: str
 
 export function CustomerApplicationWizard({ existing }: { existing?: Customer } = {}) {
   const router = useRouter();
-  const store = useMockStore();
   const { identity } = useDevIdentity();
   const printDraftId = useId();
   const [printDraftVersion, setPrintDraftVersion] = useState(0);
@@ -484,7 +482,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       const saved = existing
         ? await updateDraft.mutateAsync({ id: existing.id, input })
         : await create.mutateAsync(input);
-      linkPreparedApplication(store, applicationKey, saved.id, applicationPrintInput());
+      linkPreparedApplication(applicationKey, saved.id, applicationPrintInput());
       if (!existing) {
         allowExit();
         resetNewApplication();
@@ -553,7 +551,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
         } : undefined,
       });
 
-      linkPreparedApplication(store, applicationKey, result.customerId, applicationPrintInput());
+      linkPreparedApplication(applicationKey, result.customerId, applicationPrintInput());
       primaryIdPreview.onClear();
       secondaryIdPreview.onClear();
       let successMessage: string | undefined;

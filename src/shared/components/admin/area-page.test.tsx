@@ -1,10 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState, type ReactNode } from "react";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { DevIdentityProvider } from "@/shared/providers/dev-identity-provider";
-import { MockStoreProvider } from "@/shared/providers/mock-store-provider";
+import { SessionIdentityProvider } from "@/shared/providers/session-identity-provider";
+import { stubApi } from "@/test/api-harness";
 import { NotificationsContext } from "@/shared/providers/notifications-provider";
 import { TabBar } from "@/shared/components/modern/tab-bar";
 import { useTabParam } from "@/shared/components/modern/use-tab-param";
@@ -17,19 +17,19 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(search),
 }));
 
+beforeEach(() => stubApi("dev-super-admin"));
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   search = "";
   window.history.replaceState(null, "", "/");
 });
 
-function Wrapper({ children, identityId = "dev-super-admin" }: { children: ReactNode; identityId?: string }) {
+function Wrapper({ children }: { children: ReactNode; identityId?: string }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return (
     <QueryClientProvider client={queryClient}>
-      <MockStoreProvider>
-        <DevIdentityProvider initialIdentityId={identityId}>{children}</DevIdentityProvider>
-      </MockStoreProvider>
+      <SessionIdentityProvider>{children}</SessionIdentityProvider>
     </QueryClientProvider>
   );
 }

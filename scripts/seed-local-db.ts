@@ -2,11 +2,11 @@
 // Run: npm run db:seed   (the emulator must be running: npm run emulators)
 // Safety: refuses any host except localhost and any project not starting with "demo-".
 // Each run wipes the pilot tables first, so running it twice gives the same counts.
-import { DEV_IDENTITIES } from "@/data/mock/dev-identities";
-import { MOCK_ACCOUNTS } from "@/data/mock/mock-credentials";
-import { buildPaymentSchemes, buildProducts } from "@/data/mock/seed/catalog";
-import { buildSeed } from "@/data/mock/seed/index";
-import { buildDepartments, buildRoles } from "@/data/mock/seed/organization";
+import { DEV_IDENTITIES } from "@/data/seed/dev-identities";
+import { SEED_ACCOUNTS } from "@/data/seed/dev-credentials";
+import { buildPaymentSchemes, buildProducts } from "@/data/seed/catalog";
+import { buildSeed } from "@/data/seed/index";
+import { buildDepartments, buildRoles } from "@/data/seed/organization";
 import { PRINT_TEMPLATES } from "@/modules/contracts/print-templates";
 import { seedExperiences } from "@/modules/experiences/sample-seed";
 import { activeRoles } from "@/modules/identity/active-roles";
@@ -300,7 +300,7 @@ if (existingAuthUsers.users.length) await auth.deleteUsers(existingAuthUsers.use
 
 const userIds = new Map<string, string>();
 for (const identity of identities) {
-  const account = MOCK_ACCOUNTS.find((row) => row.identityId === identity.id);
+  const account = SEED_ACCOUNTS.find((row) => row.identityId === identity.id);
   if (!account) throw new Error(`No sample sign-in account for ${identity.id}.`);
   await auth.createUser({ uid: identity.id, email: account.email, password: account.password, displayName: identity.displayName });
   const id = await insert("UserAccount", "userAccount", clean({
@@ -357,7 +357,7 @@ if (!CLEAN) {
   ];
   for (const spec of linkedStaff) {
     const identity = DEV_IDENTITIES.find((row) => row.id === spec.identityId)!;
-    const account = MOCK_ACCOUNTS.find((row) => row.identityId === spec.identityId)!;
+    const account = SEED_ACCOUNTS.find((row) => row.identityId === spec.identityId)!;
     const staffId = await insert("StaffMember", "staffMember", {
       displayName: cleanName(identity.displayName),
       position: spec.position,

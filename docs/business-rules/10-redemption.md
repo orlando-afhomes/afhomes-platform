@@ -387,3 +387,8 @@ This ruling takes precedence over earlier text in this document where they diffe
 3. **Cut-offs.** Hotel: 48 hours before the 14:00 check-in. Resort: 72 hours. Cancelling after the cut-off, or a no-show, forfeits the points (section 10).
 4. **Holiday calendar** from November 2026 to December 2027: the Philippine regular holidays and the fixed special non-working days, including Holy Week. Eid dates and days proclaimed later are added by an Administrator.
 5. The seed values are no longer marked as sample data. Live Redemption and customer submissions stay separately unauthorized.
+---
+
+## Owner decision amendment (2026-11-26, F9 retirement)
+
+This ruling takes precedence over earlier text in this document where they differ. The staff Redemption prototype authorized on 2026-11-17 is retired. Its repositories, screens and navigation entries were removed with the mock layer; the redemption and promo-points data, bookings and scan flows are no longer reachable. Live Redemption and Services remain disabled and require separate owner authorization before any build. The points-per-night Terms of Use table and holiday calendar records remain as confirmed reference data.

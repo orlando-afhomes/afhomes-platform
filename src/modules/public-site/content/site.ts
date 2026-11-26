@@ -96,7 +96,6 @@ export const MAIN_NAV: NavLink[] = [
 
 /** Public actions shown at the right of the header and in the phone menu. Sales Sign-In is linked from the footer Access column and the phone menu (owner, 2026-11-18). */
 export const ACTION_LINKS: NavLink[] = [
-  { href: "/portal", label: "Customer Login" },
   { href: "/vip-privilege#cards", label: "Join VIP" },
 ];
 
@@ -110,7 +109,6 @@ export const FOOTER_COLUMNS: { heading: string; links: NavLink[] }[] = [
   {
     heading: "Access",
     links: [
-      { href: "/portal", label: "Customer Login" },
       { href: "/verify", label: "Verify Accreditation" },
       { href: "/login", label: "Staff Login", staffOnly: true },
       { href: "/login/sales", label: "Sales Sign-In", staffOnly: true },

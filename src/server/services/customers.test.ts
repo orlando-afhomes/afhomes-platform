@@ -5,8 +5,8 @@ import { configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/te
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
-const { MOCK_ACCOUNTS } = await import("@/data/mock/mock-credentials");
-const account = (identityId: string) => MOCK_ACCOUNTS.find((row) => row.identityId === identityId)!;
+const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
+const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 
@@ -85,7 +85,7 @@ describe.skipIf(!up)("customer applications and record access (emulators)", () =
     }
   });
 
-  it("runs draft → submit → approve with an automatic Customer ID", async () => {
+  it("runs draft â†’ submit â†’ approve with an automatic Customer ID", async () => {
     const members = await network.listMembers(admin);
     const seller = members.find((member) => member.designation === "SM")!;
     const draft = await customers.createCustomerDraft(clerk, draftInput(1, seller.id) as never);

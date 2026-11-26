@@ -35,10 +35,7 @@ import { Alert, AlertDescription } from "@/shared/ui/alert";
 import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
-import { usePromoPointsBalanceSection } from "../components/promo-points-balance-card";
 import { useAdminAreaTabAccess } from "../use-role-aware-navigation";
-import { PromoPointsPanel, RecordPromoUseButton } from "./promo-points-page";
-import { AddPromoButton, PromosPanel } from "./promos-page";
 
 export const GIFT_ACTIONS: Record<GiftLedgerEntry["type"], string> = {
   release: "Given", waiver_release: "Given by exception", expiry: "Expired", transfer: "Lost on transfer",
@@ -204,7 +201,6 @@ type GiftDetail = { kind: "tranche"; number: number } | { kind: "entry"; key: st
 /** Welcome Gift balances, yearly gifts and gift history of the chosen cardholder. */
 export function WelcomeGiftPanel() {
   const { current } = useSelectedMembership();
-  const promoSection = usePromoPointsBalanceSection(current?.membershipId);
   const [detail, setDetail] = useState<GiftDetail | null>(null);
   const today = useMemo(() => manilaToday(), []);
   const columns = useMemo(() => trancheColumns(current?.financialHold ?? false, today), [current?.financialHold, today]);
@@ -259,7 +255,6 @@ export function WelcomeGiftPanel() {
         <InfoGrid label="Other points" columns={3}>
           <InfoItem term="Reserved for upcoming stays">{count(balances?.reserved)}</InfoItem>
           <InfoItem term="Lost">{count(balances?.forfeited)}</InfoItem>
-          {promoSection.rows.map((row) => <InfoItem key={row.label} term={`Promo points ${row.label.toLowerCase()}`}>{row.value}</InfoItem>)}
         </InfoGrid>
       </Card>
       <section aria-label="Yearly gifts" className="tw:flex tw:flex-col tw:gap-3">
@@ -451,8 +446,6 @@ export function RecordWaiverRequestButton() {
 const STAY_TAB_ACTIONS: Record<string, () => ReactNode> = {
   "resort-bills": () => <EnterResortBillButton />,
   waivers: () => <RecordWaiverRequestButton />,
-  promos: () => <AddPromoButton />,
-  "promo-points": () => <RecordPromoUseButton />,
 };
 
 /**
@@ -472,8 +465,6 @@ export function StayPointsAreaPage() {
           { value: "welcome-gift", label: "Annual Points", allowed: access["welcome-gift"], render: () => withPicker(<WelcomeGiftPanel />) },
           { value: "resort-bills", label: "Pending Bills", allowed: access["resort-bills"], render: () => withPicker(<ResortBillsPanel />) },
           { value: "waivers", label: "Special Cases", allowed: access.waivers, render: () => withPicker(<WaiversPanel />) },
-          { value: "promos", label: "Promotions", allowed: access.promos, render: () => <PromosPanel /> },
-          { value: "promo-points", label: "Promo History", allowed: access["promo-points"], render: () => <PromoPointsPanel /> },
         ]}
       />
     </StayPointsMembershipProvider>

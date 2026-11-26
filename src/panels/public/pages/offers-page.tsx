@@ -136,8 +136,7 @@ export function PublicOffersPage() {
           <div className="offers-how__intro">
             <p className="site-eyebrow">How it works</p>
             <h2 className="offers-how__title">From bill to reward</h2>
-            <p className="offers-how__text">The counter checks the bill, your identity, and your balance before anything moves. You can watch both wallets in the customer portal.</p>
-            <SiteButton href="/portal" action="read">Open customer portal</SiteButton>
+            <p className="offers-how__text">The counter checks the bill, your identity, and your balance before anything moves.</p>
           </div>
           <ol className="offers-how__steps">
             {STEPS.map(({ title, text, icon: Icon }) => (

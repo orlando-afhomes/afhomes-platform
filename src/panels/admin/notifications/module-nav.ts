@@ -74,22 +74,12 @@ const ACTION_TABS: Partial<Record<AuditModule, Readonly<Record<string, string>>>
   "stay-points": {
     RESORT_BILL_ENTERED: "resort-bills", RESORT_BILL_APPROVED: "resort-bills", RESORT_BILL_REFUNDED: "resort-bills",
     COMPASSIONATE_WAIVER_REQUESTED: "waivers", COMPASSIONATE_WAIVER_GRANTED: "waivers", COMPASSIONATE_WAIVER_REFUSED: "waivers",
-    PROMO_CREATED: "promos", PROMO_UPDATED: "promos", PROMO_ENDED: "promos", PROMO_DELETED: "promos",
-    PROMO_POINTS_EARNED: "promo-points", PROMO_POINTS_EARN_REVERSED: "promo-points",
-    PROMO_POINTS_USED: "promo-points", PROMO_POINTS_USE_VOIDED: "promo-points",
   },
 };
 
-const REDEMPTION_DESTINATIONS: Readonly<Record<string, string>> = {
-  REDEMPTION_BOOKING_CREATED: "bookings",
-  REDEMPTION_TABLE_VERSION_PUBLISHED: "points-table",
-  REDEMPTION_HOLIDAY_ADDED: "holidays",
-};
-
 export function notificationDestination({ module, action }: Pick<AuditEventView, "module" | "action">): NotificationDestination {
-  const redemptionTab = module === "stay-points" ? REDEMPTION_DESTINATIONS[action] : undefined;
-  const area = redemptionTab ? "redemption" : MODULE_PRIMARY_NAV[module];
-  const tab = redemptionTab ?? ACTION_TABS[module]?.[action] ?? MODULE_PRIMARY_TAB[module];
+  const area = MODULE_PRIMARY_NAV[module];
+  const tab = ACTION_TABS[module]?.[action] ?? MODULE_PRIMARY_TAB[module];
   // Setup tabs (points table, holidays, lists, receipt history export, IGP projects) live in Settings.
   const inArea = (key: AdminAreaKey) => (ADMIN_AREA_TABS[key] as readonly { value: string }[]).some(({ value }) => value === tab);
   return !inArea(area) && inArea("vip-products") ? { area: "vip-products", tab } : { area, tab };

@@ -3,7 +3,7 @@ import { areaTabHref, redirectToAreaTab } from "./area-redirect";
 
 describe("area redirects", () => {
   it("builds the area tab URL and keeps the former route's query", () => {
-    expect(areaTabHref("stay-points", "promos")).toBe("/admin/stay-points?tab=promos");
+    expect(areaTabHref("stay-points", "welcome-gift")).toBe("/admin/stay-points?tab=welcome-gift");
     expect(areaTabHref("organization", "staff", { view: "account", tab: "old", empty: undefined })).toBe("/admin/organization?tab=staff&view=account");
     expect(areaTabHref("finance", "verification", { status: ["a", "b"] })).toBe("/admin/finance?tab=verification&status=a&status=b");
   });

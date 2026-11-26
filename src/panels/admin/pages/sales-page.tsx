@@ -17,7 +17,7 @@ import { manilaToday } from "@/shared/lib/dates";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { SelectField, StandardDateField, TextField } from "@/shared/forms/modern";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useContractHref } from "../components/use-contract-href";
 import { BizBadge } from "@/shared/components/business/biz-badge";
 import { FilterBar } from "@/shared/components/modern/filter-bar";

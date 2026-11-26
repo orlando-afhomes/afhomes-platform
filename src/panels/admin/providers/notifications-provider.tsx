@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { AuditEventView } from "@/modules/audit/types";
 import { useAuditEvents, useEffectiveModuleIds } from "@/data/queries";
 import { useAccessSnapshot } from "@/data/access-snapshot";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { isNotificationBadgeEvent } from "@/modules/notifications/creation-actions";
 import { isAreaNavKey, notificationDestination } from "@/panels/admin/notifications/module-nav";
 import { findSelectedKeys } from "@/panels/admin/components/admin-nav-match";

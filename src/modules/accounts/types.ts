@@ -15,6 +15,8 @@ export const ACCOUNT_STATUS_TRANSITIONS: Record<AccountStatus, readonly AccountS
  * historical-retention policy (open item R8; doc 01 section 8).
  */
 export const ACCOUNT_DELETE_DISABLED = "Account deletion is unavailable until the archive and retention policy is approved.";
+/** Shown when an account's identity fields are managed by its linked staff record. */
+export const LINKED_ACCOUNT_RESTRICTION = "Linked to a staff record. Name and email are managed in Staff Management.";
 
 /** What the acting identity may do to one account in Account Management. */
 export type AccountActionPolicy = {

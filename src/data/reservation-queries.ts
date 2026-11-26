@@ -1,14 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ReservationInput } from "@/modules/reservations/types";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /** Restaurant reservation hooks: keys are partitioned by the active dev identity; every change refreshes the business and audit views. */
 export function useRestaurantReservations(enabled = true) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("restaurant-reservations", identity.id),
@@ -17,8 +17,8 @@ export function useRestaurantReservations(enabled = true) {
   });
 }
 
-function useReservationMutation<V, R>(run: (repositories: ReturnType<typeof useMockRepositories>, variables: V) => Promise<R>) {
-  const repositories = useMockRepositories();
+function useReservationMutation<V, R>(run: (repositories: ReturnType<typeof useRepositories>, variables: V) => Promise<R>) {
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: V) => run(repositories, variables),

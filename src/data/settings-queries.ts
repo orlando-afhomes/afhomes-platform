@@ -2,17 +2,17 @@
 
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import { listOptions, seedReferenceEntries, type ListEntryStatus, type OutletType, type ReferenceListId } from "@/modules/settings/lists";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /** Admin-managed lists and outlets (Settings, Lists). Keys are partitioned by identity like every business query. */
 
 const SEED_ENTRIES = seedReferenceEntries();
 
 export function useReferenceEntries() {
-  const { referenceLists } = useMockRepositories();
+  const { referenceLists } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("reference-lists", identity.id),
@@ -39,26 +39,26 @@ export function useProgramCategoryLabels() {
 }
 
 export function useCreateReferenceEntry() {
-  const { referenceLists } = useMockRepositories();
+  const { referenceLists } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (input: { list: ReferenceListId; label: string }) => referenceLists.create(input), onSuccess: invalidate });
 }
 
 export function useUpdateReferenceEntry() {
-  const { referenceLists } = useMockRepositories();
+  const { referenceLists } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (input: { id: string; label?: string; status?: ListEntryStatus }) => referenceLists.update(input.id, { label: input.label, status: input.status }), onSuccess: invalidate });
 }
 
 export function useDeleteReferenceEntry() {
-  const { referenceLists } = useMockRepositories();
+  const { referenceLists } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (id: string) => referenceLists.delete(id), onSuccess: invalidate });
 }
 
 /** All outlets with usage flags; entry forms should read `useActiveOutlets` instead. */
 export function useOutlets() {
-  const { outlets } = useMockRepositories();
+  const { outlets } = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("outlets", identity.id),
@@ -73,19 +73,19 @@ export function useActiveOutlets() {
 }
 
 export function useCreateOutlet() {
-  const { outlets } = useMockRepositories();
+  const { outlets } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (input: { name: string; type: OutletType }) => outlets.create(input), onSuccess: invalidate });
 }
 
 export function useUpdateOutlet() {
-  const { outlets } = useMockRepositories();
+  const { outlets } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (input: { id: string; name?: string; type?: OutletType; status?: ListEntryStatus }) => outlets.update(input.id, { name: input.name, type: input.type, status: input.status }), onSuccess: invalidate });
 }
 
 export function useDeleteOutlet() {
-  const { outlets } = useMockRepositories();
+  const { outlets } = useRepositories();
   const invalidate = useInvalidateSettings();
   return useMutation({ mutationFn: (id: string) => outlets.delete(id), onSuccess: invalidate });
 }

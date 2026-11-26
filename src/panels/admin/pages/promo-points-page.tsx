@@ -3,8 +3,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { CardHolder, MemberQrHolder } from "@/data/contracts/member-qr-repository";
-import { useMockRepositories } from "@/data/queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useRepositories } from "@/data/queries";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useMemo, useState } from "react";
 import { Ban, Coins, Gift, IdCard, Link2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -138,7 +138,7 @@ function UseDialog({ onClose, selected }: { onClose: () => void; selected?: Memb
   const [requestId] = useState(() => crypto.getRandomValues(new Uint32Array(4)).join("-"));
   const { confirmRun, dialog: confirmation } = useConfirmRun();
   const balances = usePromoBalances();
-  const { memberQr } = useMockRepositories();
+  const { memberQr } = useRepositories();
   const { identity } = useDevIdentity();
   const holders = useQuery({
     queryKey: ["bill-cardholders", identity.id, membershipId],

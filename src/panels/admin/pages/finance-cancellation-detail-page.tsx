@@ -5,7 +5,7 @@ import { useOperation } from "@/data/business-queries";
 import { totalVerifiedCentavos } from "@/modules/finance/rules";
 import { CANCELLATION_GROUND_LABELS } from "@/modules/contracts/types";
 import { formatDate } from "@/shared/lib/format-date";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
 import { Money } from "@/shared/components/modern/money";
 import { AdminSection } from "@/shared/components/admin";

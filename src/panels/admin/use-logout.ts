@@ -3,8 +3,7 @@
 import { createElement, useState, type ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { MOCK_ACCOUNTS } from "@/data/mock/mock-credentials";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 
 /**
@@ -26,8 +25,8 @@ export function useLogout(): { logout: () => void; dialog: ReactElement } {
       setOpen(false);
       queryClient.clear();
       signOut();
-      // Sales accounts sign in at their own page.
-      const isSales = MOCK_ACCOUNTS.find((account) => account.identityId === identity.id)?.portal === "sales";
+      // Sales accounts carry a member record and sign in at their own page.
+      const isSales = identity.memberId !== null;
       router.replace(isSales ? "/login/sales" : "/login");
     },
     onClose: () => setOpen(false),

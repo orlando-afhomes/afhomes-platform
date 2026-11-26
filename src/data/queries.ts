@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
 import type { AdminModuleId } from "@/modules/identity/permissions";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import type { DepartmentRole, Designation, StaffMember } from "@/modules/organization/types";
@@ -9,34 +8,25 @@ import type { CreateAccreditedSellerInput, CreateSalesNetworkMemberInput, Update
 import type { AccreditationStatusRequest } from "@/data/contracts/accreditation-repository";
 import type { AccreditationAdminStatus, RegistrationApplicant, RegistrationCompletion } from "@/modules/accreditation/types";
 import type { SubmitRegistrationInput } from "@/data/contracts/registration-repository";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { useAccessSnapshot } from "@/data/access-snapshot";
-import { createMockRepositories } from "@/data/mock/repositories";
 import { createHttpRepositories } from "@/data/http/repositories";
-import { DATA_MODE } from "@/shared/lib/data-mode";
-import { canReadAuditHistory } from "@/data/mock/audit-repository";
 import { queryKeys } from "@/data/query-keys";
 import type { AuditQuery } from "@/modules/audit/types";
 
 /**
- * The repositories every screen reads. In mock mode (default) they run on the browser-memory sample store.
- * In api mode (NEXT_PUBLIC_DATA_MODE=api) the pilot repositories call the real backend and the rest report "not connected yet".
- * The name is kept so no screen has to change.
+ * The repositories every screen reads: the real local backend over /api/v1.
+ * Repositories outside the pilot reject with NotConnectedError, so their screens
+ * show the honest not-connected state.
  */
-export function useMockRepositories() {
-  const store = useMockStore();
-  const { identity } = useDevIdentity();
-  // Opt-in latency to see loaders in the browser: NEXT_PUBLIC_MOCK_DELAY_MS=800. Unset = instant.
-  const delayMs = Number(process.env.NEXT_PUBLIC_MOCK_DELAY_MS) || 0;
-  return useMemo(
-    () => (DATA_MODE === "api" ? createHttpRepositories() : createMockRepositories(store, () => identity, delayMs > 0 ? { delayMs } : undefined)),
-    [store, identity, delayMs],
-  );
+const repositories = createHttpRepositories();
+
+export function useRepositories() {
+  return repositories;
 }
 
 export function useMembers() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["members", identity.id],
@@ -45,7 +35,7 @@ export function useMembers() {
 }
 
 export function useCustomers() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["customers", identity.id],
@@ -54,7 +44,7 @@ export function useCustomers() {
 }
 
 export function useProducts() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   return useQuery({
     queryKey: ["products"],
     queryFn: ({ signal }) => repositories.products.list({ signal }),
@@ -62,7 +52,7 @@ export function useProducts() {
 }
 
 export function useDepartments() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["departments", identity.id],
@@ -71,7 +61,7 @@ export function useDepartments() {
 }
 
 export function useStaff() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["staff", identity.id],
@@ -80,7 +70,7 @@ export function useStaff() {
 }
 
 export function useAccounts() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["accounts", identity.id],
@@ -90,7 +80,7 @@ export function useAccounts() {
 
 /** Account Management actions the active identity may take (presentation only). */
 export function useAccountPolicies() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["account-policies", identity.id],
@@ -100,7 +90,7 @@ export function useAccountPolicies() {
 
 /** Department roles with the active identity's assign/manage authority. */
 export function useRoleOptions() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["role-options", identity.id],
@@ -110,7 +100,7 @@ export function useRoleOptions() {
 
 /** Staff record actions and linked-account summaries for the active identity. */
 export function useStaffPolicies() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["staff-policies", identity.id],
@@ -120,7 +110,7 @@ export function useStaffPolicies() {
 
 /** The active identity's own staff record and linked-account summary. */
 export function useMyProfile() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["my-profile", identity.id],
@@ -135,12 +125,12 @@ export function useMyProfile() {
  * authorization or validation are deterministic, so they are not retried.
  */
 export function useAuditEvents(query?: AuditQuery) {
-  const repositories = useMockRepositories();
-  const store = useMockStore();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
-  const access = canReadAuditHistory(store, identity) ? "read" : "denied";
+  const access = useAccessSnapshot();
+  const eligibility = access.ready && access.operations.has("audit.read") ? "read" : "denied";
   return useQuery({
-    queryKey: queryKeys.audit.list(identity.id, access, query),
+    queryKey: queryKeys.audit.list(identity.id, eligibility, query),
     queryFn: ({ signal }) => repositories.audit.list(query, { signal }),
     retry: false,
     gcTime: 0,
@@ -149,12 +139,12 @@ export function useAuditEvents(query?: AuditQuery) {
 
 /** Everyone who appears as an actor in the audit history (System included), for the actor filter. Same access rules as `useAuditEvents`. */
 export function useAuditActors() {
-  const repositories = useMockRepositories();
-  const store = useMockStore();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
-  const access = canReadAuditHistory(store, identity) ? "read" : "denied";
+  const access = useAccessSnapshot();
+  const eligibility = access.ready && access.operations.has("audit.read") ? "read" : "denied";
   return useQuery({
-    queryKey: [...queryKeys.audit.all, identity.id, access, "actors"] as const,
+    queryKey: [...queryKeys.audit.all, identity.id, eligibility, "actors"] as const,
     queryFn: ({ signal }) => repositories.audit.listActors({ signal }),
     retry: false,
     gcTime: 0,
@@ -178,7 +168,7 @@ function invalidateOrganization(queryClient: ReturnType<typeof useQueryClient>, 
 }
 
 export function useUpdateLinkedAccountStatus() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -195,7 +185,7 @@ export function useEffectiveModuleIds(): Set<AdminModuleId> {
 }
 
 export function useCreateDepartment() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -206,7 +196,7 @@ export function useCreateDepartment() {
 }
 
 export function useUpdateDepartment() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -218,7 +208,7 @@ export function useUpdateDepartment() {
 }
 
 export function useDepartmentRoles() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["department-roles", identity.id],
@@ -227,7 +217,7 @@ export function useDepartmentRoles() {
 }
 
 export function useCreateDepartmentRole() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -243,7 +233,7 @@ export function useCreateDepartmentRole() {
 }
 
 export function useUpdateDepartmentRole() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -260,7 +250,7 @@ export function useUpdateDepartmentRole() {
 }
 
 export function useDeleteDepartmentRole() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -271,7 +261,7 @@ export function useDeleteDepartmentRole() {
 }
 
 export function useCreateStaff() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -309,7 +299,7 @@ export function useCreateStaff() {
 }
 
 export function useUpdateStaff() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -347,7 +337,7 @@ export function useUpdateStaff() {
 }
 
 export function useDeleteAccount() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -358,7 +348,7 @@ export function useDeleteAccount() {
 }
 
 export function useUpdateAccount() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -370,7 +360,7 @@ export function useUpdateAccount() {
 }
 
 export function useAssignAccountRole() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -381,7 +371,7 @@ export function useAssignAccountRole() {
 }
 
 export function useRevokeAccountRole() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -392,7 +382,7 @@ export function useRevokeAccountRole() {
 }
 
 export function useUpdateAccountStatus() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -405,7 +395,7 @@ export function useUpdateAccountStatus() {
 
 /** Requests a Firebase password-reset email; no password is cached or shown. */
 export function useRequestPasswordReset() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     // No affectsAccess: a reset request changes no one's authority.
@@ -415,7 +405,7 @@ export function useRequestPasswordReset() {
 }
 
 export function useCreateCustomerDraft() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -427,7 +417,7 @@ export function useCreateCustomerDraft() {
 }
 
 export function useDeleteDepartment() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -438,7 +428,7 @@ export function useDeleteDepartment() {
 }
 
 export function useDeleteStaff() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -449,7 +439,7 @@ export function useDeleteStaff() {
 }
 
 export function useSalesNetworkMember(id: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["sales-network-member", id, identity.id],
@@ -460,7 +450,7 @@ export function useSalesNetworkMember(id: string) {
 
 /** Resolve a member by official AA number, falling back to the internal ID. */
 export function useSalesNetworkMemberByKey(key: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["sales-network-member", key, identity.id],
@@ -472,7 +462,7 @@ export function useSalesNetworkMemberByKey(key: string) {
 }
 
 export function useCreateSalesNetworkMember() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -489,7 +479,7 @@ export function useCreateSalesNetworkMember() {
 }
 
 export function useTransferSalesNetworkMember() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -507,7 +497,7 @@ export function useTransferSalesNetworkMember() {
 }
 
 export function useChangeSalesNetworkMemberStatus() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -524,7 +514,7 @@ export function useChangeSalesNetworkMemberStatus() {
 }
 
 export function useEligibleSalesNetworkParents(childDesignation: "SVD" | "SSM" | "SM" | "OST") {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["sales-network-eligible-parents", childDesignation, identity.id],
@@ -533,7 +523,7 @@ export function useEligibleSalesNetworkParents(childDesignation: "SVD" | "SSM" |
 }
 
 export function useUpdateSalesNetworkMember() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -550,7 +540,7 @@ export function useUpdateSalesNetworkMember() {
 }
 
 export function useCreateAccreditedSeller() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -569,7 +559,7 @@ export function useCreateAccreditedSeller() {
 }
 
 export function useUpdateAccreditationStatus() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -587,7 +577,7 @@ export function useUpdateAccreditationStatus() {
 }
 
 export function useIssuePendingAccreditation() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -606,7 +596,7 @@ export function useIssuePendingAccreditation() {
 
 /** Renew an approved seller: issues a new AA number and keeps the old one in the AA Number History (doc 03 section 5). */
 export function useRenewAccreditation() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   return useMutation({
@@ -627,7 +617,7 @@ export function useRenewAccreditation() {
 
 /** Effective-dated vacant leader seats in the caller's visible scope (doc 02 section 5.1.1). */
 export function useSeatVacancies() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["seat-vacancies", identity.id],
@@ -636,14 +626,14 @@ export function useSeatVacancies() {
 }
 
 export function useVerifyReferralSponsor() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   return useMutation({
     mutationFn: (code: string) => repositories.members.resolveReferralSponsor(code),
   });
 }
 
 export function useMemberAccreditations(memberId: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["member-accreditations", memberId, identity.id],
@@ -653,7 +643,7 @@ export function useMemberAccreditations(memberId: string) {
 }
 
 export function useAccreditationRecord(id: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["accreditation-record", id, identity.id],
@@ -663,7 +653,7 @@ export function useAccreditationRecord(id: string) {
 }
 
 export function useRegistrationApplications() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["registration-applications", identity.id],
@@ -672,7 +662,7 @@ export function useRegistrationApplications() {
 }
 
 export function useRegistrationApplication(id: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["registration-application", id, identity.id],
@@ -683,7 +673,7 @@ export function useRegistrationApplication(id: string) {
 
 /** Public OST application (no sign-in): submit a new application. */
 export function useSubmitRegistration() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: SubmitRegistrationInput) => repositories.registrations.submit(input),
@@ -696,7 +686,7 @@ export function useSubmitRegistration() {
 
 /** Private correction link: what the applicant may see and correct. */
 export function useRegistrationCorrection(token: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   return useQuery({
     queryKey: ["registration-correction", token],
     queryFn: ({ signal }) => repositories.registrations.getForCorrection(token, { signal }),
@@ -705,7 +695,7 @@ export function useRegistrationCorrection(token: string) {
 }
 
 export function useResubmitRegistration(token: string) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (applicant: RegistrationApplicant) => repositories.registrations.resubmit(token, applicant),
@@ -718,7 +708,7 @@ export function useResubmitRegistration(token: string) {
 
 /** Office actions on an OST application: check and complete, approve, return for correction, reject. */
 export function useRegistrationReview() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   const { identity } = useDevIdentity();
   const refresh = (approved: boolean) => {
@@ -742,7 +732,7 @@ export function useRegistrationReview() {
 }
 
 export function useAccreditations() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: ["accreditations", identity.id],

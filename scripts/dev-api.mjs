@@ -1,4 +1,4 @@
-// Runs `next` (dev by default) in api mode with the local emulator settings from scripts/api-local.env.
+// Runs `next` (dev by default) with the local emulator settings from scripts/api-local.env.
 // Node's --env-file flag cannot be used because Next re-launches itself and rejects it.
 // Usage: npm run dev:api [-- --port 3100]      or: node scripts/dev-api.mjs build | start --port 3100
 // Next allows only one `next dev` per project folder, so stop other dev servers first.

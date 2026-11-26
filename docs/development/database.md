@@ -10,7 +10,7 @@
 
 This guide covers data modeling, identifiers, financial atomicity, ledger integrity, security, indexes, schema changes, approved imports, backups, and environment isolation.
 
-Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator on localhost, prove the pilot against PostgreSQL in staging, then use a separate company-owned production database. The frontend mock remains browser-scoped and resets on full refresh.
+Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator on localhost, prove the pilot against PostgreSQL in staging, then use a separate company-owned production database. The app has no browser mock layer (removed in F9): `db:seed` loads synthetic local records into the emulator and `db:seed:clean` loads only the confirmed reference data.
 
 ---
 
@@ -37,13 +37,12 @@ Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator o
 
 ---
 
-## 4. Frontend Mock Versus Persistent Database
+## 4. Local Seed Versus Persistent Database
 
-Three data-development modes:
+Two data-development modes:
 
-1. **Frontend mock:** Synthetic data and development identities live in browser memory. A full refresh restores the seed.
-2. **Local full stack:** Next.js uses the SQL Connect Emulator through a server repository. Records survive browser refreshes. Recreate or persist test state through documented seed and emulator procedures.
-3. **Hosted database:** Independent staging and production SQL Connect/Cloud SQL pairs. Each has project-specific authentication, service credentials, reviewed schema releases, and an approved backup and recovery policy.
+1. **Local full stack:** Next.js uses the SQL Connect Emulator through a server repository. `db:seed` loads synthetic records and `db:seed:clean` loads only the confirmed reference data. Records survive browser refreshes; recreate or persist test state through the documented seed and emulator procedures.
+2. **Hosted database:** Independent staging and production SQL Connect/Cloud SQL pairs. Each has project-specific authentication, service credentials, reviewed schema releases, and an approved backup and recovery policy.
 
 ---
 
@@ -123,7 +122,7 @@ Cover atomicity, retries, duplicate protection, conflict detection, rollback, an
 
 ## 11. Local Data Persistence and Security
 
-Separate local emulator data from browser mock state. Use synthetic records and a documented local seed or state procedure. Restrict emulator access to localhost and verify production configuration is absent.
+Use synthetic records and a documented local seed or state procedure. Restrict emulator access to localhost and verify production configuration is absent.
 
 ---
 
@@ -286,7 +285,7 @@ Require review, backup, dry-run/rehearsal, validation, explicit production autho
 
 ## 32. Database Seeding
 
-Distinguish browser-memory mock seeds, local emulator seeds, staged test records, and authorized production reference data.
+Distinguish local emulator seeds, staged test records, and authorized production reference data.
 
 ### 32.1 Seed safety
 
@@ -320,7 +319,7 @@ A historical payment should not be invented from missing evidence. A certified h
 
 (See Part 30 of task prompt for scenarios A–M; summarized with expected outcomes.)
 
-- **Scenario A (Local development):** only the local emulator is used. Browser refresh resets mock mode and preserves integration-mode records.
+- **Scenario A (Local development):** only the local emulator is used. The documented seed procedure recreates state, and records survive browser refreshes.
 - **Scenario B (Transactional rollback):** hosted staging demonstrates concurrent requests and forced rollback without duplicate or partial financial or audit effects.
 - **Scenario C (Backup):** an authorized test backup preserves records and metadata, with restricted access.
 - **Scenario D (Staging rehearsal):** apply the reviewed schema and rehearse approved imports with test data. Verify identifiers, links, and totals.
@@ -354,8 +353,8 @@ Follow the [technical phase mapping](implementation.md) and the [Full-stack road
 2. The Firebase Admin SDK and generated SQL Connect operations stay server-only.
 3. Database-backed development starts with the SQL Connect Emulator.
 4. Local database-backed records survive browser refreshes.
-5. Frontend mocks remain browser-scoped and reset on refresh.
-6. Emulator-backed development and frontend mocks are separate modes.
+5. There is no browser mock layer; local records live in the emulator database.
+6. Local emulator data and hosted databases are separate environments.
 7. Separate Cloud SQL instances back staging and production.
 8. The verified Google host runs Next.js and uses SQL Connect for persistence.
 9. Database credentials are server-only.
@@ -409,7 +408,7 @@ Keep the development guides and [Full-stack roadmap](../implementation/02-full-s
 ### Local Database
 - [ ] SQL Connect, Auth, and Storage emulators configured and isolated.
 - [ ] Documented emulator state or reproducible seed procedure.
-- [ ] Confirmed difference between mock and integration-mode persistence.
+- [ ] Confirmed the emulator seed is the only local data source (browser mock removed).
 - [ ] Local mutations and hosted concurrency verified.
 
 ### Hosted SQL Connect

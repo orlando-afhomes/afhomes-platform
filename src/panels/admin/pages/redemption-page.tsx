@@ -1,7 +1,7 @@
 "use client";
 
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -81,7 +81,7 @@ export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?:
 export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {}, selected }: RedemptionPanelCreateProps) {
   const data = useRedemption(selected?.scannedCode);
   const act = useRedemptionBookingAction();
-  const { memberQr } = useMockRepositories();
+  const { memberQr } = useRepositories();
   const canBook = useOperation("redemption.book");
   const canApprove = useOperation("finance.verify");
   const { confirmRun, dialog: confirmDialog } = useConfirmRun();

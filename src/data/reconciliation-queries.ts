@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMockRepositories } from "@/data/queries";
+import { useRepositories } from "@/data/queries";
 import { queryKeys } from "@/data/query-keys";
 import type { ReceiptImportRecord } from "@/modules/imports/receipt-import";
 import type { ReconciliationDecisionInput } from "@/modules/reconciliation/rules";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 
 /**
  * Hooks for reconciliation (F11.3) and the historical receipt import (F11.5). Keys sit under the business
@@ -13,7 +13,7 @@ import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
  * business mutation elsewhere refreshes them.
  */
 export function useReconciliationTotals(period: string, enabled: boolean) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: [...queryKeys.business.list("reconciliation-totals", identity.id), period],
@@ -23,7 +23,7 @@ export function useReconciliationTotals(period: string, enabled: boolean) {
 }
 
 export function useReconciliationEntries(enabled: boolean) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("reconciliation-entries", identity.id),
@@ -32,7 +32,7 @@ export function useReconciliationEntries(enabled: boolean) {
 }
 
 export function useRecordReconciliation() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ReconciliationDecisionInput) => repositories.reconciliation.record(input),
@@ -44,7 +44,7 @@ export function useRecordReconciliation() {
 
 /** Readiness for the parallel-run switch of one closed month (doc 08 section 16; F11.5). */
 export function useMonthSwitchStatus(period: string, enabled: boolean) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: [...queryKeys.business.list("month-switch-status", identity.id), period],
@@ -55,7 +55,7 @@ export function useMonthSwitchStatus(period: string, enabled: boolean) {
 
 /** Super Administrator only: signs off the switch after a month closes with no unexplained differences. */
 export function useRecordMonthSwitch() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (month: string) => repositories.reconciliation.recordMonthSwitch(month),
@@ -66,7 +66,7 @@ export function useRecordMonthSwitch() {
 }
 
 export function useReceiptImportBatches(enabled: boolean) {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const { identity } = useDevIdentity();
   return useQuery({
     queryKey: queryKeys.business.list("receipt-import-batches", identity.id),
@@ -80,7 +80,7 @@ export type ReceiptImportAction =
   | { action: "reject"; id: string; reason: string };
 
 export function useReceiptImportAction() {
-  const repositories = useMockRepositories();
+  const repositories = useRepositories();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: ReceiptImportAction) => {

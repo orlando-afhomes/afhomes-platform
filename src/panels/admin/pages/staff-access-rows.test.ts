@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createSeedStore } from "@/data/mock/seed";
+import { createSeedStore } from "@/data/seed/store";
 import type { AccountActionPolicy, AccountPolicies } from "@/modules/accounts/types";
 import type { StaffActionPolicy } from "@/modules/organization/types";
 import { accessRowName, buildAccessRows, countPendingRows, filterAccessRows, parseAccessChip, type AccessFilters } from "./staff-access-rows";

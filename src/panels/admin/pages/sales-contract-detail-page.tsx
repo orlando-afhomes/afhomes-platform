@@ -3,8 +3,8 @@
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { useApproveDeal, useContractAction, useMarkSaleDefaulted, useOperation, useSales } from "@/data/business-queries";
-import { canCorrectPayment } from "@/data/mock/scope";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
+import { canCorrectPayment } from "@/modules/identity/record-scope";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";

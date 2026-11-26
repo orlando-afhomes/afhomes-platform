@@ -3,8 +3,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Download, ExternalLink, Printer, X } from "lucide-react";
 import { useCustomers, useMembers } from "@/data/queries";
-import { useDevIdentity } from "@/shared/providers/dev-identity-provider";
-import { useMockStore } from "@/shared/providers/mock-store-provider";
+import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
@@ -28,15 +27,11 @@ type PreparedCopy = {
 };
 
 // The provider owns a different store per browser session. Generated or signed PDFs reset with it.
-const archives = new WeakMap<object, Map<string, PreparedCopy[]>>();
+/** In-memory print archive for this browser session; nothing is persisted. */
+const archive = new Map<string, PreparedCopy[]>();
 const timestamp = new Intl.DateTimeFormat("en-PH", { dateStyle: "short", timeStyle: "short", timeZone: "Asia/Manila" });
 
-export function archiveFor(store: object) {
-  let archive = archives.get(store);
-  if (!archive) {
-    archive = new Map();
-    archives.set(store, archive);
-  }
+export function archiveFor() {
   return archive;
 }
 
@@ -48,8 +43,8 @@ export function applicationPrintKey(customerId: string) {
 const applicationFingerprint = (input: PrintDocumentInput | undefined) =>
   input?.kind === "application" ? JSON.stringify([input.customer, input.tierCode, input.priceCentavos, input.schemeLabel, input.contacts]) : null;
 
-export function linkPreparedApplication(store: object, draftKey: string, customerId: string, current?: PrintDocumentInput) {
-  const archive = archiveFor(store);
+export function linkPreparedApplication(draftKey: string, customerId: string, current?: PrintDocumentInput) {
+  const archive = archiveFor();
   const key = applicationPrintKey(customerId);
   const copies = archive.get(draftKey);
   if (!copies || key === draftKey) return;
@@ -125,7 +120,6 @@ export function VipPrintControl(props: PrintProps) {
 }
 
 function VipPrintSession({ title, variant = "info", input, archiveKey, allowSignedSample, currentVipNumber }: PrintProps) {
-  const store = useMockStore();
   const attachId = useId();
   const [open, setOpen] = useState(false);
   const [copy, setCopy] = useState<PreparedCopy | null>(null);
@@ -134,7 +128,7 @@ function VipPrintSession({ title, variant = "info", input, archiveKey, allowSign
   const running = useRef(false);
   const [, refresh] = useState(0);
   const { confirmRun, dialog: removeDialog } = useConfirmRun();
-  const copies = archiveKey ? archiveFor(store).get(archiveKey) ?? [] : [];
+  const copies = archiveKey ? archiveFor().get(archiveKey) ?? [] : [];
   const generate = async () => {
     if (!input || running.current) return;
     running.current = true;
@@ -159,7 +153,7 @@ function VipPrintSession({ title, variant = "info", input, archiveKey, allowSign
         pdf: new Blob([Uint8Array.from(document.bytes)], { type: "application/pdf" }),
       };
       if (archiveKey) {
-        const archive = archiveFor(store);
+        const archive = archiveFor();
         archive.set(archiveKey, [...(archive.get(archiveKey) ?? []), next]);
       }
       setCopy(next);
@@ -179,7 +173,7 @@ function VipPrintSession({ title, variant = "info", input, archiveKey, allowSign
     errorTitle: "Copy could not be removed",
     action: () => {
       if (!archiveKey) return;
-      const archive = archiveFor(store);
+      const archive = archiveFor();
       const remaining = (archive.get(archiveKey) ?? []).filter((item) => item.id !== target.id);
       archive.set(archiveKey, remaining);
       if (copy?.id === target.id) setCopy(remaining.at(-1) ?? null);
@@ -201,7 +195,7 @@ function VipPrintSession({ title, variant = "info", input, archiveKey, allowSign
       if (pdf.getPageCount() === 0) throw new Error("Empty PDF");
       const next = { ...copy, signed: file };
       if (archiveKey) {
-        const archive = archiveFor(store);
+        const archive = archiveFor();
         archive.set(archiveKey, (archive.get(archiveKey) ?? []).map((item) => item.id === next.id ? next : item));
       }
       setCopy(next);

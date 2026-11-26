@@ -336,6 +336,85 @@ type AllowanceReview @table {
   reviewedAt: Timestamp!
 }
 
+# ---------------------------------------------------------------- F7: membership, cards and Stay Points
+# One VIP membership per finalized contract; created at full settlement, activated separately (doc 09 §5).
+type Membership @table {
+  customer: Customer!
+  contract: Contract! @unique
+  productCode: String!
+  # pending | active | expired | cancelled | suspended
+  status: String!
+  activationDate: Date
+  fullSettlementDate: Date
+  cardClaimDate: Date
+  # actual | deemed
+  cardClaimKind: String
+  validityEndDate: Date
+  # The deemed Points Activation Date once it occurs; recorded as a business date (doc 09 §8.5).
+  deemedPadDate: Date
+  # The issued VIP Number used on the card; never regenerated.
+  cardId: String @unique
+  raNumber: String
+  financialHold: Boolean! @default(value: false)
+  restoredFromHoldOn: Date
+  transferDate: Date
+  cardServices: Any
+  history: Any
+  details: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# Insert-only Annual Welcome Gift ledger: one row per release, waiver release, transfer closure or expiry (doc 09 §15.2).
+# One row per tranche, bucket and type: a tranche releases (or is waived) and expires at most once.
+type StayPointsLedgerEntry @table(key: ["membership", "tranche", "bucket", "type"]) {
+  membership: Membership!
+  tranche: Int!
+  # weekday | weekend
+  bucket: String!
+  # release | waiver_release | transfer | expiry
+  type: String!
+  points: Int!
+  date: Date!
+  reference: String
+  actor: UserAccount
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# A Qualifying Spend bill at an AFhomes Direct Operation (doc 09 §10–11); the OR number is unique system-wide.
+type ResortSpend @table {
+  membership: Membership!
+  venue: Outlet
+  date: Date!
+  grossCentavos: Int64!
+  excludedCentavos: Int64
+  amountCentavos: Int64!
+  # submitted | verified | voided
+  status: String!
+  verificationRef: String @unique
+  # primary | supplementary
+  holder: String
+  description: String
+  enteredBy: UserAccount
+  approvedBy: UserAccount
+  approvedDate: Date
+  # Dated refund entries; the original bill stays in history (doc 09 §13).
+  refunds: Any
+  details: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# A Compassionate Waiver request and its decision for one tranche (doc 09 §14).
+type StayPointsWaiver @table {
+  membership: Membership!
+  tranche: Int!
+  date: Date!
+  ground: String!
+  supportingReference: String!
+  requestedBy: UserAccount!
+  decision: Any
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
 type Payment @table {
   contract: Contract!
   customer: Customer!

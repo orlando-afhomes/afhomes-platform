@@ -314,6 +314,20 @@ extend type Member {
   """
   parentId: UUID @fdc_generated(from: "Member.parent", purpose: IMPLICIT_REF_FIELD)
 }
+extend type Membership {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Membership", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Membership`.`contract`. It must match the value of `Contract`.`id`. See `@ref` for how to customize it.
+  """
+  contractId: UUID! @fdc_generated(from: "Membership.contract", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Membership`.`customer`. It must match the value of `Customer`.`id`. See `@ref` for how to customize it.
+  """
+  customerId: UUID! @fdc_generated(from: "Membership.customer", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Outlet {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -420,6 +434,28 @@ extend type RegistrationApplication {
   """
   sponsorMemberId: UUID @fdc_generated(from: "RegistrationApplication.sponsorMember", purpose: IMPLICIT_REF_FIELD)
 }
+extend type ResortSpend {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "ResortSpend", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ResortSpend`.`approvedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  approvedById: UUID @fdc_generated(from: "ResortSpend.approvedBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ResortSpend`.`enteredBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  enteredById: UUID @fdc_generated(from: "ResortSpend.enteredBy", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ResortSpend`.`membership`. It must match the value of `Membership`.`id`. See `@ref` for how to customize it.
+  """
+  membershipId: UUID! @fdc_generated(from: "ResortSpend.membership", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ResortSpend`.`venue`. It must match the value of `Outlet`.`id`. See `@ref` for how to customize it.
+  """
+  venueId: UUID @fdc_generated(from: "ResortSpend.venue", purpose: IMPLICIT_REF_FIELD)
+}
 extend type RoleAssignment {
   """
   ✨ Implicit foreign key field based on `RoleAssignment`.`user`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
@@ -497,6 +533,30 @@ extend type StaffMember {
   ✨ Implicit foreign key field based on `StaffMember`.`departmentRole`. It must match the value of `DepartmentRole`.`id`. See `@ref` for how to customize it.
   """
   departmentRoleId: UUID @fdc_generated(from: "StaffMember.departmentRole", purpose: IMPLICIT_REF_FIELD)
+}
+extend type StayPointsLedgerEntry {
+  """
+  ✨ Implicit foreign key field based on `StayPointsLedgerEntry`.`membership`. It must match the value of `Membership`.`id`. See `@ref` for how to customize it.
+  """
+  membershipId: UUID! @fdc_generated(from: "StayPointsLedgerEntry.membership", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `StayPointsLedgerEntry`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "StayPointsLedgerEntry.actor", purpose: IMPLICIT_REF_FIELD)
+}
+extend type StayPointsWaiver {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "StayPointsWaiver", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `StayPointsWaiver`.`membership`. It must match the value of `Membership`.`id`. See `@ref` for how to customize it.
+  """
+  membershipId: UUID! @fdc_generated(from: "StayPointsWaiver.membership", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `StayPointsWaiver`.`requestedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  requestedById: UUID! @fdc_generated(from: "StayPointsWaiver.requestedBy", purpose: IMPLICIT_REF_FIELD)
 }
 extend type TierLevel {
   """

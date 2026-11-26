@@ -18,11 +18,13 @@ import type { Actor } from "@/server/auth/actor";
 import { loadScopeMembers, requireOperation } from "@/server/auth/authorize";
 import { listAll } from "@/server/db";
 import { centavosToInt64 } from "@/server/money";
-import { contractColumns, loadContract, loadContractsOfCustomer, loadCustomer, loadCommissionRateSettings, loadSaleForContract, loadPaymentsOfContract } from "@/server/repositories/records";
+import { contractColumns, loadContract, loadContractsOfCustomer, loadCustomer, loadCommissionRateSettings, loadMembershipForContract, loadSaleForContract, loadPaymentsOfContract } from "@/server/repositories/records";
 import { loadPaymentSchemes, loadProducts } from "@/server/repositories/catalog";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
 import { ApiError } from "@/server/api/errors";
 import { applyCommissionTriggerFx, commissionEffects, issueVipNumberFx, loadSaleCommissionState, vipIssuance } from "@/server/services/commissions";
+import { ensureMembershipFx } from "@/server/services/membership";
+import { isFullySettled } from "@/modules/finance/rules";
 
 const isBroad = (actor: Actor) => activeIdentityRoles(actor.identity).some((role) => BROAD_ROLES.has(role));
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -204,8 +206,17 @@ export async function finalizeContract(actor: Actor, id: string): Promise<Contra
   contract.finalizedAt = today();
   contract.reviewedBy = actor.userId;
   contract.history.push({ at: nowIso(), actorId: actor.userId, event: BUSINESS_AUDIT_ACTIONS.CONTRACT_FINALIZED, note: null });
-  // The membership record that follows full settlement belongs to the membership module, not the pilot.
-  await saveContract(actor, contract, version, [{ action: BUSINESS_AUDIT_ACTIONS.CONTRACT_FINALIZED, entityType: "contract", entityId: contract.id, details: { module: "contracts", previousValue: previous, newValue: "finalized" } }]);
+  // A contract finalized after its full settlement already carries its pending membership (doc 09 §5.1).
+  let extra: { definitions: string; fields: string; variables: Record<string, unknown> } | undefined;
+  const audits: AuditSpec[] = [{ action: BUSINESS_AUDIT_ACTIONS.CONTRACT_FINALIZED, entityType: "contract", entityId: contract.id, details: { module: "contracts", previousValue: previous, newValue: "finalized" } }];
+  const payments = await loadPaymentsOfContract(contract.id, null);
+  if (isFullySettled(contract, payments) && !(await loadMembershipForContract(contract.id))) {
+    const fx = commissionEffects();
+    ensureMembershipFx(fx, actor, contract);
+    audits.push(...fx.audits);
+    extra = { definitions: fx.definitions.join(", "), fields: fx.fields.join("\n"), variables: fx.variables };
+  }
+  await saveContract(actor, contract, version, audits, extra);
   return contract;
 }
 

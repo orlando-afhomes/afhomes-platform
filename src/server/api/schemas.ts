@@ -547,3 +547,26 @@ export const AllowanceReviewBody = z.strictObject({
   workbook: WorkbookTotals.nullable(), workbookDifferenceReason: z.string().max(500).optional(),
 });
 export const AssembleQuery = z.object({ month: MONTH });
+
+// ---------------------------------------------------------------- F7: membership and Stay Points
+export const MembershipLookupQuery = z.object({ term: z.string().min(1).max(120) });
+export const CardServiceBody = z.strictObject({
+  kind: z.enum(["replacement", "transfer", "inheritance"]),
+  requestReference: z.string().min(1).max(200), approvalReference: z.string().min(1).max(200),
+  custody: z.enum(["voided", "recalled"]).optional(),
+  nextCustomerId: idField.optional(),
+  holderNotified: z.boolean().optional(),
+  inheritanceReference: z.string().max(200).optional(),
+  acknowledgementReference: z.string().max(200).optional(),
+});
+export const StayPointsActionBody = z.discriminatedUnion("action", [
+  z.strictObject({
+    action: z.literal("enter"), membershipId: idField, venueId: idField, date: dateOnly,
+    reference: z.string().max(100).optional(), grossCentavos: z.number().int().min(1), excludedCentavos: z.number().int().min(0).default(0),
+    holder: z.enum(["primary", "supplementary"]), scannedCode: z.string().max(100).optional(), description: z.string().min(1).max(300),
+  }),
+  z.strictObject({ action: z.literal("approve"), spendId: idField }),
+  z.strictObject({ action: z.literal("refund"), spendId: idField, date: dateOnly, amountCentavos: z.number().int().min(1), reason: z.string().min(1).max(500) }),
+  z.strictObject({ action: z.literal("request-waiver"), membershipId: idField, tranche: z.number().int().min(1), date: dateOnly, ground: z.string().min(1).max(120), supportingReference: z.string().min(1).max(200) }),
+  z.strictObject({ action: z.literal("decide-waiver"), waiverId: idField, granted: z.boolean(), releaseDate: dateOnly.nullable(), reason: z.string().min(1).max(500) }),
+]);

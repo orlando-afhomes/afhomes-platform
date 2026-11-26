@@ -1786,6 +1786,10 @@ extend type Contract {
     having: Payment_Having
   ): [Payment!]! @fdc_generated(from: "Payment.contract", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `Membership` objects in a one-to-one relationship (where `Membership`.`contract` is this object).
+  """
+  membership_on_contract: Membership @fdc_generated(from: "Membership.contract", purpose: QUERY_SINGLE_ONE_TO_ONE)
+  """
   ✨ List `Sale` objects in a one-to-one relationship (where `Sale`.`contract` is this object).
   """
   sale_on_contract: Sale @fdc_generated(from: "Sale.contract", purpose: QUERY_SINGLE_ONE_TO_ONE)
@@ -2098,6 +2102,40 @@ extend type Customer {
     """
     having: IgpSale_Having
   ): [IgpSale!]! @fdc_generated(from: "IgpSale.customer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Membership` objects in a one-to-many relationship (where `Membership`.`customer` is this object).
+  """
+  memberships_on_customer(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Membership_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Membership_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Membership_Having
+  ): [Membership!]! @fdc_generated(from: "Membership.customer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`customer` is this object).
   """
@@ -5024,7 +5062,425 @@ extend type Member {
   """
   _id: ID! @fdc_generated(from: "Member.id", purpose: ENTITY_ID)
 }
+extend type Membership {
+  """
+  ✨ List `ResortSpend` objects in a one-to-many relationship (where `ResortSpend`.`membership` is this object).
+  """
+  resortSpends_on_membership(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ResortSpend_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ResortSpend_Having
+  ): [ResortSpend!]! @fdc_generated(from: "ResortSpend.membership", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `StayPointsLedgerEntry` objects in a one-to-many relationship (where `StayPointsLedgerEntry`.`membership` is this object).
+  """
+  stayPointsLedgerEntries_on_membership(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsLedgerEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsLedgerEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsLedgerEntry_Having
+  ): [StayPointsLedgerEntry!]! @fdc_generated(from: "StayPointsLedgerEntry.membership", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `StayPointsWaiver` objects in a one-to-many relationship (where `StayPointsWaiver`.`membership` is this object).
+  """
+  stayPointsWaivers_on_membership(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsWaiver_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsWaiver_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsWaiver_Having
+  ): [StayPointsWaiver!]! @fdc_generated(from: "StayPointsWaiver.membership", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Membership", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Membership` table.
+  """
+  _count: Int! @fdc_generated(from: "Membership.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `activationDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  activationDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.activationDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `cardClaimDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cardClaimDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.cardClaimDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `cardClaimKind` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cardClaimKind_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.cardClaimKind", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `cardId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cardId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.cardId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `cardServices` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cardServices_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.cardServices", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `contractId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  contractId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.contractId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `customerId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  customerId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.customerId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `deemedPadDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  deemedPadDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.deemedPadDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `financialHold` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  financialHold_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.financialHold", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `fullSettlementDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fullSettlementDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.fullSettlementDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `history` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  history_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.history", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `productCode` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  productCode_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.productCode", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `raNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  raNumber_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.raNumber", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `restoredFromHoldOn` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  restoredFromHoldOn_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.restoredFromHoldOn", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `transferDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  transferDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.transferDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Membership` table where the `validityEndDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  validityEndDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Membership.validityEndDate", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `activationDate` field in the `Membership` table.
+  """
+  activationDate_min: Date @fdc_generated(from: "Membership.activationDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `cardClaimDate` field in the `Membership` table.
+  """
+  cardClaimDate_min: Date @fdc_generated(from: "Membership.cardClaimDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `cardServices` field in the `Membership` table.
+  """
+  cardServices_min: Any @fdc_generated(from: "Membership.cardServices", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `createdAt` field in the `Membership` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Membership.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `deemedPadDate` field in the `Membership` table.
+  """
+  deemedPadDate_min: Date @fdc_generated(from: "Membership.deemedPadDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `details` field in the `Membership` table.
+  """
+  details_min: Any @fdc_generated(from: "Membership.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `fullSettlementDate` field in the `Membership` table.
+  """
+  fullSettlementDate_min: Date @fdc_generated(from: "Membership.fullSettlementDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `history` field in the `Membership` table.
+  """
+  history_min: Any @fdc_generated(from: "Membership.history", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `restoredFromHoldOn` field in the `Membership` table.
+  """
+  restoredFromHoldOn_min: Date @fdc_generated(from: "Membership.restoredFromHoldOn", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `transferDate` field in the `Membership` table.
+  """
+  transferDate_min: Date @fdc_generated(from: "Membership.transferDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `validityEndDate` field in the `Membership` table.
+  """
+  validityEndDate_min: Date @fdc_generated(from: "Membership.validityEndDate", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `activationDate` field in the `Membership` table.
+  """
+  activationDate_max: Date @fdc_generated(from: "Membership.activationDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `cardClaimDate` field in the `Membership` table.
+  """
+  cardClaimDate_max: Date @fdc_generated(from: "Membership.cardClaimDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `cardServices` field in the `Membership` table.
+  """
+  cardServices_max: Any @fdc_generated(from: "Membership.cardServices", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `Membership` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Membership.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `deemedPadDate` field in the `Membership` table.
+  """
+  deemedPadDate_max: Date @fdc_generated(from: "Membership.deemedPadDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `details` field in the `Membership` table.
+  """
+  details_max: Any @fdc_generated(from: "Membership.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `fullSettlementDate` field in the `Membership` table.
+  """
+  fullSettlementDate_max: Date @fdc_generated(from: "Membership.fullSettlementDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `history` field in the `Membership` table.
+  """
+  history_max: Any @fdc_generated(from: "Membership.history", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `restoredFromHoldOn` field in the `Membership` table.
+  """
+  restoredFromHoldOn_max: Date @fdc_generated(from: "Membership.restoredFromHoldOn", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `transferDate` field in the `Membership` table.
+  """
+  transferDate_max: Date @fdc_generated(from: "Membership.transferDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `validityEndDate` field in the `Membership` table.
+  """
+  validityEndDate_max: Date @fdc_generated(from: "Membership.validityEndDate", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Membership.id", purpose: ENTITY_ID)
+}
 extend type Outlet {
+  """
+  ✨ List `ResortSpend` objects in a one-to-many relationship (where `ResortSpend`.`venue` is this object).
+  """
+  resortSpends_on_venue(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ResortSpend_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ResortSpend_Having
+  ): [ResortSpend!]! @fdc_generated(from: "ResortSpend.venue", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
   """
@@ -7173,6 +7629,291 @@ extend type RegistrationApplication {
   """
   _id: ID! @fdc_generated(from: "RegistrationApplication.id", purpose: ENTITY_ID)
 }
+extend type ResortSpend {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "ResortSpend", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table.
+  """
+  _count: Int! @fdc_generated(from: "ResortSpend.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `amountCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  amountCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.amountCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `approvedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.approvedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `approvedDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  approvedDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.approvedDate", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `date` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  date_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.date", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `description` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  description_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.description", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `details` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  details_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.details", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `enteredById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enteredById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.enteredById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `excludedCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  excludedCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.excludedCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `grossCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  grossCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.grossCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `holder` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  holder_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.holder", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `membershipId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  membershipId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.membershipId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `refunds` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  refunds_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.refunds", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `venueId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  venueId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.venueId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ResortSpend` table where the `verificationRef` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  verificationRef_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend.verificationRef", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `amountCentavos` field in the `ResortSpend` table.
+  """
+  amountCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ResortSpend.amountCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `excludedCentavos` field in the `ResortSpend` table.
+  """
+  excludedCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ResortSpend.excludedCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `grossCentavos` field in the `ResortSpend` table.
+  """
+  grossCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ResortSpend.grossCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `amountCentavos` field in the `ResortSpend` table.
+  """
+  amountCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ResortSpend.amountCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `excludedCentavos` field in the `ResortSpend` table.
+  """
+  excludedCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ResortSpend.excludedCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `grossCentavos` field in the `ResortSpend` table.
+  """
+  grossCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ResortSpend.grossCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `amountCentavos` field in the `ResortSpend` table.
+  """
+  amountCentavos_min: Int64 @fdc_generated(from: "ResortSpend.amountCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `approvedDate` field in the `ResortSpend` table.
+  """
+  approvedDate_min: Date @fdc_generated(from: "ResortSpend.approvedDate", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `createdAt` field in the `ResortSpend` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "ResortSpend.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `date` field in the `ResortSpend` table.
+  """
+  date_min: Date @fdc_generated(from: "ResortSpend.date", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `details` field in the `ResortSpend` table.
+  """
+  details_min: Any @fdc_generated(from: "ResortSpend.details", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `excludedCentavos` field in the `ResortSpend` table.
+  """
+  excludedCentavos_min: Int64 @fdc_generated(from: "ResortSpend.excludedCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `grossCentavos` field in the `ResortSpend` table.
+  """
+  grossCentavos_min: Int64 @fdc_generated(from: "ResortSpend.grossCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `refunds` field in the `ResortSpend` table.
+  """
+  refunds_min: Any @fdc_generated(from: "ResortSpend.refunds", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `amountCentavos` field in the `ResortSpend` table.
+  """
+  amountCentavos_max: Int64 @fdc_generated(from: "ResortSpend.amountCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `approvedDate` field in the `ResortSpend` table.
+  """
+  approvedDate_max: Date @fdc_generated(from: "ResortSpend.approvedDate", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `ResortSpend` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "ResortSpend.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `date` field in the `ResortSpend` table.
+  """
+  date_max: Date @fdc_generated(from: "ResortSpend.date", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `details` field in the `ResortSpend` table.
+  """
+  details_max: Any @fdc_generated(from: "ResortSpend.details", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `excludedCentavos` field in the `ResortSpend` table.
+  """
+  excludedCentavos_max: Int64 @fdc_generated(from: "ResortSpend.excludedCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `grossCentavos` field in the `ResortSpend` table.
+  """
+  grossCentavos_max: Int64 @fdc_generated(from: "ResortSpend.grossCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `refunds` field in the `ResortSpend` table.
+  """
+  refunds_max: Any @fdc_generated(from: "ResortSpend.refunds", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "ResortSpend.id", purpose: ENTITY_ID)
+}
 extend type RoleAssignment {
   """
   Implicit metadata field that cannot be written. It provides extra information about query results.
@@ -7922,6 +8663,314 @@ extend type StaffMember {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "StaffMember.id", purpose: ENTITY_ID)
+}
+extend type StayPointsLedgerEntry {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "StayPointsLedgerEntry", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table.
+  """
+  _count: Int! @fdc_generated(from: "StayPointsLedgerEntry.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `actorId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actorId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.actorId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `bucket` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  bucket_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.bucket", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `date` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  date_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.date", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `membershipId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  membershipId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.membershipId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `points` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  points_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.points", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `reference` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reference_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.reference", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `tranche` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tranche_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.tranche", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsLedgerEntry` table where the `type` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  type_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry.type", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `points` field in the `StayPointsLedgerEntry` table.
+  """
+  points_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "StayPointsLedgerEntry.points", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `tranche` field in the `StayPointsLedgerEntry` table.
+  """
+  tranche_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "StayPointsLedgerEntry.tranche", purpose: QUERY_SUM)
+  """
+  ✨ Average the `points` field in the `StayPointsLedgerEntry` table.
+  """
+  points_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "StayPointsLedgerEntry.points", purpose: QUERY_AVG)
+  """
+  ✨ Average the `tranche` field in the `StayPointsLedgerEntry` table.
+  """
+  tranche_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "StayPointsLedgerEntry.tranche", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `StayPointsLedgerEntry` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "StayPointsLedgerEntry.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `date` field in the `StayPointsLedgerEntry` table.
+  """
+  date_min: Date @fdc_generated(from: "StayPointsLedgerEntry.date", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `points` field in the `StayPointsLedgerEntry` table.
+  """
+  points_min: Int @fdc_generated(from: "StayPointsLedgerEntry.points", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `tranche` field in the `StayPointsLedgerEntry` table.
+  """
+  tranche_min: Int @fdc_generated(from: "StayPointsLedgerEntry.tranche", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `StayPointsLedgerEntry` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "StayPointsLedgerEntry.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `date` field in the `StayPointsLedgerEntry` table.
+  """
+  date_max: Date @fdc_generated(from: "StayPointsLedgerEntry.date", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `points` field in the `StayPointsLedgerEntry` table.
+  """
+  points_max: Int @fdc_generated(from: "StayPointsLedgerEntry.points", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `tranche` field in the `StayPointsLedgerEntry` table.
+  """
+  tranche_max: Int @fdc_generated(from: "StayPointsLedgerEntry.tranche", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "StayPointsLedgerEntry.membershipId,tranche,bucket,type", purpose: ENTITY_ID)
+}
+extend type StayPointsWaiver {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "StayPointsWaiver", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table.
+  """
+  _count: Int! @fdc_generated(from: "StayPointsWaiver.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `date` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  date_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.date", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `decision` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decision_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.decision", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `ground` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  ground_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.ground", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `membershipId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  membershipId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.membershipId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `requestedById` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  requestedById_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.requestedById", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `supportingReference` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  supportingReference_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.supportingReference", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `StayPointsWaiver` table where the `tranche` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tranche_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver.tranche", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `tranche` field in the `StayPointsWaiver` table.
+  """
+  tranche_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "StayPointsWaiver.tranche", purpose: QUERY_SUM)
+  """
+  ✨ Average the `tranche` field in the `StayPointsWaiver` table.
+  """
+  tranche_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "StayPointsWaiver.tranche", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `StayPointsWaiver` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "StayPointsWaiver.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `date` field in the `StayPointsWaiver` table.
+  """
+  date_min: Date @fdc_generated(from: "StayPointsWaiver.date", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `decision` field in the `StayPointsWaiver` table.
+  """
+  decision_min: Any @fdc_generated(from: "StayPointsWaiver.decision", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `tranche` field in the `StayPointsWaiver` table.
+  """
+  tranche_min: Int @fdc_generated(from: "StayPointsWaiver.tranche", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `StayPointsWaiver` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "StayPointsWaiver.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `date` field in the `StayPointsWaiver` table.
+  """
+  date_max: Date @fdc_generated(from: "StayPointsWaiver.date", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `decision` field in the `StayPointsWaiver` table.
+  """
+  decision_max: Any @fdc_generated(from: "StayPointsWaiver.decision", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `tranche` field in the `StayPointsWaiver` table.
+  """
+  tranche_max: Int @fdc_generated(from: "StayPointsWaiver.tranche", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "StayPointsWaiver.id", purpose: ENTITY_ID)
 }
 extend type TierLevel {
   """
@@ -9043,6 +10092,74 @@ extend type UserAccount {
     having: RegistrationApplication_Having
   ): [RegistrationApplication!]! @fdc_generated(from: "RegistrationApplication.reviewer", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `ResortSpend` objects in a one-to-many relationship (where `ResortSpend`.`approvedBy` is this object).
+  """
+  resortSpends_on_approvedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ResortSpend_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ResortSpend_Having
+  ): [ResortSpend!]! @fdc_generated(from: "ResortSpend.approvedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `ResortSpend` objects in a one-to-many relationship (where `ResortSpend`.`enteredBy` is this object).
+  """
+  resortSpends_on_enteredBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ResortSpend_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ResortSpend_Having
+  ): [ResortSpend!]! @fdc_generated(from: "ResortSpend.enteredBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `RoleAssignment` objects in a one-to-many relationship (where `RoleAssignment`.`user` is this object).
   """
   roleAssignments_on_user(
@@ -9178,6 +10295,74 @@ extend type UserAccount {
     """
     having: SeatVacancy_Having
   ): [SeatVacancy!]! @fdc_generated(from: "SeatVacancy.recordedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `StayPointsLedgerEntry` objects in a one-to-many relationship (where `StayPointsLedgerEntry`.`actor` is this object).
+  """
+  stayPointsLedgerEntries_on_actor(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsLedgerEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsLedgerEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsLedgerEntry_Having
+  ): [StayPointsLedgerEntry!]! @fdc_generated(from: "StayPointsLedgerEntry.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `StayPointsWaiver` objects in a one-to-many relationship (where `StayPointsWaiver`.`requestedBy` is this object).
+  """
+  stayPointsWaivers_on_requestedBy(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsWaiver_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsWaiver_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsWaiver_Having
+  ): [StayPointsWaiver!]! @fdc_generated(from: "StayPointsWaiver.requestedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `UnmatchedReceipt` objects in a one-to-many relationship (where `UnmatchedReceipt`.`decidedBy` is this object).
   """

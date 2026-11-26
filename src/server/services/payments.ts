@@ -15,11 +15,13 @@ import { requireOperation } from "@/server/auth/authorize";
 import { dbRead, listAll, uniqueViolation } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
 import {
-  loadAllowanceReviews, loadCommissionPayoutLists, loadCommissions, loadCommissionRateSettings, loadContract,
+  loadAllowanceReviews, loadCommissionPayoutLists, loadCommissions, loadCommissionRateSettings, loadContract, loadMembershipForContract,
   loadNumbersWithPrefix, loadPayment, loadPaymentsOfContract, loadSaleForContract, loadVerifiedPayments,
 } from "@/server/repositories/records";
 import { conflict, invalid, newId, notFound, nowIso, today, transact, type AuditSpec } from "@/server/services/common";
 import { applyCommissionTriggerFx, commissionEffects, holdUnpaidCommissionsFx, issueVipNumberFx, loadSaleCommissionState, payoutListOf, releaseCommissionsFx, restoreDefaultedCommissionsFx, vipIssuance } from "@/server/services/commissions";
+import { ensureMembershipFx } from "@/server/services/membership";
+import { isFullySettled } from "@/modules/finance/rules";
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const REFERENCE_INDEX = "payment_referenceNo_uidx";
@@ -191,6 +193,19 @@ export async function verifyPayment(actor: Actor, id: string, options: { excepti
         holdUnpaidCommissionsFx(fx, actor, state, sale.id, "Approved collections fell below 40%.", true, ["stage1"]);
         holdUnpaidCommissionsFx(fx, actor, state, sale.id, "The sale is no longer Confirmed.");
       }
+    }
+    // F7: a finalized, fully settled contract carries its pending membership in this same receipt transaction (doc 09 §5).
+    const membership = await loadMembershipForContract(contract.id);
+    if (!membership && contract.status === "finalized" && isFullySettled(contract, [...others, verified])) {
+      ensureMembershipFx(fx, actor, contract);
+    }
+    // A reinstated or reconfirmed sale releases the membership Financial Hold (doc 09 §17.2).
+    if (membership && membership.financialHold && isFullySettled(contract, [...others, verified])) {
+      fx.definitions.push("$memId: UUID!", "$memRestored: Date!");
+      fx.variables["memId"] = membership.id;
+      fx.variables["memRestored"] = firstOpenDate(closed, today());
+      fx.fields.push("membership: membership_updateMany(where: { id: { eq: $memId } }, data: { financialHold: false, restoredFromHoldOn: $memRestored })");
+      fx.audits.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, entityType: "membership", entityId: membership.id, details: { module: "membership", previousValue: "financial_hold", newValue: "no_hold", relatedRecordIds: [contract.id] } });
     }
 
     const definitions = [
@@ -374,6 +389,21 @@ export async function adjustPayment(actor: Actor, id: string, input: { kind: "re
         }
       }
     }
+    // F7: any reversal or refund that leaves the total price outstanding holds the membership (doc 09 §17.2);
+    // verified money that settles the contract again releases it.
+    const membership = sale ? await loadMembershipForContract(contract.id) : null;
+    if (membership && state && !state.settled && !membership.financialHold) {
+      fx.definitions.push("$memId: UUID!");
+      fx.variables["memId"] = membership.id;
+      fx.fields.push("membership: membership_updateMany(where: { id: { eq: $memId } }, data: { financialHold: true })");
+      fx.audits.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_APPLIED, entityType: "membership", entityId: membership.id, details: { module: "membership", previousValue: "no_hold", newValue: "financial_hold", relatedRecordIds: [contract.id] } });
+    } else if (membership && state?.settled && membership.financialHold) {
+      fx.definitions.push("$memId: UUID!", "$memRestored: Date!");
+      fx.variables["memId"] = membership.id;
+      fx.variables["memRestored"] = date;
+      fx.fields.push("membership: membership_updateMany(where: { id: { eq: $memId } }, data: { financialHold: false, restoredFromHoldOn: $memRestored })");
+      fx.audits.push({ action: BUSINESS_AUDIT_ACTIONS.FINANCIAL_HOLD_RELEASED, entityType: "membership", entityId: membership.id, details: { module: "membership", previousValue: "financial_hold", newValue: "no_hold", relatedRecordIds: [contract.id] } });
+    }
     const stored = await dbRead<{ payment: { details: Record<string, unknown> | null } | null }>(`query($id: UUID!) { payment(id: $id) { details } }`, { id });
     const event = { at: nowIso(), actorId: actor.userId, event: input.kind === "reversal" ? BUSINESS_AUDIT_ACTIONS.PAYMENT_REVERSED : BUSINESS_AUDIT_ACTIONS.PAYMENT_REFUNDED, note: reason };
     const details = { ...(stored.payment?.details ?? {}), ...detailsOf(adjusted), history: [...payment.history, event] };
@@ -491,7 +521,10 @@ export async function paperNumberTaken(number: string, self?: { paymentId?: stri
   const batches = await listAll<{ id: string; status: string; receipts: Array<{ referenceNo: string }> | null }>("receiptImportBatches", "id status receipts");
   if (batches.some((batch) => batch.id !== self?.batchId && batch.status !== "rejected" && (batch.receipts ?? []).some((receipt) => receipt.referenceNo.trim().toLowerCase() === wanted))) return true;
   const igp = await listAll<{ details: { receipts?: Array<{ documentNo: string | null }> } | null }>("igpSales", "details");
-  return igp.some((sale) => (sale.details?.receipts ?? []).some((receipt) => (receipt.documentNo ?? "").trim().toLowerCase() === wanted));
+  if (igp.some((sale) => (sale.details?.receipts ?? []).some((receipt) => (receipt.documentNo ?? "").trim().toLowerCase() === wanted))) return true;
+  // F7: resort bill OR numbers share the same system-wide uniqueness (doc 09 §11).
+  const spends = await listAll<{ verificationRef: string | null }>("resortSpends", "verificationRef");
+  return spends.some((row) => (row.verificationRef ?? "").trim().toLowerCase() === wanted);
 }
 
 export async function submitUnmatchedReceipt(actor: Actor, input: SubmitUnmatchedReceiptInput): Promise<UnmatchedReceipt> {

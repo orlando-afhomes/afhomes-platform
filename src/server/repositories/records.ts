@@ -2,6 +2,9 @@ import "server-only";
 import type { Contract } from "@/modules/contracts/types";
 import type { Commission, CommissionClawback, CommissionPayoutList, CommissionRateSetting, VipPositionRate } from "@/modules/commissions/types";
 import type { AllowanceReview, AllowanceReviewInput } from "@/modules/commissions/allowances";
+import type { Membership } from "@/modules/membership/types";
+import type { GiftLedgerEntry, ResortSpend, SpendRefund, WaiverRequest } from "@/modules/stay-points/types";
+import type { PointsBucket } from "@/modules/redemption/types";
 import type { Customer, CustomerStatus } from "@/modules/customers/types";
 import type { Payment, PaymentAdjustment } from "@/modules/finance/types";
 import type { OrgMember } from "@/modules/organization/types";
@@ -285,6 +288,101 @@ export async function loadMembersFull(): Promise<OrgMember[]> {
     ...(row.details ?? {}), id: row.id, displayName: row.displayName, designation: row.designation, branchId: row.branchId, status: row.status, parentId: row.parent?.id ?? null,
     teamName: row.teamName, referralCode: row.referralCode, aaNumber: row.aaNumber, clawbackAddendumSignedDate: row.clawbackAddendumSignedDate ?? null,
   })) as unknown as OrgMember[];
+}
+
+// ---------------------------------------------------------------- memberships and Stay Points (F7)
+export type MembershipRow = {
+  id: string; productCode: string; status: string; activationDate: string | null; fullSettlementDate: string | null;
+  cardClaimDate: string | null; cardClaimKind: string | null; validityEndDate: string | null; deemedPadDate: string | null; cardId: string | null; raNumber: string | null;
+  financialHold: boolean; restoredFromHoldOn: string | null; transferDate: string | null;
+  cardServices: unknown; history: unknown; details: Json | null; customer: Ref; contract: Ref; createdAt: string;
+};
+export const MEMBERSHIP_FIELDS = "id productCode status activationDate fullSettlementDate cardClaimDate cardClaimKind validityEndDate deemedPadDate cardId raNumber financialHold restoredFromHoldOn transferDate cardServices history details customer { id } contract { id } createdAt";
+
+export function toMembership(row: MembershipRow): Membership {
+  return {
+    ...(row.details ?? {}),
+    id: row.id, customerId: row.customer?.id ?? "", contractId: row.contract?.id ?? "",
+    productCode: row.productCode as Membership["productCode"], status: row.status as Membership["status"],
+    activationDate: row.activationDate, fullSettlementDate: row.fullSettlementDate,
+    cardClaimDate: row.cardClaimDate, ...(row.cardClaimKind ? { cardClaimKind: row.cardClaimKind as "actual" | "deemed" } : {}),
+    validityEndDate: row.validityEndDate, ...(row.deemedPadDate ? { deemedPadDate: row.deemedPadDate } : {}),
+    cardId: row.cardId, raNumber: row.raNumber,
+    financialHold: row.financialHold,
+    ...(row.restoredFromHoldOn ? { restoredFromHoldOn: row.restoredFromHoldOn } : {}),
+    ...(row.transferDate ? { transferDate: row.transferDate } : {}),
+    ...(row.cardServices ? { cardServices: row.cardServices as Membership["cardServices"] } : {}),
+    createdAt: row.createdAt,
+    history: (row.history as unknown as Membership["history"]) ?? [],
+  } as Membership;
+}
+
+export async function loadMemberships(): Promise<Membership[]> {
+  return (await listAll<MembershipRow>("memberships", MEMBERSHIP_FIELDS)).map(toMembership);
+}
+
+export async function loadMembership(id: string): Promise<Membership | null> {
+  const result = await dbRead<{ membership: MembershipRow | null }>(`query($id: UUID!) { membership(id: $id) { ${MEMBERSHIP_FIELDS} } }`, { id });
+  return result.membership ? toMembership(result.membership) : null;
+}
+
+export async function loadMembershipForContract(contractId: string): Promise<Membership | null> {
+  const result = await dbRead<{ memberships: MembershipRow[] }>(`query($c: UUID!) { memberships(where: { contract: { id: { eq: $c } } }, limit: 1) { ${MEMBERSHIP_FIELDS} } }`, { c: contractId });
+  return result.memberships[0] ? toMembership(result.memberships[0]) : null;
+}
+
+type ResortSpendRow = {
+  id: string; date: string; grossCentavos: string; excludedCentavos: string | null; amountCentavos: string; status: string;
+  verificationRef: string | null; holder: string | null; description: string | null; approvedDate: string | null;
+  refunds: unknown; details: Json | null; membership: Ref; venue: Ref; enteredBy: Ref; approvedBy: Ref;
+};
+export const RESORT_SPEND_FIELDS = "id date grossCentavos excludedCentavos amountCentavos status verificationRef holder description approvedDate refunds details membership { id } venue { id } enteredBy { id } approvedBy { id }";
+
+function toResortSpend(row: ResortSpendRow): ResortSpend {
+  return {
+    ...(row.details ?? {}), id: row.id, membershipId: row.membership?.id ?? "", date: row.date,
+    amountCentavos: int64ToCentavos(row.amountCentavos), grossCentavos: int64ToCentavos(row.grossCentavos),
+    excludedCentavos: int64ToCentavos(row.excludedCentavos ?? "0"),
+    status: row.status as ResortSpend["status"], verificationRef: row.verificationRef,
+    venueId: row.venue?.id ?? undefined, holder: (row.holder as ResortSpend["holder"]) ?? undefined,
+    description: row.description ?? "", enteredBy: row.enteredBy?.id ?? undefined, approvedBy: row.approvedBy?.id ?? undefined,
+    approvedDate: row.approvedDate ?? undefined,
+  } as ResortSpend;
+}
+
+/** The membership's resort bills and their dated refunds (doc 09 §11–13). */
+export async function loadMembershipSpends(membershipId: string): Promise<{ spends: ResortSpend[]; refunds: SpendRefund[] }> {
+  const rows = await listAll<ResortSpendRow>("resortSpends", RESORT_SPEND_FIELDS, { where: "{ membership: { id: { eq: $m } } }", variableDefinitions: "$m: UUID!", variables: { m: membershipId } });
+  return {
+    spends: rows.map(toResortSpend),
+    refunds: rows.flatMap((row) => (row.refunds as unknown as SpendRefund[] | null) ?? []),
+  };
+}
+
+type WaiverRow = { id: string; tranche: number; date: string; ground: string; supportingReference: string; requestedBy: Ref; decision: unknown; membership: Ref };
+export const WAIVER_FIELDS = "id tranche date ground supportingReference requestedBy { id } decision membership { id }";
+
+export async function loadWaiversOfMembership(membershipId: string): Promise<WaiverRequest[]> {
+  const rows = await listAll<WaiverRow>("stayPointsWaivers", WAIVER_FIELDS, { where: "{ membership: { id: { eq: $m } } }", variableDefinitions: "$m: UUID!", variables: { m: membershipId } });
+  return rows.map((row) => ({
+    id: row.id, membershipId: row.membership?.id ?? "", tranche: row.tranche, date: row.date,
+    ground: row.ground as WaiverRequest["ground"], supportingReference: row.supportingReference,
+    requestedBy: row.requestedBy?.id ?? "", decision: (row.decision as WaiverRequest["decision"]) ?? undefined,
+  }));
+}
+
+type LedgerEntryRow = { tranche: number; bucket: string; type: string; points: number; date: string; reference: string | null; actor: Ref; membership: Ref };
+export const LEDGER_ENTRY_FIELDS = "tranche bucket type points date reference actor { id } membership { id }";
+
+/** The insert-only Annual Welcome Gift ledger entries of one membership (doc 09 §15.2). */
+export async function loadLedgerEntries(membershipId: string): Promise<GiftLedgerEntry[]> {
+  // The composite-key table has no id column, so the read orders by business date.
+  const rows = await listAll<LedgerEntryRow>("stayPointsLedgerEntries", LEDGER_ENTRY_FIELDS, { where: "{ membership: { id: { eq: $m } } }", orderBy: "[{ date: ASC }]", variableDefinitions: "$m: UUID!", variables: { m: membershipId } });
+  return rows.map((row) => ({
+    membershipId: row.membership?.id ?? "", vipNumber: "", tranche: row.tranche,
+    bucket: row.bucket as PointsBucket, type: row.type as GiftLedgerEntry["type"], points: row.points, date: row.date,
+    reference: row.reference, actorId: row.actor?.id ?? "system",
+  }));
 }
 
 // ---------------------------------------------------------------- commissions (F6)

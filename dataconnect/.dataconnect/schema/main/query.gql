@@ -484,6 +484,25 @@ extend type Query {
     first: Member_FirstRow
   ): Member @fdc_generated(from: "Member", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `Membership` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  membership(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Membership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Membership_FirstRow
+  ): Membership @fdc_generated(from: "Membership", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Outlet` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   outlet(
@@ -655,6 +674,25 @@ extend type Query {
     first: RegistrationApplication_FirstRow
   ): RegistrationApplication @fdc_generated(from: "RegistrationApplication", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `ResortSpend` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  resortSpend(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ResortSpend_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ResortSpend_FirstRow
+  ): ResortSpend @fdc_generated(from: "ResortSpend", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `RoleAssignment` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   roleAssignment(
@@ -744,6 +782,39 @@ extend type Query {
     """
     first: StaffMember_FirstRow
   ): StaffMember @fdc_generated(from: "StaffMember", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `StayPointsLedgerEntry` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  stayPointsLedgerEntry(
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsLedgerEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsLedgerEntry_FirstRow
+  ): StayPointsLedgerEntry @fdc_generated(from: "StayPointsLedgerEntry", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `StayPointsWaiver` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  stayPointsWaiver(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsWaiver_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsWaiver_FirstRow
+  ): StayPointsWaiver @fdc_generated(from: "StayPointsWaiver", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `TierLevel` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -1700,6 +1771,40 @@ extend type Query {
     having: Member_Having
   ): [Member!]! @fdc_generated(from: "Member", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `Membership` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  memberships(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Membership_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Membership_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Membership_Having
+  ): [Membership!]! @fdc_generated(from: "Membership", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `Outlet` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   outlets(
@@ -2006,6 +2111,40 @@ extend type Query {
     having: RegistrationApplication_Having
   ): [RegistrationApplication!]! @fdc_generated(from: "RegistrationApplication", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `ResortSpend` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  resortSpends(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ResortSpend_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ResortSpend_Having
+  ): [ResortSpend!]! @fdc_generated(from: "ResortSpend", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `RoleAssignment` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   roleAssignments(
@@ -2175,6 +2314,74 @@ extend type Query {
     """
     having: StaffMember_Having
   ): [StaffMember!]! @fdc_generated(from: "StaffMember", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `StayPointsLedgerEntry` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  stayPointsLedgerEntries(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsLedgerEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsLedgerEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsLedgerEntry_Having
+  ): [StayPointsLedgerEntry!]! @fdc_generated(from: "StayPointsLedgerEntry", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `StayPointsWaiver` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  stayPointsWaivers(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: StayPointsWaiver_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [StayPointsWaiver_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: StayPointsWaiver_Having
+  ): [StayPointsWaiver!]! @fdc_generated(from: "StayPointsWaiver", purpose: QUERY_MULTIPLE)
   """
   ✨ List `TierLevel` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

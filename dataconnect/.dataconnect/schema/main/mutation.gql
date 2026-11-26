@@ -234,6 +234,15 @@ extend type Mutation {
     data: Member_Data!
   ): Member_KeyOutput! @fdc_generated(from: "Member", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `Membership` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  membership_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Membership_Data!
+  ): Membership_KeyOutput! @fdc_generated(from: "Membership", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Outlet` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   outlet_insert(
@@ -315,6 +324,15 @@ extend type Mutation {
     data: RegistrationApplication_Data!
   ): RegistrationApplication_KeyOutput! @fdc_generated(from: "RegistrationApplication", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `ResortSpend` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  resortSpend_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ResortSpend_Data!
+  ): ResortSpend_KeyOutput! @fdc_generated(from: "ResortSpend", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `RoleAssignment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   roleAssignment_insert(
@@ -359,6 +377,24 @@ extend type Mutation {
     """
     data: StaffMember_Data!
   ): StaffMember_KeyOutput! @fdc_generated(from: "StaffMember", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `StayPointsLedgerEntry` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  stayPointsLedgerEntry_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: StayPointsLedgerEntry_Data!
+  ): StayPointsLedgerEntry_KeyOutput! @fdc_generated(from: "StayPointsLedgerEntry", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `StayPointsWaiver` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  stayPointsWaiver_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: StayPointsWaiver_Data!
+  ): StayPointsWaiver_KeyOutput! @fdc_generated(from: "StayPointsWaiver", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `TierLevel` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -630,6 +666,15 @@ extend type Mutation {
     data: [Member_Data!]!
   ): [Member_KeyOutput!]! @fdc_generated(from: "Member", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `Membership` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  membership_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Membership_Data!]!
+  ): [Membership_KeyOutput!]! @fdc_generated(from: "Membership", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `Outlet` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   outlet_insertMany(
@@ -711,6 +756,15 @@ extend type Mutation {
     data: [RegistrationApplication_Data!]!
   ): [RegistrationApplication_KeyOutput!]! @fdc_generated(from: "RegistrationApplication", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `ResortSpend` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  resortSpend_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ResortSpend_Data!]!
+  ): [ResortSpend_KeyOutput!]! @fdc_generated(from: "ResortSpend", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `RoleAssignment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   roleAssignment_insertMany(
@@ -755,6 +809,24 @@ extend type Mutation {
     """
     data: [StaffMember_Data!]!
   ): [StaffMember_KeyOutput!]! @fdc_generated(from: "StaffMember", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `StayPointsLedgerEntry` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  stayPointsLedgerEntry_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [StayPointsLedgerEntry_Data!]!
+  ): [StayPointsLedgerEntry_KeyOutput!]! @fdc_generated(from: "StayPointsLedgerEntry", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `StayPointsWaiver` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  stayPointsWaiver_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [StayPointsWaiver_Data!]!
+  ): [StayPointsWaiver_KeyOutput!]! @fdc_generated(from: "StayPointsWaiver", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `TierLevel` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -1026,6 +1098,15 @@ extend type Mutation {
     data: Member_Data!
   ): Member_KeyOutput! @fdc_generated(from: "Member", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `Membership` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Membership`.
+  """
+  membership_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Membership_Data!
+  ): Membership_KeyOutput! @fdc_generated(from: "Membership", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `Outlet` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Outlet`.
   """
   outlet_upsert(
@@ -1107,6 +1188,15 @@ extend type Mutation {
     data: RegistrationApplication_Data!
   ): RegistrationApplication_KeyOutput! @fdc_generated(from: "RegistrationApplication", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `ResortSpend` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ResortSpend`.
+  """
+  resortSpend_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ResortSpend_Data!
+  ): ResortSpend_KeyOutput! @fdc_generated(from: "ResortSpend", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `RoleAssignment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
   """
   roleAssignment_upsert(
@@ -1151,6 +1241,24 @@ extend type Mutation {
     """
     data: StaffMember_Data!
   ): StaffMember_KeyOutput! @fdc_generated(from: "StaffMember", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `StayPointsLedgerEntry` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StayPointsLedgerEntry`.
+  """
+  stayPointsLedgerEntry_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: StayPointsLedgerEntry_Data!
+  ): StayPointsLedgerEntry_KeyOutput! @fdc_generated(from: "StayPointsLedgerEntry", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `StayPointsWaiver` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StayPointsWaiver`.
+  """
+  stayPointsWaiver_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: StayPointsWaiver_Data!
+  ): StayPointsWaiver_KeyOutput! @fdc_generated(from: "StayPointsWaiver", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `TierLevel` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TierLevel`.
   """
@@ -1422,6 +1530,15 @@ extend type Mutation {
     data: [Member_Data!]!
   ): [Member_KeyOutput!]! @fdc_generated(from: "Member", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `Membership` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Membership`.
+  """
+  membership_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Membership_Data!]!
+  ): [Membership_KeyOutput!]! @fdc_generated(from: "Membership", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `Outlet` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Outlet`.
   """
   outlet_upsertMany(
@@ -1503,6 +1620,15 @@ extend type Mutation {
     data: [RegistrationApplication_Data!]!
   ): [RegistrationApplication_KeyOutput!]! @fdc_generated(from: "RegistrationApplication", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `ResortSpend` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ResortSpend`.
+  """
+  resortSpend_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ResortSpend_Data!]!
+  ): [ResortSpend_KeyOutput!]! @fdc_generated(from: "ResortSpend", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `RoleAssignment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `RoleAssignment`.
   """
   roleAssignment_upsertMany(
@@ -1547,6 +1673,24 @@ extend type Mutation {
     """
     data: [StaffMember_Data!]!
   ): [StaffMember_KeyOutput!]! @fdc_generated(from: "StaffMember", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `StayPointsLedgerEntry` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StayPointsLedgerEntry`.
+  """
+  stayPointsLedgerEntry_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [StayPointsLedgerEntry_Data!]!
+  ): [StayPointsLedgerEntry_KeyOutput!]! @fdc_generated(from: "StayPointsLedgerEntry", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `StayPointsWaiver` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `StayPointsWaiver`.
+  """
+  stayPointsWaiver_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [StayPointsWaiver_Data!]!
+  ): [StayPointsWaiver_KeyOutput!]! @fdc_generated(from: "StayPointsWaiver", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `TierLevel` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `TierLevel`.
   """
@@ -2198,6 +2342,30 @@ extend type Mutation {
     data: Member_Data!
   ): Member_KeyOutput @fdc_generated(from: "Member", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `Membership` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Membership` or `null` if not found.
+  """
+  membership_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Membership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Membership_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Membership_Data!
+  ): Membership_KeyOutput @fdc_generated(from: "Membership", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `Outlet` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Outlet` or `null` if not found.
   """
   outlet_update(
@@ -2414,6 +2582,30 @@ extend type Mutation {
     data: RegistrationApplication_Data!
   ): RegistrationApplication_KeyOutput @fdc_generated(from: "RegistrationApplication", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `ResortSpend` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ResortSpend` or `null` if not found.
+  """
+  resortSpend_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ResortSpend_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ResortSpend_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ResortSpend_Data!
+  ): ResortSpend_KeyOutput @fdc_generated(from: "ResortSpend", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `RoleAssignment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `RoleAssignment` or `null` if not found.
   """
   roleAssignment_update(
@@ -2528,6 +2720,49 @@ extend type Mutation {
     """
     data: StaffMember_Data!
   ): StaffMember_KeyOutput @fdc_generated(from: "StaffMember", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `StayPointsLedgerEntry` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `StayPointsLedgerEntry` or `null` if not found.
+  """
+  stayPointsLedgerEntry_update(
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsLedgerEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsLedgerEntry_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: StayPointsLedgerEntry_Data!
+  ): StayPointsLedgerEntry_KeyOutput @fdc_generated(from: "StayPointsLedgerEntry", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `StayPointsWaiver` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `StayPointsWaiver` or `null` if not found.
+  """
+  stayPointsWaiver_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsWaiver_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsWaiver_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: StayPointsWaiver_Data!
+  ): StayPointsWaiver_KeyOutput @fdc_generated(from: "StayPointsWaiver", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `TierLevel` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `TierLevel` or `null` if not found.
   """
@@ -3114,6 +3349,25 @@ extend type Mutation {
     data: Member_Data!
   ): Int! @fdc_generated(from: "Member", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `Membership` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  membership_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Membership_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Membership_Data!
+  ): Int! @fdc_generated(from: "Membership", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `Outlet` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   outlet_updateMany(
@@ -3285,6 +3539,25 @@ extend type Mutation {
     data: RegistrationApplication_Data!
   ): Int! @fdc_generated(from: "RegistrationApplication", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `ResortSpend` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  resortSpend_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ResortSpend_Data!
+  ): Int! @fdc_generated(from: "ResortSpend", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `RoleAssignment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   roleAssignment_updateMany(
@@ -3379,6 +3652,44 @@ extend type Mutation {
     """
     data: StaffMember_Data!
   ): Int! @fdc_generated(from: "StaffMember", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `StayPointsLedgerEntry` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  stayPointsLedgerEntry_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: StayPointsLedgerEntry_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: StayPointsLedgerEntry_Data!
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `StayPointsWaiver` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  stayPointsWaiver_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: StayPointsWaiver_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: StayPointsWaiver_Data!
+  ): Int! @fdc_generated(from: "StayPointsWaiver", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `TierLevel` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -3940,6 +4251,25 @@ extend type Mutation {
     first: Member_FirstRow
   ): Member_KeyOutput @fdc_generated(from: "Member", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `Membership` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  membership_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Membership_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Membership_FirstRow
+  ): Membership_KeyOutput @fdc_generated(from: "Membership", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `Outlet` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   outlet_delete(
@@ -4111,6 +4441,25 @@ extend type Mutation {
     first: RegistrationApplication_FirstRow
   ): RegistrationApplication_KeyOutput @fdc_generated(from: "RegistrationApplication", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `ResortSpend` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  resortSpend_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ResortSpend_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ResortSpend_FirstRow
+  ): ResortSpend_KeyOutput @fdc_generated(from: "ResortSpend", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `RoleAssignment` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   roleAssignment_delete(
@@ -4200,6 +4549,39 @@ extend type Mutation {
     """
     first: StaffMember_FirstRow
   ): StaffMember_KeyOutput @fdc_generated(from: "StaffMember", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `StayPointsLedgerEntry` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  stayPointsLedgerEntry_delete(
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsLedgerEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsLedgerEntry_FirstRow
+  ): StayPointsLedgerEntry_KeyOutput @fdc_generated(from: "StayPointsLedgerEntry", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `StayPointsWaiver` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  stayPointsWaiver_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: StayPointsWaiver_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: StayPointsWaiver_FirstRow
+  ): StayPointsWaiver_KeyOutput @fdc_generated(from: "StayPointsWaiver", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `TierLevel` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -4636,6 +5018,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "Member", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `Membership` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  membership_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Membership_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Membership", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `Outlet` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   outlet_deleteMany(
@@ -4762,6 +5158,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "RegistrationApplication", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `ResortSpend` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  resortSpend_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ResortSpend_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ResortSpend", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `RoleAssignment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   roleAssignment_deleteMany(
@@ -4831,6 +5241,34 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "StaffMember", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `StayPointsLedgerEntry` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  stayPointsLedgerEntry_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: StayPointsLedgerEntry_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsLedgerEntry", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `StayPointsWaiver` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  stayPointsWaiver_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: StayPointsWaiver_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "StayPointsWaiver", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `TierLevel` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

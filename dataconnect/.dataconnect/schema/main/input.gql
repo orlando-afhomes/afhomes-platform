@@ -155,6 +155,12 @@ It has the same format as `Member_Key`, but is only used as mutation return valu
 """
 scalar Member_KeyOutput
 """
+✨ `Membership_KeyOutput` returns the primary key fields of table type `Membership`.
+
+It has the same format as `Membership_Key`, but is only used as mutation return value.
+"""
+scalar Membership_KeyOutput
+"""
 ✨ `Outlet_KeyOutput` returns the primary key fields of table type `Outlet`.
 
 It has the same format as `Outlet_Key`, but is only used as mutation return value.
@@ -209,6 +215,12 @@ It has the same format as `RegistrationApplication_Key`, but is only used as mut
 """
 scalar RegistrationApplication_KeyOutput
 """
+✨ `ResortSpend_KeyOutput` returns the primary key fields of table type `ResortSpend`.
+
+It has the same format as `ResortSpend_Key`, but is only used as mutation return value.
+"""
+scalar ResortSpend_KeyOutput
+"""
 ✨ `RoleAssignment_KeyOutput` returns the primary key fields of table type `RoleAssignment`.
 
 It has the same format as `RoleAssignment_Key`, but is only used as mutation return value.
@@ -238,6 +250,18 @@ scalar SeatVacancy_KeyOutput
 It has the same format as `StaffMember_Key`, but is only used as mutation return value.
 """
 scalar StaffMember_KeyOutput
+"""
+✨ `StayPointsLedgerEntry_KeyOutput` returns the primary key fields of table type `StayPointsLedgerEntry`.
+
+It has the same format as `StayPointsLedgerEntry_Key`, but is only used as mutation return value.
+"""
+scalar StayPointsLedgerEntry_KeyOutput
+"""
+✨ `StayPointsWaiver_KeyOutput` returns the primary key fields of table type `StayPointsWaiver`.
+
+It has the same format as `StayPointsWaiver_Key`, but is only used as mutation return value.
+"""
+scalar StayPointsWaiver_KeyOutput
 """
 ✨ `TierLevel_KeyOutput` returns the primary key fields of table type `TierLevel`.
 
@@ -5373,6 +5397,10 @@ input Contract_Data {
   """
   payments_on_contract: [Payment_Data!]
   """
+  ✨ Generated from Field `Contract`.`membership_on_contract` of type `Membership`
+  """
+  membership_on_contract: Membership_Data
+  """
   ✨ Generated from Field `Contract`.`sale_on_contract` of type `Sale`
   """
   sale_on_contract: Sale_Data
@@ -5461,6 +5489,10 @@ input Contract_Filter {
   ✨ Generated from Field `Contract`.`payments_on_contract` of type `[Payment!]!`
   """
   payments_on_contract: Payment_ListFilter
+  """
+  ✨ Generated from Field `Contract`.`membership_on_contract` of type `Membership`
+  """
+  membership_on_contract: Membership_Filter
   """
   ✨ Generated from Field `Contract`.`sale_on_contract` of type `Sale`
   """
@@ -5932,6 +5964,10 @@ input Customer_Data {
   """
   igpSales_on_customer: [IgpSale_Data!]
   """
+  ✨ Generated from Field `Customer`.`memberships_on_customer` of type `[Membership!]!`
+  """
+  memberships_on_customer: [Membership_Data!]
+  """
   ✨ Generated from Field `Customer`.`payments_on_customer` of type `[Payment!]!`
   """
   payments_on_customer: [Payment_Data!]
@@ -6016,6 +6052,10 @@ input Customer_Filter {
   ✨ Generated from Field `Customer`.`igpSales_on_customer` of type `[IgpSale!]!`
   """
   igpSales_on_customer: IgpSale_ListFilter
+  """
+  ✨ Generated from Field `Customer`.`memberships_on_customer` of type `[Membership!]!`
+  """
+  memberships_on_customer: Membership_ListFilter
   """
   ✨ Generated from Field `Customer`.`payments_on_customer` of type `[Payment!]!`
   """
@@ -11737,6 +11777,869 @@ input Member_Order {
   rowVersion_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'Membership'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Membership_Data {
+  """
+  ✨ Generated from Field `Membership`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Membership`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`contractId` of type `UUID!`
+  """
+  contractId: UUID
+  """
+  ✨ `_expr` server value variant of `contractId` (✨ Generated from Field `Membership`.`contractId` of type `UUID!`)
+  """
+  contractId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`customerId` of type `UUID!`
+  """
+  customerId: UUID
+  """
+  ✨ `_expr` server value variant of `customerId` (✨ Generated from Field `Membership`.`customerId` of type `UUID!`)
+  """
+  customerId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`contract` of type `Contract!`
+  """
+  contract: Contract_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`customer` of type `Customer!`
+  """
+  customer: Customer_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`activationDate` of type `Date`
+  """
+  activationDate: Date
+  """
+  ✨ `_date` server value variant of `activationDate` (✨ Generated from Field `Membership`.`activationDate` of type `Date`)
+  """
+  activationDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `activationDate` (✨ Generated from Field `Membership`.`activationDate` of type `Date`)
+  """
+  activationDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `activationDate` (✨ Generated from Field `Membership`.`activationDate` of type `Date`)
+  """
+  activationDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`
+  """
+  cardClaimDate: Date
+  """
+  ✨ `_date` server value variant of `cardClaimDate` (✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`)
+  """
+  cardClaimDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `cardClaimDate` (✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`)
+  """
+  cardClaimDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `cardClaimDate` (✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`)
+  """
+  cardClaimDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`cardClaimKind` of type `String`
+  """
+  cardClaimKind: String
+  """
+  ✨ `_expr` server value variant of `cardClaimKind` (✨ Generated from Field `Membership`.`cardClaimKind` of type `String`)
+  """
+  cardClaimKind_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`cardId` of type `String`
+  """
+  cardId: String
+  """
+  ✨ `_expr` server value variant of `cardId` (✨ Generated from Field `Membership`.`cardId` of type `String`)
+  """
+  cardId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`cardServices` of type `Any`
+  """
+  cardServices: Any
+  """
+  ✨ `_expr` server value variant of `cardServices` (✨ Generated from Field `Membership`.`cardServices` of type `Any`)
+  """
+  cardServices_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`
+  """
+  deemedPadDate: Date
+  """
+  ✨ `_date` server value variant of `deemedPadDate` (✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`)
+  """
+  deemedPadDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `deemedPadDate` (✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`)
+  """
+  deemedPadDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `deemedPadDate` (✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`)
+  """
+  deemedPadDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`details` of type `Any`
+  """
+  details: Any
+  """
+  ✨ `_expr` server value variant of `details` (✨ Generated from Field `Membership`.`details` of type `Any`)
+  """
+  details_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`financialHold` of type `Boolean!`
+  """
+  financialHold: Boolean
+  """
+  ✨ `_expr` server value variant of `financialHold` (✨ Generated from Field `Membership`.`financialHold` of type `Boolean!`)
+  """
+  financialHold_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`
+  """
+  fullSettlementDate: Date
+  """
+  ✨ `_date` server value variant of `fullSettlementDate` (✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`)
+  """
+  fullSettlementDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `fullSettlementDate` (✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`)
+  """
+  fullSettlementDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `fullSettlementDate` (✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`)
+  """
+  fullSettlementDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`history` of type `Any`
+  """
+  history: Any
+  """
+  ✨ `_expr` server value variant of `history` (✨ Generated from Field `Membership`.`history` of type `Any`)
+  """
+  history_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`productCode` of type `String!`
+  """
+  productCode: String
+  """
+  ✨ `_expr` server value variant of `productCode` (✨ Generated from Field `Membership`.`productCode` of type `String!`)
+  """
+  productCode_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`raNumber` of type `String`
+  """
+  raNumber: String
+  """
+  ✨ `_expr` server value variant of `raNumber` (✨ Generated from Field `Membership`.`raNumber` of type `String`)
+  """
+  raNumber_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`
+  """
+  restoredFromHoldOn: Date
+  """
+  ✨ `_date` server value variant of `restoredFromHoldOn` (✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`)
+  """
+  restoredFromHoldOn_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `restoredFromHoldOn` (✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`)
+  """
+  restoredFromHoldOn_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `restoredFromHoldOn` (✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`)
+  """
+  restoredFromHoldOn_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Membership`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`transferDate` of type `Date`
+  """
+  transferDate: Date
+  """
+  ✨ `_date` server value variant of `transferDate` (✨ Generated from Field `Membership`.`transferDate` of type `Date`)
+  """
+  transferDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `transferDate` (✨ Generated from Field `Membership`.`transferDate` of type `Date`)
+  """
+  transferDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `transferDate` (✨ Generated from Field `Membership`.`transferDate` of type `Date`)
+  """
+  transferDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate` of type `Date`
+  """
+  validityEndDate: Date
+  """
+  ✨ `_date` server value variant of `validityEndDate` (✨ Generated from Field `Membership`.`validityEndDate` of type `Date`)
+  """
+  validityEndDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `validityEndDate` (✨ Generated from Field `Membership`.`validityEndDate` of type `Date`)
+  """
+  validityEndDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `validityEndDate` (✨ Generated from Field `Membership`.`validityEndDate` of type `Date`)
+  """
+  validityEndDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Membership`.`resortSpends_on_membership` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_membership: [ResortSpend_Data!]
+  """
+  ✨ Generated from Field `Membership`.`stayPointsLedgerEntries_on_membership` of type `[StayPointsLedgerEntry!]!`
+  """
+  stayPointsLedgerEntries_on_membership: [StayPointsLedgerEntry_Data!]
+  """
+  ✨ Generated from Field `Membership`.`stayPointsWaivers_on_membership` of type `[StayPointsWaiver!]!`
+  """
+  stayPointsWaivers_on_membership: [StayPointsWaiver_Data!]
+}
+"""
+✨ Generated filter input type for table 'Membership'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Membership_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Membership_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Membership_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Membership_Filter!]
+  """
+  ✨ Generated from Field `Membership`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Membership`.`contractId` of type `UUID!`
+  """
+  contractId: UUID_Filter
+  """
+  ✨ Generated from Field `Membership`.`customerId` of type `UUID!`
+  """
+  customerId: UUID_Filter
+  """
+  ✨ Generated from Field `Membership`.`contract` of type `Contract!`
+  """
+  contract: Contract_Filter
+  """
+  ✨ Generated from Field `Membership`.`customer` of type `Customer!`
+  """
+  customer: Customer_Filter
+  """
+  ✨ Generated from Field `Membership`.`activationDate` of type `Date`
+  """
+  activationDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`
+  """
+  cardClaimDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimKind` of type `String`
+  """
+  cardClaimKind: String_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardId` of type `String`
+  """
+  cardId: String_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardServices` of type `Any`
+  """
+  cardServices: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`
+  """
+  deemedPadDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`details` of type `Any`
+  """
+  details: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`financialHold` of type `Boolean!`
+  """
+  financialHold: Boolean_Filter
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`
+  """
+  fullSettlementDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`history` of type `Any`
+  """
+  history: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`productCode` of type `String!`
+  """
+  productCode: String_Filter
+  """
+  ✨ Generated from Field `Membership`.`raNumber` of type `String`
+  """
+  raNumber: String_Filter
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`
+  """
+  restoredFromHoldOn: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Membership`.`transferDate` of type `Date`
+  """
+  transferDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate` of type `Date`
+  """
+  validityEndDate: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`resortSpends_on_membership` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_membership: ResortSpend_ListFilter
+  """
+  ✨ Generated from Field `Membership`.`stayPointsLedgerEntries_on_membership` of type `[StayPointsLedgerEntry!]!`
+  """
+  stayPointsLedgerEntries_on_membership: StayPointsLedgerEntry_ListFilter
+  """
+  ✨ Generated from Field `Membership`.`stayPointsWaivers_on_membership` of type `[StayPointsWaiver!]!`
+  """
+  stayPointsWaivers_on_membership: StayPointsWaiver_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Membership'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Membership_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Membership_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Membership_Filter
+}
+"""
+✨ Generated having input type for table 'Membership'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Membership_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Membership_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Membership_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Membership_Having!]
+  """
+  ✨ Generated from Field `Membership`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`activationDate_count` of type `Int!`
+  """
+  activationDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_count` of type `Int!`
+  """
+  cardClaimDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimKind_count` of type `Int!`
+  """
+  cardClaimKind_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardId_count` of type `Int!`
+  """
+  cardId_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardServices_count` of type `Int!`
+  """
+  cardServices_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`contractId_count` of type `Int!`
+  """
+  contractId_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`customerId_count` of type `Int!`
+  """
+  customerId_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_count` of type `Int!`
+  """
+  deemedPadDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`details_count` of type `Int!`
+  """
+  details_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`financialHold_count` of type `Int!`
+  """
+  financialHold_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_count` of type `Int!`
+  """
+  fullSettlementDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`history_count` of type `Int!`
+  """
+  history_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`productCode_count` of type `Int!`
+  """
+  productCode_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`raNumber_count` of type `Int!`
+  """
+  raNumber_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_count` of type `Int!`
+  """
+  restoredFromHoldOn_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`transferDate_count` of type `Int!`
+  """
+  transferDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_count` of type `Int!`
+  """
+  validityEndDate_count: Int_Filter
+  """
+  ✨ Generated from Field `Membership`.`activationDate_min` of type `Date`
+  """
+  activationDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_min` of type `Date`
+  """
+  cardClaimDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardServices_min` of type `Any`
+  """
+  cardServices_min: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_min` of type `Date`
+  """
+  deemedPadDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`details_min` of type `Any`
+  """
+  details_min: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_min` of type `Date`
+  """
+  fullSettlementDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`history_min` of type `Any`
+  """
+  history_min: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_min` of type `Date`
+  """
+  restoredFromHoldOn_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`transferDate_min` of type `Date`
+  """
+  transferDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_min` of type `Date`
+  """
+  validityEndDate_min: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`activationDate_max` of type `Date`
+  """
+  activationDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_max` of type `Date`
+  """
+  cardClaimDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`cardServices_max` of type `Any`
+  """
+  cardServices_max: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_max` of type `Date`
+  """
+  deemedPadDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`details_max` of type `Any`
+  """
+  details_max: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_max` of type `Date`
+  """
+  fullSettlementDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`history_max` of type `Any`
+  """
+  history_max: Any_Filter
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_max` of type `Date`
+  """
+  restoredFromHoldOn_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`transferDate_max` of type `Date`
+  """
+  transferDate_max: Date_Filter
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_max` of type `Date`
+  """
+  validityEndDate_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'Membership'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Membership_Key {
+  """
+  ✨ Generated from Field `Membership`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Membership`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Membership'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Membership_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Membership_Filter
+}
+"""
+✨ Generated order input type for table 'Membership'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Membership_Order {
+  """
+  ✨ Generated from Field `Membership`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`contractId` of type `UUID!`
+  """
+  contractId: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`customerId` of type `UUID!`
+  """
+  customerId: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`contract` of type `Contract!`
+  """
+  contract: Contract_Order
+  """
+  ✨ Generated from Field `Membership`.`customer` of type `Customer!`
+  """
+  customer: Customer_Order
+  """
+  ✨ Generated from Field `Membership`.`activationDate` of type `Date`
+  """
+  activationDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate` of type `Date`
+  """
+  cardClaimDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimKind` of type `String`
+  """
+  cardClaimKind: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardId` of type `String`
+  """
+  cardId: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardServices` of type `Any`
+  """
+  cardServices: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate` of type `Date`
+  """
+  deemedPadDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`details` of type `Any`
+  """
+  details: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`financialHold` of type `Boolean!`
+  """
+  financialHold: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate` of type `Date`
+  """
+  fullSettlementDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`history` of type `Any`
+  """
+  history: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`productCode` of type `String!`
+  """
+  productCode: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`raNumber` of type `String`
+  """
+  raNumber: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn` of type `Date`
+  """
+  restoredFromHoldOn: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`transferDate` of type `Date`
+  """
+  transferDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate` of type `Date`
+  """
+  validityEndDate: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`activationDate_count` of type `Int!`
+  """
+  activationDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_count` of type `Int!`
+  """
+  cardClaimDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimKind_count` of type `Int!`
+  """
+  cardClaimKind_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardId_count` of type `Int!`
+  """
+  cardId_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardServices_count` of type `Int!`
+  """
+  cardServices_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`contractId_count` of type `Int!`
+  """
+  contractId_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`customerId_count` of type `Int!`
+  """
+  customerId_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_count` of type `Int!`
+  """
+  deemedPadDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`details_count` of type `Int!`
+  """
+  details_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`financialHold_count` of type `Int!`
+  """
+  financialHold_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_count` of type `Int!`
+  """
+  fullSettlementDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`history_count` of type `Int!`
+  """
+  history_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`productCode_count` of type `Int!`
+  """
+  productCode_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`raNumber_count` of type `Int!`
+  """
+  raNumber_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_count` of type `Int!`
+  """
+  restoredFromHoldOn_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`transferDate_count` of type `Int!`
+  """
+  transferDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_count` of type `Int!`
+  """
+  validityEndDate_count: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`activationDate_min` of type `Date`
+  """
+  activationDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_min` of type `Date`
+  """
+  cardClaimDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardServices_min` of type `Any`
+  """
+  cardServices_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_min` of type `Date`
+  """
+  deemedPadDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`details_min` of type `Any`
+  """
+  details_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_min` of type `Date`
+  """
+  fullSettlementDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`history_min` of type `Any`
+  """
+  history_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_min` of type `Date`
+  """
+  restoredFromHoldOn_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`transferDate_min` of type `Date`
+  """
+  transferDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_min` of type `Date`
+  """
+  validityEndDate_min: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`activationDate_max` of type `Date`
+  """
+  activationDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardClaimDate_max` of type `Date`
+  """
+  cardClaimDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`cardServices_max` of type `Any`
+  """
+  cardServices_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`deemedPadDate_max` of type `Date`
+  """
+  deemedPadDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`details_max` of type `Any`
+  """
+  details_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`fullSettlementDate_max` of type `Date`
+  """
+  fullSettlementDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`history_max` of type `Any`
+  """
+  history_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`restoredFromHoldOn_max` of type `Date`
+  """
+  restoredFromHoldOn_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`transferDate_max` of type `Date`
+  """
+  transferDate_max: OrderDirection
+  """
+  ✨ Generated from Field `Membership`.`validityEndDate_max` of type `Date`
+  """
+  validityEndDate_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'Outlet'. It includes all necessary fields for creating or upserting rows into table.
 """
 input Outlet_Data {
@@ -11788,6 +12691,10 @@ input Outlet_Data {
   ✨ `_expr` server value variant of `type` (✨ Generated from Field `Outlet`.`type` of type `String!`)
   """
   type_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Outlet`.`resortSpends_on_venue` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_venue: [ResortSpend_Data!]
 }
 """
 ✨ Generated filter input type for table 'Outlet'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
@@ -11829,6 +12736,10 @@ input Outlet_Filter {
   ✨ Generated from Field `Outlet`.`type` of type `String!`
   """
   type: String_Filter
+  """
+  ✨ Generated from Field `Outlet`.`resortSpends_on_venue` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_venue: ResortSpend_ListFilter
 }
 """
 ✨ Generated first-row input type for table 'Outlet'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
@@ -17204,6 +18115,769 @@ input RegistrationApplication_Order {
   versions_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'ResortSpend'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input ResortSpend_Data {
+  """
+  ✨ Generated from Field `ResortSpend`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ResortSpend`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID
+  """
+  ✨ `_expr` server value variant of `approvedById` (✨ Generated from Field `ResortSpend`.`approvedById` of type `UUID`)
+  """
+  approvedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredById` of type `UUID`
+  """
+  enteredById: UUID
+  """
+  ✨ `_expr` server value variant of `enteredById` (✨ Generated from Field `ResortSpend`.`enteredById` of type `UUID`)
+  """
+  enteredById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID
+  """
+  ✨ `_expr` server value variant of `membershipId` (✨ Generated from Field `ResortSpend`.`membershipId` of type `UUID!`)
+  """
+  membershipId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`venueId` of type `UUID`
+  """
+  venueId: UUID
+  """
+  ✨ `_expr` server value variant of `venueId` (✨ Generated from Field `ResortSpend`.`venueId` of type `UUID`)
+  """
+  venueId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredBy` of type `UserAccount`
+  """
+  enteredBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`membership` of type `Membership!`
+  """
+  membership: Membership_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`venue` of type `Outlet`
+  """
+  venue: Outlet_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `amountCentavos` (✨ Generated from Field `ResortSpend`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `amountCentavos` (✨ Generated from Field `ResortSpend`.`amountCentavos` of type `Int64!`)
+  """
+  amountCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`
+  """
+  approvedDate: Date
+  """
+  ✨ `_date` server value variant of `approvedDate` (✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`)
+  """
+  approvedDate_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `approvedDate` (✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`)
+  """
+  approvedDate_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `approvedDate` (✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`)
+  """
+  approvedDate_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`date` of type `Date!`
+  """
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `ResortSpend`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `ResortSpend`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `date` (✨ Generated from Field `ResortSpend`.`date` of type `Date!`)
+  """
+  date_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`description` of type `String`
+  """
+  description: String
+  """
+  ✨ `_expr` server value variant of `description` (✨ Generated from Field `ResortSpend`.`description` of type `String`)
+  """
+  description_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`details` of type `Any`
+  """
+  details: Any
+  """
+  ✨ `_expr` server value variant of `details` (✨ Generated from Field `ResortSpend`.`details` of type `Any`)
+  """
+  details_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos` of type `Int64`
+  """
+  excludedCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `excludedCentavos` (✨ Generated from Field `ResortSpend`.`excludedCentavos` of type `Int64`)
+  """
+  excludedCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `excludedCentavos` (✨ Generated from Field `ResortSpend`.`excludedCentavos` of type `Int64`)
+  """
+  excludedCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos` of type `Int64!`
+  """
+  grossCentavos: Int64
+  """
+  ✨ `_expr` server value variant of `grossCentavos` (✨ Generated from Field `ResortSpend`.`grossCentavos` of type `Int64!`)
+  """
+  grossCentavos_expr: Int64_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `grossCentavos` (✨ Generated from Field `ResortSpend`.`grossCentavos` of type `Int64!`)
+  """
+  grossCentavos_update: [Int64_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`holder` of type `String`
+  """
+  holder: String
+  """
+  ✨ `_expr` server value variant of `holder` (✨ Generated from Field `ResortSpend`.`holder` of type `String`)
+  """
+  holder_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds` of type `Any`
+  """
+  refunds: Any
+  """
+  ✨ `_expr` server value variant of `refunds` (✨ Generated from Field `ResortSpend`.`refunds` of type `Any`)
+  """
+  refunds_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `ResortSpend`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `ResortSpend`.`verificationRef` of type `String`
+  """
+  verificationRef: String
+  """
+  ✨ `_expr` server value variant of `verificationRef` (✨ Generated from Field `ResortSpend`.`verificationRef` of type `String`)
+  """
+  verificationRef_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'ResortSpend'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ResortSpend_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [ResortSpend_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: ResortSpend_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [ResortSpend_Filter!]
+  """
+  ✨ Generated from Field `ResortSpend`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedById` of type `UUID`
+  """
+  approvedById: UUID_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredById` of type `UUID`
+  """
+  enteredById: UUID_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`venueId` of type `UUID`
+  """
+  venueId: UUID_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredBy` of type `UserAccount`
+  """
+  enteredBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`membership` of type `Membership!`
+  """
+  membership: Membership_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`venue` of type `Outlet`
+  """
+  venue: Outlet_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`
+  """
+  approvedDate: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`date` of type `Date!`
+  """
+  date: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`description` of type `String`
+  """
+  description: String_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`details` of type `Any`
+  """
+  details: Any_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos` of type `Int64`
+  """
+  excludedCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos` of type `Int64!`
+  """
+  grossCentavos: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`holder` of type `String`
+  """
+  holder: String_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds` of type `Any`
+  """
+  refunds: Any_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`verificationRef` of type `String`
+  """
+  verificationRef: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'ResortSpend'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input ResortSpend_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [ResortSpend_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: ResortSpend_Filter
+}
+"""
+✨ Generated having input type for table 'ResortSpend'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input ResortSpend_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [ResortSpend_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: ResortSpend_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [ResortSpend_Having!]
+  """
+  ✨ Generated from Field `ResortSpend`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_count` of type `Int!`
+  """
+  approvedDate_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`date_count` of type `Int!`
+  """
+  date_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`description_count` of type `Int!`
+  """
+  description_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`details_count` of type `Int!`
+  """
+  details_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredById_count` of type `Int!`
+  """
+  enteredById_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_count` of type `Int!`
+  """
+  excludedCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_count` of type `Int!`
+  """
+  grossCentavos_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`holder_count` of type `Int!`
+  """
+  holder_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_count` of type `Int!`
+  """
+  refunds_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`venueId_count` of type `Int!`
+  """
+  venueId_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`verificationRef_count` of type `Int!`
+  """
+  verificationRef_count: Int_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_sum` of type `Int64`
+  """
+  excludedCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_sum` of type `Int64`
+  """
+  grossCentavos_sum: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_avg` of type `Float`
+  """
+  excludedCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_avg` of type `Float`
+  """
+  grossCentavos_avg: Float_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_min` of type `Date`
+  """
+  approvedDate_min: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`date_min` of type `Date`
+  """
+  date_min: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`details_min` of type `Any`
+  """
+  details_min: Any_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_min` of type `Int64`
+  """
+  excludedCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_min` of type `Int64`
+  """
+  grossCentavos_min: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_min` of type `Any`
+  """
+  refunds_min: Any_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_max` of type `Date`
+  """
+  approvedDate_max: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`date_max` of type `Date`
+  """
+  date_max: Date_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`details_max` of type `Any`
+  """
+  details_max: Any_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_max` of type `Int64`
+  """
+  excludedCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_max` of type `Int64`
+  """
+  grossCentavos_max: Int64_Filter
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_max` of type `Any`
+  """
+  refunds_max: Any_Filter
+}
+"""
+✨ Generated key input type for table 'ResortSpend'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input ResortSpend_Key {
+  """
+  ✨ Generated from Field `ResortSpend`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `ResortSpend`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'ResortSpend'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input ResortSpend_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: ResortSpend_Filter
+}
+"""
+✨ Generated order input type for table 'ResortSpend'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input ResortSpend_Order {
+  """
+  ✨ Generated from Field `ResortSpend`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedById` of type `UUID`
+  """
+  approvedById: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredById` of type `UUID`
+  """
+  enteredById: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`membershipId` of type `UUID!`
+  """
+  membershipId: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`venueId` of type `UUID`
+  """
+  venueId: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedBy` of type `UserAccount`
+  """
+  approvedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredBy` of type `UserAccount`
+  """
+  enteredBy: UserAccount_Order
+  """
+  ✨ Generated from Field `ResortSpend`.`membership` of type `Membership!`
+  """
+  membership: Membership_Order
+  """
+  ✨ Generated from Field `ResortSpend`.`venue` of type `Outlet`
+  """
+  venue: Outlet_Order
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos` of type `Int64!`
+  """
+  amountCentavos: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate` of type `Date`
+  """
+  approvedDate: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`date` of type `Date!`
+  """
+  date: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`description` of type `String`
+  """
+  description: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`details` of type `Any`
+  """
+  details: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos` of type `Int64`
+  """
+  excludedCentavos: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos` of type `Int64!`
+  """
+  grossCentavos: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`holder` of type `String`
+  """
+  holder: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds` of type `Any`
+  """
+  refunds: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`verificationRef` of type `String`
+  """
+  verificationRef: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_count` of type `Int!`
+  """
+  amountCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedById_count` of type `Int!`
+  """
+  approvedById_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_count` of type `Int!`
+  """
+  approvedDate_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`date_count` of type `Int!`
+  """
+  date_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`description_count` of type `Int!`
+  """
+  description_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`details_count` of type `Int!`
+  """
+  details_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`enteredById_count` of type `Int!`
+  """
+  enteredById_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_count` of type `Int!`
+  """
+  excludedCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_count` of type `Int!`
+  """
+  grossCentavos_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`holder_count` of type `Int!`
+  """
+  holder_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_count` of type `Int!`
+  """
+  refunds_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`venueId_count` of type `Int!`
+  """
+  venueId_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`verificationRef_count` of type `Int!`
+  """
+  verificationRef_count: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_sum` of type `Int64`
+  """
+  amountCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_sum` of type `Int64`
+  """
+  excludedCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_sum` of type `Int64`
+  """
+  grossCentavos_sum: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_avg` of type `Float`
+  """
+  amountCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_avg` of type `Float`
+  """
+  excludedCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_avg` of type `Float`
+  """
+  grossCentavos_avg: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_min` of type `Int64`
+  """
+  amountCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_min` of type `Date`
+  """
+  approvedDate_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`date_min` of type `Date`
+  """
+  date_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`details_min` of type `Any`
+  """
+  details_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_min` of type `Int64`
+  """
+  excludedCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_min` of type `Int64`
+  """
+  grossCentavos_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_min` of type `Any`
+  """
+  refunds_min: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`amountCentavos_max` of type `Int64`
+  """
+  amountCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`approvedDate_max` of type `Date`
+  """
+  approvedDate_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`date_max` of type `Date`
+  """
+  date_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`details_max` of type `Any`
+  """
+  details_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`excludedCentavos_max` of type `Int64`
+  """
+  excludedCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`grossCentavos_max` of type `Int64`
+  """
+  grossCentavos_max: OrderDirection
+  """
+  ✨ Generated from Field `ResortSpend`.`refunds_max` of type `Any`
+  """
+  refunds_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'RoleAssignment'. It includes all necessary fields for creating or upserting rows into table.
 """
 input RoleAssignment_Data {
@@ -19275,6 +20949,920 @@ input StaffMember_Order {
   profile_max: OrderDirection
 }
 """
+✨ Generated data input type for table 'StayPointsLedgerEntry'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input StayPointsLedgerEntry_Data {
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID
+  """
+  ✨ `_expr` server value variant of `membershipId` (✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`)
+  """
+  membershipId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`
+  """
+  tranche: Int
+  """
+  ✨ `_expr` server value variant of `tranche` (✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`)
+  """
+  tranche_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `tranche` (✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`)
+  """
+  tranche_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`
+  """
+  bucket: String
+  """
+  ✨ `_expr` server value variant of `bucket` (✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`)
+  """
+  bucket_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`
+  """
+  type: String
+  """
+  ✨ `_expr` server value variant of `type` (✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`)
+  """
+  type_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membership` of type `Membership!`
+  """
+  membership: Membership_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actorId` of type `UUID`
+  """
+  actorId: UUID
+  """
+  ✨ `_expr` server value variant of `actorId` (✨ Generated from Field `StayPointsLedgerEntry`.`actorId` of type `UUID`)
+  """
+  actorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`
+  """
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `date` (✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`)
+  """
+  date_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points` of type `Int!`
+  """
+  points: Int
+  """
+  ✨ `_expr` server value variant of `points` (✨ Generated from Field `StayPointsLedgerEntry`.`points` of type `Int!`)
+  """
+  points_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `points` (✨ Generated from Field `StayPointsLedgerEntry`.`points` of type `Int!`)
+  """
+  points_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`reference` of type `String`
+  """
+  reference: String
+  """
+  ✨ `_expr` server value variant of `reference` (✨ Generated from Field `StayPointsLedgerEntry`.`reference` of type `String`)
+  """
+  reference_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'StayPointsLedgerEntry'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StayPointsLedgerEntry_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [StayPointsLedgerEntry_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: StayPointsLedgerEntry_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [StayPointsLedgerEntry_Filter!]
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`
+  """
+  tranche: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`
+  """
+  bucket: String_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`
+  """
+  type: String_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membership` of type `Membership!`
+  """
+  membership: Membership_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actorId` of type `UUID`
+  """
+  actorId: UUID_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`
+  """
+  date: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points` of type `Int!`
+  """
+  points: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`reference` of type `String`
+  """
+  reference: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'StayPointsLedgerEntry'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input StayPointsLedgerEntry_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [StayPointsLedgerEntry_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: StayPointsLedgerEntry_Filter
+}
+"""
+✨ Generated having input type for table 'StayPointsLedgerEntry'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StayPointsLedgerEntry_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [StayPointsLedgerEntry_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: StayPointsLedgerEntry_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [StayPointsLedgerEntry_Having!]
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actorId_count` of type `Int!`
+  """
+  actorId_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket_count` of type `Int!`
+  """
+  bucket_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_count` of type `Int!`
+  """
+  date_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_count` of type `Int!`
+  """
+  points_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`reference_count` of type `Int!`
+  """
+  reference_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_count` of type `Int!`
+  """
+  tranche_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type_count` of type `Int!`
+  """
+  type_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_sum` of type `Int`
+  """
+  points_sum: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_sum` of type `Int`
+  """
+  tranche_sum: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_avg` of type `Float`
+  """
+  points_avg: Float_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_avg` of type `Float`
+  """
+  tranche_avg: Float_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_min` of type `Date`
+  """
+  date_min: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_min` of type `Int`
+  """
+  points_min: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_min` of type `Int`
+  """
+  tranche_min: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_max` of type `Date`
+  """
+  date_max: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_max` of type `Int`
+  """
+  points_max: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_max` of type `Int`
+  """
+  tranche_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'StayPointsLedgerEntry'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input StayPointsLedgerEntry_Key {
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID
+  """
+  ✨ `_expr` server value variant of `membershipId` (✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`)
+  """
+  membershipId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`
+  """
+  tranche: Int
+  """
+  ✨ `_expr` server value variant of `tranche` (✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`)
+  """
+  tranche_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`
+  """
+  bucket: String
+  """
+  ✨ `_expr` server value variant of `bucket` (✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`)
+  """
+  bucket_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`
+  """
+  type: String
+  """
+  ✨ `_expr` server value variant of `type` (✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`)
+  """
+  type_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'StayPointsLedgerEntry'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input StayPointsLedgerEntry_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: StayPointsLedgerEntry_Filter
+}
+"""
+✨ Generated order input type for table 'StayPointsLedgerEntry'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input StayPointsLedgerEntry_Order {
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId` of type `UUID!`
+  """
+  membershipId: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche` of type `Int!`
+  """
+  tranche: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket` of type `String!`
+  """
+  bucket: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type` of type `String!`
+  """
+  type: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membership` of type `Membership!`
+  """
+  membership: Membership_Order
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actorId` of type `UUID`
+  """
+  actorId: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actor` of type `UserAccount`
+  """
+  actor: UserAccount_Order
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date` of type `Date!`
+  """
+  date: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points` of type `Int!`
+  """
+  points: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`reference` of type `String`
+  """
+  reference: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`actorId_count` of type `Int!`
+  """
+  actorId_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`bucket_count` of type `Int!`
+  """
+  bucket_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_count` of type `Int!`
+  """
+  date_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_count` of type `Int!`
+  """
+  points_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`reference_count` of type `Int!`
+  """
+  reference_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_count` of type `Int!`
+  """
+  tranche_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`type_count` of type `Int!`
+  """
+  type_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_sum` of type `Int`
+  """
+  points_sum: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_sum` of type `Int`
+  """
+  tranche_sum: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_avg` of type `Float`
+  """
+  points_avg: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_avg` of type `Float`
+  """
+  tranche_avg: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_min` of type `Date`
+  """
+  date_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_min` of type `Int`
+  """
+  points_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_min` of type `Int`
+  """
+  tranche_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`date_max` of type `Date`
+  """
+  date_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`points_max` of type `Int`
+  """
+  points_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsLedgerEntry`.`tranche_max` of type `Int`
+  """
+  tranche_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'StayPointsWaiver'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input StayPointsWaiver_Data {
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID
+  """
+  ✨ `_expr` server value variant of `membershipId` (✨ Generated from Field `StayPointsWaiver`.`membershipId` of type `UUID!`)
+  """
+  membershipId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedById` of type `UUID!`
+  """
+  requestedById: UUID
+  """
+  ✨ `_expr` server value variant of `requestedById` (✨ Generated from Field `StayPointsWaiver`.`requestedById` of type `UUID!`)
+  """
+  requestedById_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membership` of type `Membership!`
+  """
+  membership: Membership_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedBy` of type `UserAccount!`
+  """
+  requestedBy: UserAccount_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`
+  """
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `date` (✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`)
+  """
+  date_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision` of type `Any`
+  """
+  decision: Any
+  """
+  ✨ `_expr` server value variant of `decision` (✨ Generated from Field `StayPointsWaiver`.`decision` of type `Any`)
+  """
+  decision_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`ground` of type `String!`
+  """
+  ground: String
+  """
+  ✨ `_expr` server value variant of `ground` (✨ Generated from Field `StayPointsWaiver`.`ground` of type `String!`)
+  """
+  ground_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`supportingReference` of type `String!`
+  """
+  supportingReference: String
+  """
+  ✨ `_expr` server value variant of `supportingReference` (✨ Generated from Field `StayPointsWaiver`.`supportingReference` of type `String!`)
+  """
+  supportingReference_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche` of type `Int!`
+  """
+  tranche: Int
+  """
+  ✨ `_expr` server value variant of `tranche` (✨ Generated from Field `StayPointsWaiver`.`tranche` of type `Int!`)
+  """
+  tranche_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `tranche` (✨ Generated from Field `StayPointsWaiver`.`tranche` of type `Int!`)
+  """
+  tranche_update: [Int_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'StayPointsWaiver'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StayPointsWaiver_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [StayPointsWaiver_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: StayPointsWaiver_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [StayPointsWaiver_Filter!]
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membershipId` of type `UUID!`
+  """
+  membershipId: UUID_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedById` of type `UUID!`
+  """
+  requestedById: UUID_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membership` of type `Membership!`
+  """
+  membership: Membership_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedBy` of type `UserAccount!`
+  """
+  requestedBy: UserAccount_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`
+  """
+  date: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision` of type `Any`
+  """
+  decision: Any_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`ground` of type `String!`
+  """
+  ground: String_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`supportingReference` of type `String!`
+  """
+  supportingReference: String_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche` of type `Int!`
+  """
+  tranche: Int_Filter
+}
+"""
+✨ Generated first-row input type for table 'StayPointsWaiver'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input StayPointsWaiver_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [StayPointsWaiver_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: StayPointsWaiver_Filter
+}
+"""
+✨ Generated having input type for table 'StayPointsWaiver'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input StayPointsWaiver_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [StayPointsWaiver_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: StayPointsWaiver_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [StayPointsWaiver_Having!]
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_count` of type `Int!`
+  """
+  date_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_count` of type `Int!`
+  """
+  decision_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`ground_count` of type `Int!`
+  """
+  ground_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedById_count` of type `Int!`
+  """
+  requestedById_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`supportingReference_count` of type `Int!`
+  """
+  supportingReference_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_count` of type `Int!`
+  """
+  tranche_count: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_sum` of type `Int`
+  """
+  tranche_sum: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_avg` of type `Float`
+  """
+  tranche_avg: Float_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_min` of type `Date`
+  """
+  date_min: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_min` of type `Any`
+  """
+  decision_min: Any_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_min` of type `Int`
+  """
+  tranche_min: Int_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_max` of type `Date`
+  """
+  date_max: Date_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_max` of type `Any`
+  """
+  decision_max: Any_Filter
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_max` of type `Int`
+  """
+  tranche_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'StayPointsWaiver'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input StayPointsWaiver_Key {
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'StayPointsWaiver'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input StayPointsWaiver_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: StayPointsWaiver_Filter
+}
+"""
+✨ Generated order input type for table 'StayPointsWaiver'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input StayPointsWaiver_Order {
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membershipId` of type `UUID!`
+  """
+  membershipId: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedById` of type `UUID!`
+  """
+  requestedById: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membership` of type `Membership!`
+  """
+  membership: Membership_Order
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedBy` of type `UserAccount!`
+  """
+  requestedBy: UserAccount_Order
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date` of type `Date!`
+  """
+  date: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision` of type `Any`
+  """
+  decision: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`ground` of type `String!`
+  """
+  ground: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`supportingReference` of type `String!`
+  """
+  supportingReference: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche` of type `Int!`
+  """
+  tranche: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_count` of type `Int!`
+  """
+  date_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_count` of type `Int!`
+  """
+  decision_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`ground_count` of type `Int!`
+  """
+  ground_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`membershipId_count` of type `Int!`
+  """
+  membershipId_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`requestedById_count` of type `Int!`
+  """
+  requestedById_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`supportingReference_count` of type `Int!`
+  """
+  supportingReference_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_count` of type `Int!`
+  """
+  tranche_count: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_sum` of type `Int`
+  """
+  tranche_sum: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_avg` of type `Float`
+  """
+  tranche_avg: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_min` of type `Date`
+  """
+  date_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_min` of type `Any`
+  """
+  decision_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_min` of type `Int`
+  """
+  tranche_min: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`date_max` of type `Date`
+  """
+  date_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`decision_max` of type `Any`
+  """
+  decision_max: OrderDirection
+  """
+  ✨ Generated from Field `StayPointsWaiver`.`tranche_max` of type `Int`
+  """
+  tranche_max: OrderDirection
+}
+"""
 ✨ Generated data input type for table 'TierLevel'. It includes all necessary fields for creating or upserting rows into table.
 """
 input TierLevel_Data {
@@ -20509,6 +23097,14 @@ input UserAccount_Data {
   """
   registrationApplications_on_reviewer: [RegistrationApplication_Data!]
   """
+  ✨ Generated from Field `UserAccount`.`resortSpends_on_approvedBy` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_approvedBy: [ResortSpend_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`resortSpends_on_enteredBy` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_enteredBy: [ResortSpend_Data!]
+  """
   ✨ Generated from Field `UserAccount`.`roleAssignments_on_user` of type `[RoleAssignment!]!`
   """
   roleAssignments_on_user: [RoleAssignment_Data!]
@@ -20524,6 +23120,14 @@ input UserAccount_Data {
   ✨ Generated from Field `UserAccount`.`seatVacancies_on_recordedBy` of type `[SeatVacancy!]!`
   """
   seatVacancies_on_recordedBy: [SeatVacancy_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`stayPointsLedgerEntries_on_actor` of type `[StayPointsLedgerEntry!]!`
+  """
+  stayPointsLedgerEntries_on_actor: [StayPointsLedgerEntry_Data!]
+  """
+  ✨ Generated from Field `UserAccount`.`stayPointsWaivers_on_requestedBy` of type `[StayPointsWaiver!]!`
+  """
+  stayPointsWaivers_on_requestedBy: [StayPointsWaiver_Data!]
   """
   ✨ Generated from Field `UserAccount`.`unmatchedReceipts_on_decidedBy` of type `[UnmatchedReceipt!]!`
   """
@@ -20690,6 +23294,14 @@ input UserAccount_Filter {
   """
   registrationApplications_on_reviewer: RegistrationApplication_ListFilter
   """
+  ✨ Generated from Field `UserAccount`.`resortSpends_on_approvedBy` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_approvedBy: ResortSpend_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`resortSpends_on_enteredBy` of type `[ResortSpend!]!`
+  """
+  resortSpends_on_enteredBy: ResortSpend_ListFilter
+  """
   ✨ Generated from Field `UserAccount`.`roleAssignments_on_user` of type `[RoleAssignment!]!`
   """
   roleAssignments_on_user: RoleAssignment_ListFilter
@@ -20705,6 +23317,14 @@ input UserAccount_Filter {
   ✨ Generated from Field `UserAccount`.`seatVacancies_on_recordedBy` of type `[SeatVacancy!]!`
   """
   seatVacancies_on_recordedBy: SeatVacancy_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`stayPointsLedgerEntries_on_actor` of type `[StayPointsLedgerEntry!]!`
+  """
+  stayPointsLedgerEntries_on_actor: StayPointsLedgerEntry_ListFilter
+  """
+  ✨ Generated from Field `UserAccount`.`stayPointsWaivers_on_requestedBy` of type `[StayPointsWaiver!]!`
+  """
+  stayPointsWaivers_on_requestedBy: StayPointsWaiver_ListFilter
   """
   ✨ Generated from Field `UserAccount`.`unmatchedReceipts_on_decidedBy` of type `[UnmatchedReceipt!]!`
   """

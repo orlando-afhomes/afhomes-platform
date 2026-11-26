@@ -12,6 +12,8 @@ import type { ReferenceEntryView, ReferenceListRepository } from "@/data/contrac
 import type { ProductRepository } from "@/data/contracts/product-repository";
 import type { TierLevelRepository, TierLevelView } from "@/data/contracts/tier-level-repository";
 import type { HistoryImportRepository } from "@/data/contracts/history-import-repository";
+import type { MembershipRepository, MembershipView, CustomerLookupResult } from "@/data/contracts/membership-repository";
+import type { MembershipPoints, StayPointsOverview, StayPointsRepository } from "@/data/contracts/stay-points-repository";
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { RegistrationRepository, RegistrationCorrectionView } from "@/data/contracts/registration-repository";
 import type { ReportRepository } from "@/data/contracts/report-repository";
@@ -518,8 +520,23 @@ const commissions = (): Partial<CommissionRepository> => ({
   voidPayout: async (id, reason) => (await apiFetch<{ commission: CommissionView }>(`/commissions/${id}/void`, { method: "POST", body: { reason } })).commission,
 });
 
+// F7: memberships, cards and Stay Points read and write through the API.
+const memberships = (): Partial<MembershipRepository> => ({
+  list: async (options) => (await apiFetch<{ items: MembershipView[] }>("/memberships", { signal: signalOf(options) })).items,
+  lookupActiveVip: async (term, options) => (await apiFetch<{ items: CustomerLookupResult[] }>(`/memberships/lookup?term=${encodeURIComponent(term)}`, { signal: signalOf(options) })).items,
+  activate: async (id) => (await apiFetch<{ membership: MembershipView }>(`/memberships/${id}/activate`, { method: "POST" })).membership,
+  recordCardClaim: async (id) => (await apiFetch<{ membership: MembershipView }>(`/memberships/${id}/claim`, { method: "POST" })).membership,
+  serviceCard: async (id, input) => (await apiFetch<{ membership: MembershipView }>(`/memberships/${id}/service`, { method: "POST", body: input })).membership,
+});
+
+const stayPoints = (): Partial<StayPointsRepository> => ({
+  list: async (options) => (await apiFetch<{ items: MembershipPoints[] }>("/stay-points", { signal: signalOf(options) })).items,
+  venues: async (options) => (await apiFetch<{ items: StayPointsOverview["venues"] }>("/stay-points/venues", { signal: signalOf(options) })).items,
+  act: (action, options) => apiFetch<MembershipPoints>("/stay-points/act", { method: "POST", body: action, signal: signalOf(options) }),
+});
+
 const NOT_IN_PILOT = [
-  "audit", "memberQr", "memberships", "stayPoints", "redemption",
+  "audit", "memberQr", "redemption",
   "reservations", "promos", "reconciliation",
 ] as const;
 
@@ -542,6 +559,8 @@ export function createHttpRepositories(): Repositories {
     historyImports: partial("historyImports", historyImports()),
     reports: partial("reports", reports()),
     commissions: partial("commissions", commissions()),
+    memberships: partial("memberships", memberships()),
+    stayPoints: partial("stayPoints", stayPoints()),
     experiences: partial("experiences", experiences()),
     referenceLists: partial("referenceLists", referenceLists()),
     outlets: partial("outlets", outlets()),

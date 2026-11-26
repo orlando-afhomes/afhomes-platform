@@ -68,6 +68,39 @@ export const AUDIT_ENTITY_LABELS: Partial<Record<AuditEvent["entityType"], strin
 export const AUDIT_DEFAULT_PAGE_SIZE = 25;
 export const AUDIT_MAX_PAGE_SIZE = 100;
 
+/**
+ * Owning module of a record type, used only when an audit payload carries no module value.
+ * Business modules write the module in the payload; this covers older organization-era events.
+ */
+export const AUDIT_MODULE_BY_ENTITY: Readonly<Record<string, AuditModule>> = {
+  member: "sales-network",
+  "seat-vacancy": "sales-network",
+  accreditation: "accreditation",
+  registration: "accreditation",
+  account: "organization",
+  staff: "organization",
+  "department-role": "organization",
+  department: "organization",
+  "report-export": "organization",
+  customer: "customers",
+  "customer-import": "customers",
+  "customer-export": "customers",
+  product: "vip-products",
+  "payment-scheme": "vip-products",
+  "tier-level": "vip-products",
+  "reference-entry": "vip-products",
+  contract: "contracts",
+  sale: "sales",
+  payment: "finance",
+  "closed-month": "finance",
+  "receipt-import": "finance",
+  reconciliation: "finance",
+  membership: "membership",
+  commission: "commissions",
+  "commission-position-rate": "commissions",
+  "resort-spend": "stay-points",
+};
+
 /** Filters and paging for the read-only audit history. Every field is optional. */
 export type AuditQuery = {
   page?: number;

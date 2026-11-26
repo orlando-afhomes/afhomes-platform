@@ -318,6 +318,9 @@ const ROLE_OPERATION_GRANTS: Record<DevRole, readonly AdminOperation[]> = {
     "commission.rates.manage",
     "commission.clawback.collect",
     "commission.clawback.writeOff",
+    // Owner decision 2026-11-26: the collections report is read by the Administrator and Finance
+    // (the Super Administrator holds every operation). Doc 11 section 7: the Admin may view all management reporting.
+    "finance.reports.view",
     "reconciliation.manage",
     "history-import.manage",
     "history-import.signoff",

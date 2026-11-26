@@ -162,16 +162,16 @@ describe("Admin dashboard with loaded records", () => {
     expect(screen.getByRole("link", { name: "View All" })).toHaveAttribute("href", "/admin/audit-logs");
   });
 
-  it("keeps collections away from the Administrator but shows the receipts queue", async () => {
+  it("shows collections to the Administrator with the receipts queue (owner decision 2026-11-26)", async () => {
     const store = show("dev-admin");
     const scoped = await scopedRecords(store, "dev-admin");
     const confirmed = confirmedIn([...scoped.sales, ...scoped.igpRows], PERIOD);
 
     await waitFor(async () => expect(await kpi("Confirmed sales value")).toBe(formatPeso(confirmed)));
     const chart = screen.getByRole("region", { name: "Sales Performance" });
-    await waitFor(() => expect(chart.querySelector("figcaption")?.textContent).toContain(`Sales ${formatPeso(confirmed)} from`));
-    expect(within(chart).queryByRole("radiogroup")).toBeNull();
-    expect(chart.textContent).not.toContain("Collections");
+    // With finance.reports.view the chart gains the Collections series and its toggle.
+    await waitFor(() => expect(chart.textContent).toContain("Collections"));
+    expect(within(chart).getByRole("radiogroup")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: /^Payment Verification/ })).toHaveAttribute("href", "/admin/finance?tab=verification");
   });
 

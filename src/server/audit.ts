@@ -1,5 +1,6 @@
 import "server-only";
 import { dbWrite } from "@/server/db";
+import { auditModuleOf } from "@/server/services/common";
 
 export type AuditInput = {
   actorUserId?: string | null;
@@ -21,6 +22,7 @@ export async function recordAudit(input: AuditInput): Promise<void> {
         action: input.action,
         entityType: input.entityType,
         entityId: input.entityId,
+        module: auditModuleOf(input),
         correlationId: input.correlationId,
         details: input.details ?? {},
       },

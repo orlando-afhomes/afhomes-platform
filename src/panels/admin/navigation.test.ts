@@ -98,7 +98,8 @@ describe("admin navigation", () => {
   it("keeps the former per-page rules for the Administrator", () => {
     expect(tabAccess("dev-admin", "finance")).toEqual(["verification", "month-end-close", "reconciliation"]);
     expect(tabAccess("dev-admin", "organization")).toEqual(["staff", "departments", "roles"]);
-    expect(tabAccess("dev-admin", "reports")).not.toContain("collections");
+    // Owner decision 2026-11-26: the collections report is read by the Administrator and Finance.
+    expect(tabAccess("dev-admin", "reports")).toContain("collections");
     expect(tabAccess("dev-super-admin", "reports")).toContain("collections");
   });
 

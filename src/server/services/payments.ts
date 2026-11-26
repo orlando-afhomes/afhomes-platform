@@ -644,6 +644,11 @@ async function loadBatch(id: string): Promise<ReceiptImportBatch | null> {
 
 export async function listReceiptImportBatches(actor: Actor): Promise<ReceiptImportBatch[]> {
   requireOperation(actor, "history-import.manage");
+  return loadReceiptImportBatches();
+}
+
+/** Every import batch, unscoped, for the reconciliation source totals (doc 11 section 26). */
+export async function loadReceiptImportBatches(): Promise<ReceiptImportBatch[]> {
   const rows = await listAll<BatchRow>("receiptImportBatches", BATCH_FIELDS, { orderBy: "[{ createdAt: DESC }, { id: DESC }]" });
   return rows.map(toBatch);
 }

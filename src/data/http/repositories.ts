@@ -17,6 +17,11 @@ import type { MembershipPoints, StayPointsOverview, StayPointsRepository } from 
 import type { ReceiptImportBatch } from "@/modules/imports/receipt-import";
 import type { RegistrationRepository, RegistrationCorrectionView } from "@/data/contracts/registration-repository";
 import type { ReportRepository } from "@/data/contracts/report-repository";
+import type { AuditRepository } from "@/data/contracts/audit-repository";
+import type { ReconciliationRepository } from "@/data/contracts/reconciliation-repository";
+import type { AuditActorOption, AuditPage } from "@/modules/audit/types";
+import type { ReconciliationEntry, SourceTotal } from "@/modules/reconciliation/rules";
+import type { MonthSwitchSignOff, MonthSwitchStatus } from "@/modules/reconciliation/switch-signoff";
 import type { Repositories } from "@/data/contracts/repositories";
 import type { DepartmentRoleRepository } from "@/data/contracts/role-repository";
 import type { SaleRepository, SaleView } from "@/data/contracts/sale-repository";
@@ -535,9 +540,30 @@ const stayPoints = (): Partial<StayPointsRepository> => ({
   act: (action, options) => apiFetch<MembershipPoints>("/stay-points/act", { method: "POST", body: action, signal: signalOf(options) }),
 });
 
+// F8: the audit history and the reconciliation decisions read and write through the API.
+const audit = (): Partial<AuditRepository> => ({
+  list: (query, options) => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query ?? {})) if (value !== undefined) params.set(key, String(value));
+    const search = params.toString();
+    return apiFetch<AuditPage>(`/audit${search ? `?${search}` : ""}`, { signal: signalOf(options) });
+  },
+  listActors: async (options) => (await apiFetch<{ items: AuditActorOption[] }>("/audit/actors", { signal: signalOf(options) })).items,
+});
+
+const reconciliation = (): Partial<ReconciliationRepository> => ({
+  sourceTotals: async (period, options) =>
+    (await apiFetch<{ items: SourceTotal[] }>(`/reconciliation/totals?period=${encodeURIComponent(period)}`, { signal: signalOf(options) })).items,
+  listEntries: async (options) => (await apiFetch<{ items: ReconciliationEntry[] }>("/reconciliation/entries", { signal: signalOf(options) })).items,
+  record: async (input) => (await apiFetch<{ entry: ReconciliationEntry }>("/reconciliation/entries", { method: "POST", body: input })).entry,
+  monthSwitchStatus: (month, options) =>
+    apiFetch<MonthSwitchStatus>(`/reconciliation/switch?month=${encodeURIComponent(month)}`, { signal: signalOf(options) }),
+  recordMonthSwitch: async (month) => (await apiFetch<{ signOff: MonthSwitchSignOff }>("/reconciliation/switch", { method: "POST", body: { month } })).signOff,
+});
+
 const NOT_IN_PILOT = [
-  "audit", "memberQr", "redemption",
-  "reservations", "promos", "reconciliation",
+  "memberQr", "redemption",
+  "reservations", "promos",
 ] as const;
 
 /** The repositories the real local backend serves (organization/access, sales network, accreditation, registration, customers, contracts, sales, receipts, members, catalog and export audit); the rest report "not connected yet". */
@@ -561,6 +587,8 @@ export function createHttpRepositories(): Repositories {
     commissions: partial("commissions", commissions()),
     memberships: partial("memberships", memberships()),
     stayPoints: partial("stayPoints", stayPoints()),
+    audit: partial("audit", audit()),
+    reconciliation: partial("reconciliation", reconciliation()),
     experiences: partial("experiences", experiences()),
     referenceLists: partial("referenceLists", referenceLists()),
     outlets: partial("outlets", outlets()),

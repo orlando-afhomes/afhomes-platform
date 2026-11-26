@@ -1,5 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
+import { AUDIT_MODULE_BY_ENTITY } from "@/modules/audit/types";
 import type { Actor } from "@/server/auth/actor";
 import { ApiError } from "@/server/api/errors";
 import { dbWrite, failedCheck, uniqueViolation } from "@/server/db";
@@ -12,9 +13,15 @@ export const newId = () => randomUUID().replaceAll("-", "");
 
 export type AuditSpec = { action: string; entityType: string; entityId: string; details?: Record<string, unknown> };
 
+/** The module an audit event belongs to: the stored column, then its payload's value, then the record type's module. */
+export function auditModuleOf(input: { module?: string | null; entityType: string; details?: Record<string, unknown> | null }): string {
+  const declared = input.module ?? input.details?.module;
+  return typeof declared === "string" && declared ? declared : AUDIT_MODULE_BY_ENTITY[input.entityType] ?? "organization";
+}
+
 /** Audit row for one change. Never put credentials, tokens or unnecessary personal data in `details`. */
 export function auditData(actor: Actor | null, spec: AuditSpec, correlationId?: string) {
-  return { actorId: actor?.userId ?? undefined, action: spec.action, entityType: spec.entityType, entityId: spec.entityId, correlationId, details: spec.details ?? {} };
+  return { actorId: actor?.userId ?? undefined, action: spec.action, entityType: spec.entityType, entityId: spec.entityId, module: auditModuleOf(spec), correlationId, details: spec.details ?? {} };
 }
 
 /**

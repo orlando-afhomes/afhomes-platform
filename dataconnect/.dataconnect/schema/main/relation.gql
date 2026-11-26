@@ -649,6 +649,15 @@ extend type AuditEvent {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "AuditEvent.id", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `AuditEvent` table where the `module` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  module_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "AuditEvent.module", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `AuditEvent` table where the `occurredAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   occurredAt_count(
@@ -5446,6 +5455,134 @@ extend type Membership {
   """
   _id: ID! @fdc_generated(from: "Membership.id", purpose: ENTITY_ID)
 }
+extend type MonthSwitchSignOff {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "MonthSwitchSignOff", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table.
+  """
+  _count: Int! @fdc_generated(from: "MonthSwitchSignOff.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `actorId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actorId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.actorId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `checkedLeaders` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  checkedLeaders_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.checkedLeaders", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `checkedMeasures` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  checkedMeasures_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.checkedMeasures", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `month` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  month_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.month", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `MonthSwitchSignOff` table where the `recordedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recordedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff.recordedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `checkedLeaders` field in the `MonthSwitchSignOff` table.
+  """
+  checkedLeaders_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "MonthSwitchSignOff.checkedLeaders", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `checkedMeasures` field in the `MonthSwitchSignOff` table.
+  """
+  checkedMeasures_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "MonthSwitchSignOff.checkedMeasures", purpose: QUERY_SUM)
+  """
+  ✨ Average the `checkedLeaders` field in the `MonthSwitchSignOff` table.
+  """
+  checkedLeaders_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "MonthSwitchSignOff.checkedLeaders", purpose: QUERY_AVG)
+  """
+  ✨ Average the `checkedMeasures` field in the `MonthSwitchSignOff` table.
+  """
+  checkedMeasures_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "MonthSwitchSignOff.checkedMeasures", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `checkedLeaders` field in the `MonthSwitchSignOff` table.
+  """
+  checkedLeaders_min: Int @fdc_generated(from: "MonthSwitchSignOff.checkedLeaders", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `checkedMeasures` field in the `MonthSwitchSignOff` table.
+  """
+  checkedMeasures_min: Int @fdc_generated(from: "MonthSwitchSignOff.checkedMeasures", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `recordedAt` field in the `MonthSwitchSignOff` table.
+  """
+  recordedAt_min: Timestamp @fdc_generated(from: "MonthSwitchSignOff.recordedAt", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `checkedLeaders` field in the `MonthSwitchSignOff` table.
+  """
+  checkedLeaders_max: Int @fdc_generated(from: "MonthSwitchSignOff.checkedLeaders", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `checkedMeasures` field in the `MonthSwitchSignOff` table.
+  """
+  checkedMeasures_max: Int @fdc_generated(from: "MonthSwitchSignOff.checkedMeasures", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `recordedAt` field in the `MonthSwitchSignOff` table.
+  """
+  recordedAt_max: Timestamp @fdc_generated(from: "MonthSwitchSignOff.recordedAt", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "MonthSwitchSignOff.id", purpose: ENTITY_ID)
+}
 extend type Outlet {
   """
   ✨ List `ResortSpend` objects in a one-to-many relationship (where `ResortSpend`.`venue` is this object).
@@ -7241,6 +7378,196 @@ extend type ReceiptImportBatch {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "ReceiptImportBatch.id", purpose: ENTITY_ID)
+}
+extend type ReconciliationEntry {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "ReconciliationEntry", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table.
+  """
+  _count: Int! @fdc_generated(from: "ReconciliationEntry.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `actorId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  actorId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.actorId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `decision` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  decision_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.decision", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `differenceCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  differenceCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.differenceCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `liveCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  liveCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.liveCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `measure` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  measure_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.measure", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `period` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  period_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.period", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `reason` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  reason_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.reason", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `recordedAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  recordedAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.recordedAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ReconciliationEntry` table where the `workbookCentavos` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  workbookCentavos_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry.workbookCentavos", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `differenceCentavos` field in the `ReconciliationEntry` table.
+  """
+  differenceCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ReconciliationEntry.differenceCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `liveCentavos` field in the `ReconciliationEntry` table.
+  """
+  liveCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ReconciliationEntry.liveCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `workbookCentavos` field in the `ReconciliationEntry` table.
+  """
+  workbookCentavos_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ReconciliationEntry.workbookCentavos", purpose: QUERY_SUM)
+  """
+  ✨ Average the `differenceCentavos` field in the `ReconciliationEntry` table.
+  """
+  differenceCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ReconciliationEntry.differenceCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `liveCentavos` field in the `ReconciliationEntry` table.
+  """
+  liveCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ReconciliationEntry.liveCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Average the `workbookCentavos` field in the `ReconciliationEntry` table.
+  """
+  workbookCentavos_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ReconciliationEntry.workbookCentavos", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `differenceCentavos` field in the `ReconciliationEntry` table.
+  """
+  differenceCentavos_min: Int64 @fdc_generated(from: "ReconciliationEntry.differenceCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `liveCentavos` field in the `ReconciliationEntry` table.
+  """
+  liveCentavos_min: Int64 @fdc_generated(from: "ReconciliationEntry.liveCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `recordedAt` field in the `ReconciliationEntry` table.
+  """
+  recordedAt_min: Timestamp @fdc_generated(from: "ReconciliationEntry.recordedAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `workbookCentavos` field in the `ReconciliationEntry` table.
+  """
+  workbookCentavos_min: Int64 @fdc_generated(from: "ReconciliationEntry.workbookCentavos", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `differenceCentavos` field in the `ReconciliationEntry` table.
+  """
+  differenceCentavos_max: Int64 @fdc_generated(from: "ReconciliationEntry.differenceCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `liveCentavos` field in the `ReconciliationEntry` table.
+  """
+  liveCentavos_max: Int64 @fdc_generated(from: "ReconciliationEntry.liveCentavos", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `recordedAt` field in the `ReconciliationEntry` table.
+  """
+  recordedAt_max: Timestamp @fdc_generated(from: "ReconciliationEntry.recordedAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `workbookCentavos` field in the `ReconciliationEntry` table.
+  """
+  workbookCentavos_max: Int64 @fdc_generated(from: "ReconciliationEntry.workbookCentavos", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "ReconciliationEntry.id", purpose: ENTITY_ID)
 }
 extend type ReferenceEntry {
   """
@@ -9854,6 +10181,40 @@ extend type UserAccount {
     having: IgpSale_Having
   ): [IgpSale!]! @fdc_generated(from: "IgpSale.createdBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
+  ✨ List `MonthSwitchSignOff` objects in a one-to-many relationship (where `MonthSwitchSignOff`.`actor` is this object).
+  """
+  monthSwitchSignOffs_on_actor(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: MonthSwitchSignOff_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [MonthSwitchSignOff_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: MonthSwitchSignOff_Having
+  ): [MonthSwitchSignOff!]! @fdc_generated(from: "MonthSwitchSignOff.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `Payment` objects in a one-to-many relationship (where `Payment`.`submittedBy` is this object).
   """
   payments_on_submittedBy(
@@ -10023,6 +10384,40 @@ extend type UserAccount {
     """
     having: ReceiptImportBatch_Having
   ): [ReceiptImportBatch!]! @fdc_generated(from: "ReceiptImportBatch.decidedBy", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `ReconciliationEntry` objects in a one-to-many relationship (where `ReconciliationEntry`.`actor` is this object).
+  """
+  reconciliationEntries_on_actor(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReconciliationEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReconciliationEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReconciliationEntry_Having
+  ): [ReconciliationEntry!]! @fdc_generated(from: "ReconciliationEntry.actor", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
   """
   ✨ List `RegistrationApplication` objects in a one-to-many relationship (where `RegistrationApplication`.`account` is this object).
   """

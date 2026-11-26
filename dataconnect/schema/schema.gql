@@ -443,15 +443,46 @@ type Payment @table {
 }
 
 # Append-only. The connector exposes insert operations only, never update or delete.
+# The SQL trigger in dataconnect/security/audit-append-only.sql enforces the same rule in the database.
 type AuditEvent @table {
   actor: UserAccount
   action: String!
   entityType: String!
   # Internal id of the affected record (polymorphic, so not a foreign key).
   entityId: String!
+  # Owning business module, from the payload's own module value (doc 12 section 7).
+  module: String
   occurredAt: Timestamp! @default(expr: "request.time")
   correlationId: String
   details: Any
+}
+
+# ---------------------------------------------------------------- F8: reporting, audit and close
+# Append-only reconciliation decision: the company-spreadsheet total against the live total for a month
+# (doc 11 section 26; parallel run). A later entry supersedes an earlier one, which stays on record.
+type ReconciliationEntry @table {
+  # Month as YYYY-MM.
+  period: String!
+  # verified_receipts | imported_receipts | sales_value | commissions_payable | commissions_paid
+  measure: String!
+  workbookCentavos: Int64!
+  liveCentavos: Int64!
+  differenceCentavos: Int64!
+  # signed_off | explained_variance
+  decision: String!
+  reason: String
+  actor: UserAccount
+  recordedAt: Timestamp! @default(expr: "request.time")
+}
+
+# Insert-only sign-off of the parallel-run switch for one closed month (doc 08 section 16).
+type MonthSwitchSignOff @table {
+  # Closed month as YYYY-MM; one sign-off per month.
+  month: String! @unique
+  actor: UserAccount
+  recordedAt: Timestamp! @default(expr: "request.time")
+  checkedMeasures: Int!
+  checkedLeaders: Int!
 }
 
 type IdempotencyRecord @table(key: ["user", "operation", "requestKey"]) {

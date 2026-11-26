@@ -328,6 +328,16 @@ extend type Membership {
   """
   customerId: UUID! @fdc_generated(from: "Membership.customer", purpose: IMPLICIT_REF_FIELD)
 }
+extend type MonthSwitchSignOff {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "MonthSwitchSignOff", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `MonthSwitchSignOff`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "MonthSwitchSignOff.actor", purpose: IMPLICIT_REF_FIELD)
+}
 extend type Outlet {
   """
   ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
@@ -405,6 +415,16 @@ extend type ReceiptImportBatch {
   ✨ Implicit foreign key field based on `ReceiptImportBatch`.`decidedBy`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
   """
   decidedById: UUID @fdc_generated(from: "ReceiptImportBatch.decidedBy", purpose: IMPLICIT_REF_FIELD)
+}
+extend type ReconciliationEntry {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "ReconciliationEntry", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `ReconciliationEntry`.`actor`. It must match the value of `UserAccount`.`id`. See `@ref` for how to customize it.
+  """
+  actorId: UUID @fdc_generated(from: "ReconciliationEntry.actor", purpose: IMPLICIT_REF_FIELD)
 }
 extend type ReferenceEntry {
   """

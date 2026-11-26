@@ -1,8 +1,10 @@
 import { z } from "zod";
 import type { PrepareContractInput } from "@/data/contracts/contract-repository";
 import type { SubmitPaymentInput } from "@/data/contracts/payment-repository";
+import { AUDIT_ENTITY_TYPES, AUDIT_MODULES } from "@/modules/audit/types";
 import type { CustomerDraftInput } from "@/modules/customers/types";
 import { PAYMENT_METHODS, PAYMENT_PURPOSES } from "@/modules/finance/types";
+import { RECONCILIATION_MEASURES } from "@/modules/reconciliation/rules";
 import { normalizeId } from "@/server/repositories/records";
 
 /** An internal id in either UUID spelling, normalised to the database form. */
@@ -137,7 +139,35 @@ export const MatchUnmatchedBody = z.strictObject({
   note: z.string().max(500).nullable().optional(),
 });
 
-export const ClosedMonthBody = z.strictObject({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use the month format YYYY-MM.") });
+const monthField = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use the month format YYYY-MM.");
+
+export const ClosedMonthBody = z.strictObject({ month: monthField });
+
+// ---------------------------------------------------------------- F8: audit read and reconciliation
+/** Audit history filters and paging (doc 12 section 19). Unknown fields are refused. */
+export const AuditQuerySchema = z.strictObject({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  module: z.enum(AUDIT_MODULES).optional(),
+  entityType: z.enum(AUDIT_ENTITY_TYPES).optional(),
+  action: z.string().min(1).max(120).optional(),
+  actorId: z.string().min(1).max(120).optional(),
+  entityId: z.string().min(1).max(120).optional(),
+  from: z.string().min(1).max(40).optional(),
+  to: z.string().min(1).max(40).optional(),
+});
+
+/** One reconciliation decision: the company-spreadsheet total against the live total (doc 11 section 26). */
+export const ReconciliationRecordBody = z.strictObject({
+  period: monthField,
+  measure: z.enum(RECONCILIATION_MEASURES),
+  workbookCentavos: money,
+  decision: z.enum(["signed_off", "explained_variance"]),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export const ReconciliationPeriodQuery = z.strictObject({ period: monthField });
+export const ReconciliationMonthQuery = z.strictObject({ month: monthField });
 
 export const ReceiptImportCreateBody = z.strictObject({
   fileName: z.string().min(1).max(200),

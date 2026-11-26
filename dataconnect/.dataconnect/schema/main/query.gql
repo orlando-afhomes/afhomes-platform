@@ -503,6 +503,25 @@ extend type Query {
     first: Membership_FirstRow
   ): Membership @fdc_generated(from: "Membership", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `MonthSwitchSignOff` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  monthSwitchSignOff(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: MonthSwitchSignOff_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: MonthSwitchSignOff_FirstRow
+  ): MonthSwitchSignOff @fdc_generated(from: "MonthSwitchSignOff", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `Outlet` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   outlet(
@@ -635,6 +654,25 @@ extend type Query {
     """
     first: ReceiptImportBatch_FirstRow
   ): ReceiptImportBatch @fdc_generated(from: "ReceiptImportBatch", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `ReconciliationEntry` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  reconciliationEntry(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReconciliationEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReconciliationEntry_FirstRow
+  ): ReconciliationEntry @fdc_generated(from: "ReconciliationEntry", purpose: QUERY_SINGLE)
   """
   ✨ Look up a single `ReferenceEntry` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
@@ -1805,6 +1843,40 @@ extend type Query {
     having: Membership_Having
   ): [Membership!]! @fdc_generated(from: "Membership", purpose: QUERY_MULTIPLE)
   """
+  ✨ List `MonthSwitchSignOff` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  monthSwitchSignOffs(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: MonthSwitchSignOff_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [MonthSwitchSignOff_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: MonthSwitchSignOff_Having
+  ): [MonthSwitchSignOff!]! @fdc_generated(from: "MonthSwitchSignOff", purpose: QUERY_MULTIPLE)
+  """
   ✨ List `Outlet` objects in the table and return selected fields, optionally filtered by `where` conditions
   """
   outlets(
@@ -2042,6 +2114,40 @@ extend type Query {
     """
     having: ReceiptImportBatch_Having
   ): [ReceiptImportBatch!]! @fdc_generated(from: "ReceiptImportBatch", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ReconciliationEntry` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  reconciliationEntries(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ReconciliationEntry_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ReconciliationEntry_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ReconciliationEntry_Having
+  ): [ReconciliationEntry!]! @fdc_generated(from: "ReconciliationEntry", purpose: QUERY_MULTIPLE)
   """
   ✨ List `ReferenceEntry` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

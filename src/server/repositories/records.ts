@@ -9,6 +9,7 @@ import type { Customer, CustomerStatus } from "@/modules/customers/types";
 import type { Payment, PaymentAdjustment } from "@/modules/finance/types";
 import type { OrgMember } from "@/modules/organization/types";
 import type { Sale } from "@/modules/sales/types";
+import type { SeatVacancy } from "@/modules/sales-network/vacancy";
 import { dbRead, listAll } from "@/server/db";
 import { centavosToInt64, int64ToCentavos } from "@/server/money";
 import { manilaDateOf } from "@/shared/lib/dates";
@@ -553,4 +554,30 @@ export async function loadAllowanceReviews(): Promise<AllowanceReview[]> {
       reviewedAt: row.reviewedAt, reviewedBy: row.reviewedBy?.id ?? "",
     } as AllowanceReview;
   });
+}
+
+// ---------------------------------------------------------------- F8: reporting and reconciliation
+/** Every sale with its dated adjustments, for the reconciliation source totals (doc 11 section 26). */
+export async function loadSales(): Promise<Sale[]> {
+  const [rows, adjustmentRows] = await Promise.all([
+    listAll<SaleRow>("sales", SALE_FIELDS),
+    listAll<AdjustmentRow & { sale: Ref }>("saleAdjustments", "id date amountCentavos kind reason actor { id } sale { id }", { orderBy: "[{ createdAt: ASC }, { id: ASC }]" }),
+  ]);
+  const bySale = new Map<string, AdjustmentRow[]>();
+  for (const row of adjustmentRows) {
+    const saleId = row.sale?.id;
+    if (saleId) bySale.set(saleId, [...(bySale.get(saleId) ?? []), row]);
+  }
+  return rows.map((row) => toSale(row, bySale.get(row.id) ?? []));
+}
+
+type VacancyRow = { id: string; holderEndDate: string; startDate: string; filledOn: string | null; filledMethod: string | null; seatMember: Ref; filledByMember: Ref };
+/** Effective-dated vacant leader seats (doc 02 section 5.1.1), for the switch readiness check. */
+export async function loadSeatVacancies(): Promise<SeatVacancy[]> {
+  const rows = await listAll<VacancyRow>("seatVacancies", "id seatMember { id } holderEndDate startDate filledOn filledMethod filledByMember { id }");
+  return rows.map((row) => ({
+    id: row.id, seatMemberId: row.seatMember?.id ?? "", holderEndDate: row.holderEndDate, startDate: row.startDate,
+    filledOn: row.filledOn, filledMethod: (row.filledMethod ?? null) as SeatVacancy["filledMethod"],
+    filledByMemberId: row.filledByMember?.id ?? null, recordedBy: "", recordedAt: "",
+  }));
 }

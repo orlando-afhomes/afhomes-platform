@@ -243,6 +243,15 @@ extend type Mutation {
     data: Membership_Data!
   ): Membership_KeyOutput! @fdc_generated(from: "Membership", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `MonthSwitchSignOff` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  monthSwitchSignOff_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: MonthSwitchSignOff_Data!
+  ): MonthSwitchSignOff_KeyOutput! @fdc_generated(from: "MonthSwitchSignOff", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `Outlet` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   outlet_insert(
@@ -305,6 +314,15 @@ extend type Mutation {
     """
     data: ReceiptImportBatch_Data!
   ): ReceiptImportBatch_KeyOutput! @fdc_generated(from: "ReceiptImportBatch", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ReconciliationEntry` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  reconciliationEntry_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ReconciliationEntry_Data!
+  ): ReconciliationEntry_KeyOutput! @fdc_generated(from: "ReconciliationEntry", purpose: INSERT_SINGLE)
   """
   ✨ Insert a single `ReferenceEntry` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -675,6 +693,15 @@ extend type Mutation {
     data: [Membership_Data!]!
   ): [Membership_KeyOutput!]! @fdc_generated(from: "Membership", purpose: INSERT_MULTIPLE)
   """
+  ✨ Insert `MonthSwitchSignOff` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  monthSwitchSignOff_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [MonthSwitchSignOff_Data!]!
+  ): [MonthSwitchSignOff_KeyOutput!]! @fdc_generated(from: "MonthSwitchSignOff", purpose: INSERT_MULTIPLE)
+  """
   ✨ Insert `Outlet` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   outlet_insertMany(
@@ -737,6 +764,15 @@ extend type Mutation {
     """
     data: [ReceiptImportBatch_Data!]!
   ): [ReceiptImportBatch_KeyOutput!]! @fdc_generated(from: "ReceiptImportBatch", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ReconciliationEntry` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  reconciliationEntry_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ReconciliationEntry_Data!]!
+  ): [ReconciliationEntry_KeyOutput!]! @fdc_generated(from: "ReconciliationEntry", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `ReferenceEntry` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -1107,6 +1143,15 @@ extend type Mutation {
     data: Membership_Data!
   ): Membership_KeyOutput! @fdc_generated(from: "Membership", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `MonthSwitchSignOff` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MonthSwitchSignOff`.
+  """
+  monthSwitchSignOff_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: MonthSwitchSignOff_Data!
+  ): MonthSwitchSignOff_KeyOutput! @fdc_generated(from: "MonthSwitchSignOff", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `Outlet` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Outlet`.
   """
   outlet_upsert(
@@ -1169,6 +1214,15 @@ extend type Mutation {
     """
     data: ReceiptImportBatch_Data!
   ): ReceiptImportBatch_KeyOutput! @fdc_generated(from: "ReceiptImportBatch", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ReconciliationEntry` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReconciliationEntry`.
+  """
+  reconciliationEntry_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ReconciliationEntry_Data!
+  ): ReconciliationEntry_KeyOutput! @fdc_generated(from: "ReconciliationEntry", purpose: UPSERT_SINGLE)
   """
   ✨ Insert or update a single `ReferenceEntry` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReferenceEntry`.
   """
@@ -1539,6 +1593,15 @@ extend type Mutation {
     data: [Membership_Data!]!
   ): [Membership_KeyOutput!]! @fdc_generated(from: "Membership", purpose: UPSERT_MULTIPLE)
   """
+  ✨ Insert or update `MonthSwitchSignOff` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `MonthSwitchSignOff`.
+  """
+  monthSwitchSignOff_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [MonthSwitchSignOff_Data!]!
+  ): [MonthSwitchSignOff_KeyOutput!]! @fdc_generated(from: "MonthSwitchSignOff", purpose: UPSERT_MULTIPLE)
+  """
   ✨ Insert or update `Outlet` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Outlet`.
   """
   outlet_upsertMany(
@@ -1601,6 +1664,15 @@ extend type Mutation {
     """
     data: [ReceiptImportBatch_Data!]!
   ): [ReceiptImportBatch_KeyOutput!]! @fdc_generated(from: "ReceiptImportBatch", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ReconciliationEntry` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReconciliationEntry`.
+  """
+  reconciliationEntry_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ReconciliationEntry_Data!]!
+  ): [ReconciliationEntry_KeyOutput!]! @fdc_generated(from: "ReconciliationEntry", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `ReferenceEntry` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ReferenceEntry`.
   """
@@ -2366,6 +2438,30 @@ extend type Mutation {
     data: Membership_Data!
   ): Membership_KeyOutput @fdc_generated(from: "Membership", purpose: UPDATE_SINGLE)
   """
+  ✨ Update a single `MonthSwitchSignOff` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `MonthSwitchSignOff` or `null` if not found.
+  """
+  monthSwitchSignOff_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: MonthSwitchSignOff_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: MonthSwitchSignOff_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: MonthSwitchSignOff_Data!
+  ): MonthSwitchSignOff_KeyOutput @fdc_generated(from: "MonthSwitchSignOff", purpose: UPDATE_SINGLE)
+  """
   ✨ Update a single `Outlet` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Outlet` or `null` if not found.
   """
   outlet_update(
@@ -2533,6 +2629,30 @@ extend type Mutation {
     """
     data: ReceiptImportBatch_Data!
   ): ReceiptImportBatch_KeyOutput @fdc_generated(from: "ReceiptImportBatch", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ReconciliationEntry` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ReconciliationEntry` or `null` if not found.
+  """
+  reconciliationEntry_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReconciliationEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReconciliationEntry_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ReconciliationEntry_Data!
+  ): ReconciliationEntry_KeyOutput @fdc_generated(from: "ReconciliationEntry", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `ReferenceEntry` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ReferenceEntry` or `null` if not found.
   """
@@ -3368,6 +3488,25 @@ extend type Mutation {
     data: Membership_Data!
   ): Int! @fdc_generated(from: "Membership", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `MonthSwitchSignOff` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  monthSwitchSignOff_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: MonthSwitchSignOff_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: MonthSwitchSignOff_Data!
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `Outlet` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   outlet_updateMany(
@@ -3500,6 +3639,25 @@ extend type Mutation {
     """
     data: ReceiptImportBatch_Data!
   ): Int! @fdc_generated(from: "ReceiptImportBatch", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ReconciliationEntry` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  reconciliationEntry_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ReconciliationEntry_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ReconciliationEntry_Data!
+  ): Int! @fdc_generated(from: "ReconciliationEntry", purpose: UPDATE_MULTIPLE)
   """
   ✨ Update `ReferenceEntry` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
@@ -4270,6 +4428,25 @@ extend type Mutation {
     first: Membership_FirstRow
   ): Membership_KeyOutput @fdc_generated(from: "Membership", purpose: DELETE_SINGLE)
   """
+  ✨ Delete a single `MonthSwitchSignOff` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  monthSwitchSignOff_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: MonthSwitchSignOff_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: MonthSwitchSignOff_FirstRow
+  ): MonthSwitchSignOff_KeyOutput @fdc_generated(from: "MonthSwitchSignOff", purpose: DELETE_SINGLE)
+  """
   ✨ Delete a single `Outlet` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
   outlet_delete(
@@ -4402,6 +4579,25 @@ extend type Mutation {
     """
     first: ReceiptImportBatch_FirstRow
   ): ReceiptImportBatch_KeyOutput @fdc_generated(from: "ReceiptImportBatch", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ReconciliationEntry` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  reconciliationEntry_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: ReconciliationEntry_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ReconciliationEntry_FirstRow
+  ): ReconciliationEntry_KeyOutput @fdc_generated(from: "ReconciliationEntry", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `ReferenceEntry` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -5032,6 +5228,20 @@ extend type Mutation {
     all: Boolean = false
   ): Int! @fdc_generated(from: "Membership", purpose: DELETE_MULTIPLE)
   """
+  ✨ Delete `MonthSwitchSignOff` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  monthSwitchSignOff_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: MonthSwitchSignOff_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "MonthSwitchSignOff", purpose: DELETE_MULTIPLE)
+  """
   ✨ Delete `Outlet` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """
   outlet_deleteMany(
@@ -5129,6 +5339,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "ReceiptImportBatch", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ReconciliationEntry` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  reconciliationEntry_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ReconciliationEntry_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ReconciliationEntry", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `ReferenceEntry` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

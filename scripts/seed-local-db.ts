@@ -103,7 +103,7 @@ if (DRY) {
   process.exit(0);
 }
 
-const TABLES_TO_WIPE = ["commissionClawback", "commissionPayoutList", "commission", "allowanceReview", "commissionRateSetting", "vipPositionRate", "paymentAdjustment", "closedMonth", "unmatchedReceipt", "receiptImportBatch", "igpBuyerMembership", "igpHistoryBatch", "igpSale", "igpAccreditation", "igpUnit", "igpProject", "igpSettings", "accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
+const TABLES_TO_WIPE = ["reconciliationEntry", "monthSwitchSignOff", "commissionClawback", "commissionPayoutList", "commission", "allowanceReview", "commissionRateSetting", "vipPositionRate", "paymentAdjustment", "closedMonth", "unmatchedReceipt", "receiptImportBatch", "igpBuyerMembership", "igpHistoryBatch", "igpSale", "igpAccreditation", "igpUnit", "igpProject", "igpSettings", "accreditationNumber", "accreditation", "registrationApplication", "seatVacancy", "product", "paymentScheme", "tierLevel", "experience", "outlet", "referenceEntry", "printTemplate", "payment", "saleAdjustment", "sale", "contract", "customer", "auditEvent", "idempotencyRecord", "roleAssignment", "accountStatusEvent", "userAccount", "staffMember", "departmentRole", "department"];
 for (const table of TABLES_TO_WIPE) await gql(`mutation { ${table}_deleteMany(all: true) }`);
 // Members reference themselves, so break the parent links before deleting them.
 await gql(`mutation { member_updateMany(all: true, data: { parentId: null }) }`);

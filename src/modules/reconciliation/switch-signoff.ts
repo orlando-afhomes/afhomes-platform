@@ -61,6 +61,22 @@ function eligibleDays(vacancies: readonly SeatVacancy[], memberId: string, month
   return days;
 }
 
+const LEADER_DESIGNATIONS: ReadonlySet<string> = new Set(["SM", "SSM", "SVD"]);
+
+function daysInMonthOf(month: string): number {
+  return new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
+}
+
+/** The leader seats the switch must find a review for: leaders in post that month, a seat vacant all month excluded. */
+export function leadersInPostForSwitch(
+  members: readonly Pick<OrgMember, "id" | "displayName" | "designation">[],
+  vacancies: readonly SeatVacancy[],
+  month: string,
+): Array<Pick<OrgMember, "id" | "displayName" | "designation">> {
+  const daysInMonth = daysInMonthOf(month);
+  return members.filter((member) => LEADER_DESIGNATIONS.has(member.designation) && eligibleDays(vacancies, member.id, month, daysInMonth) > 0);
+}
+
 /**
  * Every unexplained difference blocking the switch for a closed month.
  * Empty means the month is ready for the Super Administrator sign-off.
@@ -81,10 +97,7 @@ export function checkMonthSwitchReady(input: SwitchCheckData): string[] {
     }
   }
 
-  const daysInMonth = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).getUTCDate();
-  for (const member of members) {
-    if (member.designation !== "SM" && member.designation !== "SSM" && member.designation !== "SVD") continue;
-    if (eligibleDays(vacancies, member.id, month, daysInMonth) === 0) continue;
+  for (const member of leadersInPostForSwitch(members, vacancies, month)) {
     const review = [...reviews].reverse().find((item) => item.month === month && item.memberId === member.id);
     if (!review) {
       unexplained.push(`No allowance review for ${member.displayName}.`);

@@ -269,9 +269,9 @@ function govIdTypeKey(idType?: string | null): string {
 /** Character policy for a government ID type. */
 export function govIdPolicyFor(idType?: string | null): GovIdPolicy {
   const kind = govIdTypeKey(idType);
-  // Digital National ID is a 6-character uppercase alphanumeric code.
-  if (kind.includes("digital")) return "alphanumeric";
-  // PSN (12 digits) and PCN (16 characters).
+  // Digital National ID uses the 16-digit National ID Card Number, not the 6-character code.
+  if (kind.includes("digital")) return "numeric";
+  // PSN (12 digits) and PCN (16 digits).
   if (kind.includes("national")) return "numeric";
   if (
     kind.includes("tin") ||
@@ -306,7 +306,7 @@ export function uppercaseGovId(value: string, policy: GovIdPolicy = "alphanumeri
 export function govIdMaxLengthFor(idType?: string | null): number {
   const kind = govIdTypeKey(idType);
   // Digital National ID must be checked first: its label also contains "national".
-  if (kind.includes("digital")) return 6;
+  if (kind.includes("digital")) return 16;
   if (kind.includes("national")) return 16;
   // Passport: 9 significant characters plus separators.
   if (kind.includes("passport")) return 12;
@@ -314,4 +314,74 @@ export function govIdMaxLengthFor(idType?: string | null): number {
   if (kind.includes("tin")) return 15;
   if (kind.includes("sss") || kind.includes("gsis") || kind.includes("umid") || kind.includes("prc")) return 14;
   return MAX_GOV_ID_LENGTH;
+}
+
+type GovIdGroupRule = {
+  matches: (kind: string) => boolean;
+  groups: readonly number[];
+  /** Maximum significant characters; older versions may be shorter. */
+  max: number;
+  /** Group letters and digits instead of digits only. */
+  characters?: boolean;
+};
+
+/** Printed groups for the Philippine ID formats that require dashes; others stay compact. */
+const GOV_ID_GROUPS: readonly GovIdGroupRule[] = [
+  { matches: (kind) => kind.includes("digital"), groups: [4, 4, 4, 4], max: 16 },
+  { matches: (kind) => kind.includes("national"), groups: [4, 4, 4, 4], max: 16 },
+  { matches: (kind) => kind.includes("sss"), groups: [2, 7, 1], max: 12 },
+  { matches: (kind) => kind.includes("umid"), groups: [4, 7, 1], max: 12 },
+  { matches: (kind) => kind.includes("driver"), groups: [2, 2, 6], max: 11 },
+  { matches: (kind) => kind.includes("voter"), groups: [4, 5, 8], max: 40, characters: true },
+];
+
+/** Placeholder sample for each ID selection; unknown or blank types get a neutral prompt. */
+export function govIdSampleFor(idType?: string | null): string {
+  const kind = govIdTypeKey(idType);
+  if (!kind) return "Enter ID number";
+  if (kind.includes("digital")) return "1234-5678-9012-3456";
+  if (kind.includes("national")) return "1234-5678-9012-3456";
+  if (kind.includes("passport")) return "P1234567A";
+  if (kind.includes("driver")) return "N01-23-456789";
+  if (kind.includes("sss")) return "12-3456789-0";
+  if (kind.includes("gsis")) return "12345678901";
+  if (kind.includes("umid")) return "1234-5678901-2";
+  if (kind.includes("prc")) return "0123456";
+  if (kind.includes("voter")) return "1234-5678A-C1234BCD";
+  if (kind.includes("postal")) return "A123456789012 P";
+  return "ABC123456";
+}
+
+/** Split into printed groups; the last group absorbs remaining valid characters. */
+function govIdParts(value: string, groups: readonly number[]): string[] {
+  const parts: string[] = [];
+  let at = 0;
+  for (let index = 0; index < groups.length && at < value.length; index += 1) {
+    const size = index === groups.length - 1 ? value.length - at : groups[index];
+    parts.push(value.slice(at, at + size));
+    at += size;
+  }
+  return parts;
+}
+
+/** Group an ID number as printed on the card; validators strip separators. */
+export function formatGovernmentIdNumber(value: string, idType?: string | null): string {
+  const pattern = GOV_ID_GROUPS.find((entry) => entry.matches(govIdTypeKey(idType)));
+  const cleaned = uppercaseGovId(value, govIdPolicyFor(idType));
+  if (!pattern) return cleaned;
+  if (pattern.characters) {
+    const bare = cleaned.replace(/[\s.-]/g, "").slice(0, pattern.max);
+    return govIdParts(bare, pattern.groups).join("-");
+  }
+  const letter = /^[A-Z]/.test(cleaned) ? cleaned.charAt(0) : "";
+  const digits = (letter ? cleaned.slice(1) : cleaned).replace(/\D/g, "").slice(0, pattern.max);
+  const parts = govIdParts(digits, pattern.groups);
+  return [letter + (parts[0] ?? ""), ...parts.slice(1)].join("-");
+}
+
+/** Input width for the grouped display, including separators and any license letter. */
+export function govIdDisplayLengthFor(idType?: string | null): number {
+  const pattern = GOV_ID_GROUPS.find((entry) => entry.matches(govIdTypeKey(idType)));
+  if (!pattern || pattern.characters) return govIdMaxLengthFor(idType);
+  return pattern.max + (pattern.groups.length - 1) + (govIdTypeKey(idType).includes("driver") ? 1 : 0);
 }

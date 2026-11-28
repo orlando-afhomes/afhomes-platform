@@ -12,6 +12,7 @@
  * resolves to a design token. No animations, so reduced-motion is safe.
  */
 import Link from "next/link";
+import { maskGovIdNumber } from "@/shared/forms";
 import {
   BadgeCheck,
   Briefcase,
@@ -174,7 +175,7 @@ export function CustomerInfoCard({
             <Fact icon={BadgeCheck} term="Government ID">
               <span className="tw:flex tw:flex-col tw:gap-2">
                 <span>
-                  {[customer.governmentIdType, customer.governmentIdNumber].filter(Boolean).join(" · ") || "—"}
+                  {[customer.governmentIdType, customer.governmentIdNumber ? maskGovIdNumber(customer.governmentIdNumber) : null].filter(Boolean).join(" · ") || "—"}
                 </span>
                 {customer.governmentIdImage ? (
                   <ImagePreview

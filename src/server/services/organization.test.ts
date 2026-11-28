@@ -1,10 +1,11 @@
 // @vitest-environment node
 // Organization slice (F1): departments, delegable roles, staff provisioning and accounts on the local emulators.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
+import { configureEmulatorEnv, emulatorsUp, sessionCookieFor, storageEmulatorUp } from "@/server/testing/emulator";
 
 configureEmulatorEnv();
 const up = await emulatorsUp();
+const storageUp = await storageEmulatorUp();
 const { SEED_ACCOUNTS } = await import("@/data/seed/dev-credentials");
 const account = (identityId: string) => SEED_ACCOUNTS.find((row) => row.identityId === identityId)!;
 
@@ -95,6 +96,59 @@ describe.skipIf(!up)("organization services (emulators)", () => {
     expect(modules.has("experiences")).toBe(true);
   }, 60_000);
 
+  it("rejects a staff ID number that is invalid for its selected type", async () => {
+    expect(departmentId).toBeTruthy();
+    expect(roleId).toBeTruthy();
+    await expect(org.createStaff(superAdmin, {
+      displayName: "Invalid ID Employee",
+      position: "Tester",
+      departmentId: departmentId!,
+      departmentRoleId: roleId!,
+      email: `f1-invalid-id-${suffix}@afhomes.local`,
+      provisionPendingAccount: true,
+      systemRoleIds: ["clerk"],
+      governmentIdType: "Digital National ID",
+      governmentIdNumber: "AB12CD",
+    })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("keeps a legacy Digital National ID saveable while another field changes", async () => {
+    expect(staffId).toBeTruthy();
+    const storage = await import("@/server/storage");
+    // An older release stored the six-character digital code; write one directly to represent that record.
+    const profile = (await storage.loadStaffProfile(staffId!)) ?? {};
+    await db.dbWrite("mutation($id: UUID!, $profile: Any!) { staffMember_update(id: $id, data: { profile: $profile }) }", {
+      id: staffId,
+      profile: { ...profile, governmentIdType: "Digital National ID", governmentIdNumber: "AB12CD" },
+    });
+    const updated = await org.updateStaff(superAdmin, staffId!, { displayName: "F1 Test Employee Renamed" });
+    expect(updated.governmentIdNumber).toBe("AB12CD");
+    // The current format still applies the moment the ID itself changes.
+    await expect(org.updateStaff(superAdmin, staffId!, { governmentIdNumber: "AB1234" })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it.skipIf(!storageUp)("keeps the private avatar across profile saves and removes it with the record", async () => {
+    expect(staffId).toBeTruthy();
+    const storage = await import("@/server/storage");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=", "base64");
+    const first = await org.uploadStaffAvatar(superAdmin, staffId!, png, "first.png");
+    const firstId = first.avatarUrl.split("/").at(-1)!;
+    // An ordinary profile save must keep the server-owned private file reference.
+    await org.updateStaff(superAdmin, staffId!, { displayName: "F1 Test Employee Renamed" });
+    expect(storage.staffAvatarFileOf(await storage.loadStaffProfile(staffId!))?.fileId).toBe(firstId);
+    expect((await org.downloadStaffAvatarImage(superAdmin, staffId!, firstId)).bytes.equals(png)).toBe(true);
+    // Replacing the photo retires the previous object, and removal retires the current one.
+    const second = await org.uploadStaffAvatar(superAdmin, staffId!, png, "second.png");
+    const secondId = second.avatarUrl.split("/").at(-1)!;
+    expect(secondId).not.toBe(firstId);
+    await expect(org.downloadStaffAvatarImage(superAdmin, staffId!, firstId)).rejects.toMatchObject({ status: 404 });
+    await org.updateStaff(superAdmin, staffId!, { avatarUrl: null });
+    const cleared = await storage.loadStaffProfile(staffId!);
+    expect(cleared?.avatarFile ?? null).toBeNull();
+    expect(cleared?.avatarUrl ?? null).toBeNull();
+    await expect(org.downloadStaffAvatarImage(superAdmin, staffId!, secondId)).rejects.toMatchObject({ status: 404 });
+  });
+
   it("records the activation in account status history and audit", async () => {
     expect(accountId).toBeTruthy();
     const events = await db.dbRead<{ accountStatusEvents: Array<{ previousStatus: string; newStatus: string }> }>(
@@ -109,12 +163,16 @@ describe.skipIf(!up)("organization services (emulators)", () => {
     expect(audits.auditEvents.length).toBeGreaterThan(0);
   });
 
-  it("denies HR role creation and password reset while allowing staff reads", async () => {
+  it("allows HR to reset their own password but denies role creation and resetting another account", async () => {
     const staff = await org.listStaff(hr);
     expect(staff.length).toBeGreaterThan(0);
     expect(departmentId).toBeTruthy();
     await expect(org.createDepartmentRole(hr, { name: `HR Attempt ${suffix}`, departmentId: departmentId!, moduleIds: ["dashboard"] })).rejects.toMatchObject({ status: 403 });
-    await expect(org.requestPasswordReset(hr, hr.userId)).rejects.toMatchObject({ status: 403 });
+    await expect(org.requestPasswordReset(hr, admin.userId)).rejects.toMatchObject({ status: 403 });
+    // Authority is checked before the target lookup, so a nonexistent id cannot be probed for existence.
+    await expect(org.requestPasswordReset(hr, "00000000000000000000000000000000")).rejects.toMatchObject({ status: 403 });
+    const own = await org.requestPasswordReset(hr, hr.userId);
+    expect(own.email).toBe(account("dev-hr").email);
   });
 
   it("keeps the protected Super Administrator account out of an Administrator's reach", async () => {

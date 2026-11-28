@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Runs against the LOCAL emulators (npm run emulators, then npm run db:seed).
+// Runs against the LOCAL emulators (npm run emulators, then npm run db:seed:fixtures).
 // Skipped automatically when the emulators are not running.
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
@@ -58,7 +58,7 @@ describe.skipIf(!emulatorsUp)("server sign-in, session and permissions (emulator
     authorize = await import("@/server/auth/authorize");
     db = await import("@/server/db");
     const seeded = await db.dbRead<{ userAccounts: Array<{ id: string }> }>(`query { userAccounts { id } }`);
-    if (!seeded.userAccounts.length) throw new Error("Run npm run db:seed first.");
+    if (!seeded.userAccounts.length) throw new Error("Run npm run db:seed:fixtures first.");
   }, 30_000);
 
   async function signIn(identityId: string, portal?: "admin" | "staff" | "sales") {

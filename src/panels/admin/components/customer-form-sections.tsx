@@ -18,7 +18,7 @@ import { OfficeAddressFields } from "@/shared/forms/modern/structured-fields";
 import { Button } from "@/shared/ui/button";
 import { Switch } from "@/shared/ui/switch";
 import { FormGrid } from "@/shared/components/modern/form-layout";
-import { cleanBusinessInput, cleanBusinessLiveInput, cleanOccupationInput, cleanOccupationLiveInput, cleanTitleInput, govIdPolicyFor, MAX_BUSINESS_TEXT, MAX_LANDLINE_DIGITS, uppercaseGovId } from "@/shared/utils/input-sanitizers";
+import { cleanBusinessInput, cleanBusinessLiveInput, cleanOccupationInput, cleanOccupationLiveInput, cleanTitleInput, MAX_BUSINESS_TEXT, MAX_LANDLINE_DIGITS } from "@/shared/utils/input-sanitizers";
 import { Card } from "@/shared/ui/card";
 import type { CustomerDraft, CustomerErrors, SetDraft } from "./customer-draft";
 
@@ -82,11 +82,11 @@ function markBlurredField(event: FocusEvent<HTMLElement>, fieldId: string, key: 
 const GENDER_ICONS: Record<string, LucideIcon> = { Male: Mars, Female: Venus };
 const CIVIL_ICONS: Record<string, LucideIcon> = { Single: User, Married: HeartHandshake, Widowed: HeartCrack, Separated: Split, Divorced: HeartOff };
 
-const GENDER_CARDS = GENDER_OPTIONS.map((option) => {
+export const GENDER_CARDS = GENDER_OPTIONS.map((option) => {
   const Icon = GENDER_ICONS[option.value] ?? UserRound;
   return { ...option, icon: <Icon className="tw:size-4" /> };
 });
-const CIVIL_CARDS = CIVIL_STATUS_OPTIONS.map((option) => {
+export const CIVIL_CARDS = CIVIL_STATUS_OPTIONS.map((option) => {
   const Icon = CIVIL_ICONS[option.value] ?? Heart;
   return { ...option, icon: <Icon className="tw:size-3.5" /> };
 });
@@ -258,13 +258,9 @@ export function GovernmentIdSection({ draft, set, errors, idPreview }: SectionPr
         <div className="tw:contents" onBlur={(event) => markBlurredField(event, "gov-id-number", "governmentIdNumber", markTouched)}>
           <GovernmentIdFields
             idType={draft.governmentIdType || undefined}
-            onIdTypeChange={(value) => {
-              set("governmentIdType", value);
-              // Re-filter the existing number under the newly selected ID type's policy.
-              set("governmentIdNumber", uppercaseGovId(draft.governmentIdNumber, govIdPolicyFor(value)));
-            }}
+            onIdTypeChange={(value) => set("governmentIdType", value)}
             idNumber={draft.governmentIdNumber}
-            onIdNumberChange={(value) => set("governmentIdNumber", uppercaseGovId(value, govIdPolicyFor(draft.governmentIdType)))}
+            onIdNumberChange={(value) => set("governmentIdNumber", value)}
             idTypeOptions={govIdOptions}
             errorIdNumber={errors.governmentIdNumber ?? localError("governmentIdNumber", draft.governmentIdNumber, { idType: draft.governmentIdType })}
           />
@@ -448,13 +444,9 @@ export function SecondaryHolderSection({ draft, set, errors, newApplication, idP
           <div className="tw:contents" onBlur={(event) => markBlurredField(event, "sec-gov-id-number", "governmentIdNumber", markTouched)}>
             <GovernmentIdFields
               idType={draft.secGovernmentIdType || undefined}
-              onIdTypeChange={(value) => {
-                set("secGovernmentIdType", value);
-                // Re-filter the existing number under the newly selected ID type's policy.
-                set("secGovernmentIdNumber", uppercaseGovId(draft.secGovernmentIdNumber, govIdPolicyFor(value)));
-              }}
+              onIdTypeChange={(value) => set("secGovernmentIdType", value)}
               idNumber={draft.secGovernmentIdNumber}
-              onIdNumberChange={(value) => set("secGovernmentIdNumber", uppercaseGovId(value, govIdPolicyFor(draft.secGovernmentIdType)))}
+              onIdNumberChange={(value) => set("secGovernmentIdNumber", value)}
               idTypeOptions={govIdOptions}
               idPrefix="sec-gov-id"
               errorIdNumber={localSecondaryError("governmentIdNumber", draft.secGovernmentIdNumber, { idType: draft.secGovernmentIdType })}

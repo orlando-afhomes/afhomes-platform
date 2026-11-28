@@ -1,7 +1,10 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Building2 } from "lucide-react";
+import { useFormDirty } from "@/shared/forms/modern/use-form-dirty";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import type { Department } from "@/modules/organization/types";
 import { useCreateDepartment, useRoleOptions, useUpdateDepartment } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/identity-provider";
@@ -14,6 +17,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { SearchSelect } from "@/shared/components/modern/search-select";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
+import { RecordDetailsDialog } from "@/shared/components/modern/record-details-dialog";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 
 const STATUS_ITEMS = [
@@ -69,33 +73,30 @@ function DepartmentViewDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog open={viewDept !== null} onOpenChange={(next) => (!next ? onClose() : undefined)}>
-      <DialogContent className="tw:sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Department Details</DialogTitle>
-          <DialogDescription>Read-only summary of the department.</DialogDescription>
-        </DialogHeader>
-        {viewDept ? (
-          <dl className="tw:flex tw:flex-col">
-            <DetailRow term="Name">{viewDept.name}</DetailRow>
-            <DetailRow term="Status">
-              <StatusBadge status={viewDept.status} />
-            </DetailRow>
-            <DetailRow term="Roles">{roleCount}</DetailRow>
-            <DetailRow term="Staff">{staffCount}</DetailRow>
-          </dl>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DetailRow({ term, children }: { term: string; children: React.ReactNode }) {
-  return (
-    <div className="tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
-      <dt className="tw:w-28 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{term}</dt>
-      <dd className="tw:min-w-0 tw:flex-1">{children}</dd>
-    </div>
+    <RecordDetailsDialog
+      open={viewDept !== null}
+      onClose={onClose}
+      title={viewDept?.name ?? "Department Details"}
+      subtitle={viewDept ? `Department Details · ${viewDept.code}` : undefined}
+      icon={<Building2 />}
+      badge={viewDept ? <StatusBadge status={viewDept.status} /> : null}
+      sections={[
+        {
+          title: "Overview",
+          rows: [
+            { label: "Name", value: viewDept?.name ?? "—" },
+            { label: "Status", value: <StatusBadge status={viewDept?.status ?? ""} /> },
+            { label: "Roles", value: roleCount },
+            { label: "Staff", value: staffCount },
+          ],
+        },
+      ]}
+      footer={
+        <Button type="button" variant="outline" onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
+          Close
+        </Button>
+      }
+    />
   );
 }
 
@@ -111,6 +112,7 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
   const [nameError, setNameError] = useState<string | null>(null);
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { dirty } = useFormDirty({ name, status });
   // The department holding the protected Super Admin role keeps its status
   // Super Admin only; metadata edits stay available to departments holders.
   // The repository re-checks every status change.
@@ -142,9 +144,7 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
       }
     } catch (err) {
       setConfirmSave(false);
-      toast.error(editDept ? "Update failed." : "Create failed.", {
-        description: err instanceof Error ? err.message : "Failed to save department.",
-      });
+      notify.actionError(err, editDept ? "Update failed." : "Create failed.");
     } finally {
       setSubmitting(false);
     }
@@ -213,7 +213,7 @@ function DepartmentForm({ editDept, onDone }: { editDept: Department | null; onD
         <Button type="button" variant="outline" onClick={onDone} className="tw:min-h-11 tw:sm:min-h-8">
           Cancel
         </Button>
-        <Button type="submit" loading={submitting} className="tw:min-h-11 tw:sm:min-h-8">
+        <Button type="submit" loading={submitting} disabled={!dirty} className="tw:min-h-11 tw:sm:min-h-8">
           {editDept ? "Save" : "Create"}
         </Button>
       </DialogFooter>

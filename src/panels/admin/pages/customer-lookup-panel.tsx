@@ -2,17 +2,14 @@
 
 import { Collapsible } from "@base-ui/react/collapsible";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { AdminPage } from "@/shared/components/admin/admin-page";
 import { CUSTOMER_LOOKUP_GRANTS } from "../navigation";
 import { useRoleAwareAdminNavigation } from "../use-role-aware-navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
-import { EnterResortBillButton } from "./stay-points-page";
-import { RedemptionBookingsPanel } from "./redemption-page";
-import { BadgeCheck, BedDouble, CalendarDays, CalendarPlus, ChevronDown, Coins, CreditCard, Crown, IdCard, Search, UserRound, type LucideIcon } from "lucide-react";
-import { useCustomerLookup, useOperation, useVipProducts } from "@/data/business-queries";
+import { EnterResortBillButton, type LoyaltyHolder } from "./stay-points-page";
+import { BadgeCheck, BedDouble, CalendarDays, ChevronDown, Coins, CreditCard, Crown, IdCard, Search, UserRound, type LucideIcon } from "lucide-react";
+import { useCustomerLookup, useVipProducts } from "@/data/business-queries";
 import { CUSTOMER_LOOKUP_MIN_LENGTH, type CustomerLookupResult } from "@/data/contracts/membership-repository";
 import { SearchInput } from "@/shared/components/modern/search-input";
 import { TextLinesSkeleton } from "@/shared/components/modern/skeletons";
@@ -222,15 +219,6 @@ function LookupDisclosure({ open, id, children }: { open: boolean; id: string; c
 function ManualHolderActions({ item }: { item: CustomerLookupResult }) {
   const [open, setOpen] = useState(false);
   const loyaltyId = useId();
-  const holder: MemberQrHolder = {
-    membershipId: item.membershipId,
-    holder: "primary",
-    holderName: item.customerName,
-    vipNumber: item.vipNumber ?? "",
-    status: "Active",
-    financialHold: false,
-    photoUrl: null,
-  };
   return <div className="customer-lookup__manual">
     <div className="customer-lookup__shortcuts">
       <Button type="button" variant="outline" className="customer-lookup__shortcut customer-lookup__shortcut--loyalty" aria-expanded={open} aria-controls={loyaltyId} onClick={() => setOpen(!open)}>
@@ -239,31 +227,28 @@ function ManualHolderActions({ item }: { item: CustomerLookupResult }) {
       </Button>
     </div>
     <LookupDisclosure open={open} id={loyaltyId}>
-      <div className="customer-lookup__loyalty-section"><LoyaltyActions holder={holder} /></div>
+      <div className="customer-lookup__loyalty-section"><LoyaltyActions membershipId={item.membershipId} holderName={item.customerName} vipNumber={item.vipNumber ?? ""} /></div>
     </LookupDisclosure>
   </div>;
 }
 
-function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
-  const lookup = useCustomerLookup(holder.vipNumber);
-  const balance = lookup.data?.find((item) => item.membershipId === holder.membershipId);
-  const canBook = useOperation("redemption.book");
-  const [bookings, setBookings] = useState(false);
-  const [create, setCreate] = useState(false);
+/**
+ * Only the fields the search actually returns are shown: the lookup covers active, unexpired
+ * memberships but carries no financial-hold data, so no status or hold text is invented here.
+ * Live redemption stays retired (2026-11-26); the bookings UI is not offered.
+ */
+function LoyaltyActions({ membershipId, holderName, vipNumber }: LoyaltyHolder) {
+  const lookup = useCustomerLookup(vipNumber);
+  const balance = lookup.data?.find((item) => item.membershipId === membershipId);
   return <Card className="customer-lookup__loyalty">
     <div className="customer-lookup__loyalty-heading">
-      {holder.photoUrl ? (
-        <Avatar className="tw:size-14">
-          <AvatarImage src={holder.photoUrl} alt={`Profile picture of ${holder.holderName}`} />
-          <AvatarFallback>{holder.holderName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-      ) : <span className="customer-lookup__accent-icon customer-lookup__accent-icon--member"><UserRound aria-hidden="true" /></span>}
-      <h2>{holder.holderName}</h2>
+      <span className="customer-lookup__accent-icon customer-lookup__accent-icon--member"><UserRound aria-hidden="true" /></span>
+      <h2>{holderName}</h2>
     </div>
     <dl className="customer-lookup__loyalty-details">
       <div className="customer-lookup__loyalty-detail">
         <dt><IdCard aria-hidden="true" /> VIP Card No.</dt>
-        <dd><strong>{holder.vipNumber}</strong><small className="customer-lookup__loyalty-membership">{holder.status}{holder.financialHold ? " · Financial hold" : ""}</small></dd>
+        <dd><strong>{vipNumber || "—"}</strong></dd>
       </div>
       <div className="customer-lookup__loyalty-detail">
         <dt><BedDouble aria-hidden="true" /> Stay Points</dt>
@@ -273,18 +258,8 @@ function LoyaltyActions({ holder }: { holder: MemberQrHolder }) {
       </div>
     </dl>
     <div className="customer-lookup__loyalty-buttons">
-      <EnterResortBillButton selected={holder} />
-      {canBook ? <Button type="button" variant="outline" className="customer-lookup__manage-bookings" aria-expanded={bookings} onClick={() => setBookings(!bookings)}><CalendarDays aria-hidden="true" />{bookings ? "Hide Bookings" : "View Bookings"}</Button> : null}
+      <EnterResortBillButton selected={{ membershipId, holderName, vipNumber }} />
     </div>
-    {canBook && bookings ? (
-      <section className="customer-lookup__bookings" aria-label="Bookings">
-        <div className="customer-lookup__bookings-heading">
-          <h3>Bookings</h3>
-          <Button type="button" onClick={() => setCreate(true)}><CalendarPlus aria-hidden="true" />New Booking</Button>
-        </div>
-        <RedemptionBookingsPanel selected={holder} createOpen={create} onCreateClose={() => setCreate(false)} />
-      </section>
-    ) : null}
   </Card>;
 }
 

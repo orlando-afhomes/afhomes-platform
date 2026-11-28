@@ -3,6 +3,7 @@
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useId, useState } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import type { AccreditationStatusRequest } from "@/data/contracts/accreditation-repository";
 import { transitionRequiresReason } from "@/modules/accreditation/transitions";
@@ -116,7 +117,7 @@ export function AccreditationChangeHost({ target, onClose }: { target: Accredita
         },
         (err: unknown) => {
           close();
-          toast.error(copy.errorTitle, { description: err instanceof Error ? err.message : "Failed to update status." });
+          notify.actionError(err, copy.errorTitle);
         },
       );
   };

@@ -7,6 +7,7 @@ import { getGrantedModuleIds, SYSTEM_ROLES } from "@/modules/identity/permission
 import type { DevRole } from "@/modules/identity/types";
 import { STAFF_DELETE_DISABLED, type Department, type DepartmentRole, type DepartmentRoleOption, type StaffActionPolicy, type StaffMember } from "@/modules/organization/types";
 import type { StaffProfileInput, StaffSelfProfile } from "@/data/contracts/staff-repository";
+import { validateGovIdNumber } from "@/shared/forms/validation/identification";
 import type { Actor } from "@/server/auth/actor";
 import { requireOperation, requireModule } from "@/server/auth/authorize";
 import { getAdminApp } from "@/server/firebase-admin";
@@ -41,6 +42,7 @@ import {
   portalForRoles,
 } from "@/server/repositories/organization";
 import { dbRead } from "@/server/db";
+import { attachStaffAvatar, deleteStaffAvatar, downloadStaffAvatar, loadStaffProfile, mergeStaffProfile } from "@/server/storage";
 import { conflict, invalid, newId, notFound, transact } from "@/server/services/common";
 
 const STAFF_ACCOUNT_STATUSES: readonly AccountStatus[] = ["active", "suspended", "deactivated"];
@@ -83,6 +85,13 @@ function profileData(input: StaffProfileInput): Record<string, string | null> {
     profile[field] = value === null ? null : text(value) || null;
   }
   return profile;
+}
+
+/** Rejects an ID number that does not match its selected type before the profile is saved. */
+function validateGovernmentIdProfile(profile: Record<string, string | null>): void {
+  if (!profile.governmentIdNumber) return;
+  const error = validateGovIdNumber(profile.governmentIdNumber, profile.governmentIdType ?? undefined);
+  if (error) throw invalid(error, { governmentIdNumber: error });
 }
 
 /** Existing profile fields of a staff record, ready to merge with an edit. */
@@ -184,6 +193,20 @@ export async function getStaff(actor: Actor, id: string): Promise<StaffMember> {
   const staff = await loadStaffMember(id);
   if (!staff) throw notFound("Staff member");
   return staff;
+}
+
+/** Uploads one staff avatar to private storage; the caller has checked Staff authority. */
+export async function uploadStaffAvatar(actor: Actor, id: string, bytes: Buffer, originalName: string | null): Promise<{ avatarUrl: string }> {
+  requireOperation(actor, "organization.staff.manage");
+  const staff = await loadStaffMember(id);
+  if (!staff) throw notFound("Staff member");
+  return attachStaffAvatar(actor, id, await loadStaffProfile(id), bytes, originalName);
+}
+
+/** A person may read their own avatar; other staff need the Staff module. */
+export async function downloadStaffAvatarImage(actor: Actor, id: string, fileId: string) {
+  if (actor.identity.staffId !== id) requireModule(actor, "staff");
+  return downloadStaffAvatar(id, await loadStaffProfile(id), fileId);
 }
 
 function linkedSummary(actor: Actor, staff: StaffMember, account: Account): LinkedAccountSummary {
@@ -529,7 +552,8 @@ export async function createStaff(
   }
 
   const staffId = newId();
-  const profile = profileData(input);
+  const profile = { ...profileData(input), avatarUrl: input.avatarUrl ?? null };
+  validateGovernmentIdProfile(profile);
   const staffData = { id: staffId, displayName, position, departmentId: departmentId ?? undefined, departmentRoleId: input.departmentRoleId ?? undefined, status: "active", email, profile };
   const firebaseUid = input.provisionPendingAccount ? await createFirebaseUser(email, displayName) : undefined;
   const accountId = input.provisionPendingAccount ? newId() : (input.accountId ?? null);
@@ -560,7 +584,7 @@ export async function createStaff(
     if (firebaseUid) await getAuth(getAdminApp()).deleteUser(firebaseUid).catch(() => undefined);
     throw error;
   }
-  return { id: staffId, displayName, position, departmentId, departmentRoleId: input.departmentRoleId ?? null, status: "active", email, createdAt: new Date().toISOString().slice(0, 10), avatarUrl: input.avatarUrl ?? null, accountId, ...profile } as StaffMember;
+  return { id: staffId, displayName, position, departmentId, departmentRoleId: input.departmentRoleId ?? null, status: "active", email, createdAt: new Date().toISOString().slice(0, 10), accountId, ...profile } as StaffMember;
 }
 
 export async function updateStaff(
@@ -598,7 +622,10 @@ export async function updateStaff(
     if (input.departmentRoleId) assertCompatibleRole(roles, input.departmentRoleId, next.departmentId);
     next.departmentRoleId = input.departmentRoleId;
   }
-  if (input.avatarUrl !== undefined) next.avatarUrl = input.avatarUrl;
+  if (input.avatarUrl !== undefined) {
+    // The upload route owns the URL; an ordinary save may only clear it. The newest value is read again below.
+    next.avatarUrl = input.avatarUrl;
+  }
   if (input.accountId !== undefined) next.accountId = input.accountId;
 
   const departmentChanged = next.departmentId !== staff.departmentId;
@@ -637,13 +664,25 @@ export async function updateStaff(
   if (next.departmentRoleId !== staff.departmentRoleId) changes.push(["role", staff.departmentRoleId, next.departmentRoleId]);
   if (next.accountId !== staff.accountId) changes.push(["account", staff.accountId, next.accountId]);
   const describe = (value: string | null) => value ?? "none";
+  // Read the profile again just before the write: an avatar upload may have committed while the checks ran.
+  const latest = await loadStaffProfile(id);
+  const latestAvatarUrl = typeof latest?.avatarUrl === "string" ? latest.avatarUrl : null;
+  // The newest profile is authoritative for the avatar; only a missing profile row falls back to the request.
+  next.avatarUrl = input.avatarUrl === null ? null : latest ? latestAvatarUrl : (input.avatarUrl ?? next.avatarUrl);
+  const nextProfile = mergeStaffProfile(latest ?? storedProfile(staff), profileData(input), next.avatarUrl ?? null);
+  // A legacy ID number stays saveable while it is unchanged; the current format is enforced when the ID is edited.
+  const previousIdType = (latest?.governmentIdType as string | undefined) ?? null;
+  const previousIdNumber = (latest?.governmentIdNumber as string | undefined) ?? null;
+  const nextIdType = (nextProfile.governmentIdType as string | undefined) ?? null;
+  const nextIdNumber = (nextProfile.governmentIdNumber as string | undefined) ?? null;
+  if (nextIdType !== previousIdType || nextIdNumber !== previousIdNumber) validateGovernmentIdProfile(nextProfile as Record<string, string | null>);
   const syncAccount = Boolean(linked && identityChanged);
   await transact(actor, {
     variableDefinitions: ["$id: UUID!", "$staff: StaffMember_Data!", ...(syncAccount ? ["$syncId: UUID!", "$sync: UserAccount_Data!"] : [])].join(", "),
     fields: ["staff: staffMember_update(id: $id, data: $staff)", ...(syncAccount ? ["account: userAccount_update(id: $syncId, data: $sync)"] : [])].join("\n"),
     variables: {
       id,
-      staff: { displayName: next.displayName, position: next.position, email: next.email, departmentId: next.departmentId ?? undefined, departmentRoleId: next.departmentRoleId ?? undefined, avatarUrl: next.avatarUrl ?? undefined, profile: { ...storedProfile(staff), ...profileData(input) } },
+      staff: { displayName: next.displayName, position: next.position, email: next.email, departmentId: next.departmentId ?? undefined, departmentRoleId: next.departmentRoleId ?? undefined, profile: nextProfile },
       ...(syncAccount ? { syncId: linked!.id, sync: { displayName: next.displayName, email: next.email } } : {}),
     },
     audit:
@@ -651,6 +690,7 @@ export async function updateStaff(
         ? [{ action: AUDIT_ACTIONS.STAFF_UPDATED, entityType: "staff", entityId: id, details: { module: "organization", previousValue: changes.map(([field, before]) => `${field}:${describe(before)}`).join(";"), newValue: changes.map(([field, , after]) => `${field}:${describe(after)}`).join(";") } }]
         : [],
   });
+  if (input.avatarUrl === null) await deleteStaffAvatar(latest);
   return { ...staff, ...next, ...profileData(input) } as StaffMember;
 }
 
@@ -753,6 +793,21 @@ export async function updateAccount(actor: Actor, id: string, input: { displayNa
 
 type AssignmentRow = { role: string; status: string };
 
+/**
+ * A member link grants a sales role on the account, which is an Accounts access change. It therefore needs
+ * the same authority as a role change from the Accounts screen, not the Sales Network record permission.
+ * Returns the account the caller is allowed to change.
+ */
+export async function assertCanChangeSalesAccountRole(actor: Actor, accountId: string, roles: readonly DevRole[]): Promise<Account> {
+  requireModule(actor, "accounts");
+  const account = await loadAccount(accountId);
+  if (!account) throw invalid("The linked account does not exist.");
+  assertAccountEditable(actor, account);
+  if (actor.userId === account.id && !isSuperAdmin(actor)) throw new ApiError(403, "forbidden", OWN_ACCOUNT_ERROR);
+  for (const role of roles) assertCanAssignSystemRole(actor, role);
+  return account;
+}
+
 async function loadAssignments(accountId: string): Promise<AssignmentRow[]> {
   const result = await dbRead<{ roleAssignments: AssignmentRow[] }>(`query($id: UUID!) { roleAssignments(where: { userId: { eq: $id } }) { role status } }`, { id: accountId });
   return result.roleAssignments;
@@ -818,20 +873,23 @@ export async function updateAccountStatus(actor: Actor, id: string, status: Acco
   return { ...account, status };
 }
 
-/** Requests a Firebase password-reset email. Never generates, returns or stores a password. */
+/** Requests a Firebase password-reset email. A signed-in user may reset their own; managing another account needs Accounts authority. Never generates, returns or stores a password. */
 export async function requestPasswordReset(actor: Actor, id: string): Promise<{ email: string; resetLink?: string }> {
-  requireModule(actor, "accounts");
+  const self = actor.userId === id;
+  if (!self) {
+    // Check authority before loading another account, so the response cannot reveal whether an ID exists.
+    requireModule(actor, "accounts");
+    if (!canActivateAccounts(actor)) throw new ApiError(403, "forbidden", "Only an Administrator or Super Administrator can reset a password.");
+  }
   const account = await loadAccount(id);
   if (!account) throw notFound("Account");
-  assertAccountEditable(actor, account);
-  if (actor.userId === account.id && !isSuperAdmin(actor)) throw new ApiError(403, "forbidden", SELF_MODIFICATION_ERROR);
-  if (!canActivateAccounts(actor)) throw new ApiError(403, "forbidden", "Only an Administrator or Super Administrator can reset a password.");
+  if (!self) assertAccountEditable(actor, account);
   const link = await getAuth(getAdminApp()).generatePasswordResetLink(account.email);
   await transact(actor, {
     variableDefinitions: "",
     fields: "",
     variables: {},
-    audit: [{ action: AUDIT_ACTIONS.ACCOUNT_PASSWORD_RESET, entityType: "account", entityId: id, details: { module: "organization", channel: "email" } }],
+    audit: [{ action: AUDIT_ACTIONS.ACCOUNT_PASSWORD_RESET, entityType: "account", entityId: id, details: { module: "organization", channel: "email", ...(self ? { self: true } : {}) } }],
   });
   // The Auth emulator has no mail delivery; local QA uses the generated link. Never returned outside local emulator work.
   return { email: account.email, ...(process.env.FIREBASE_AUTH_EMULATOR_HOST ? { resetLink: link } : {}) };

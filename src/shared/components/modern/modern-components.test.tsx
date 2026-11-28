@@ -8,6 +8,7 @@ import { DataTable, type ColumnDef } from "./data-table";
 import { QueryState } from "./query-state";
 import { PageHeader } from "./page-header";
 import { RowActionsMenu } from "./row-actions-menu";
+import { useConfirmRun } from "./use-confirm-run";
 import { StatusBadge } from "./status-badge";
 
 afterEach(() => {
@@ -97,11 +98,56 @@ describe("modern RowActionsMenu", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Actions for Row One" })).toHaveFocus());
   });
 
+  it("reports a failed delete with the specific field reason", async () => {
+    const user = userEvent.setup();
+    const failure = Object.assign(new Error("Review the highlighted fields."), { errors: { name: "Name is required." } });
+    const onDelete = vi.fn().mockRejectedValue(failure);
+    render(
+      <>
+        <Toaster />
+        <RowActionsMenu itemName="Row One" onEdit={() => {}} onDelete={onDelete} />
+      </>,
+    );
+    await openByKeyboard(user);
+    await user.click(screen.getByRole("menuitem", { name: "Delete" }));
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText("Name is required.")).toBeInTheDocument();
+    expect(screen.queryByText("Review the highlighted fields.")).toBeNull();
+  });
+
   it("renders nothing when no action is allowed and gives the trigger a 44px mobile target", () => {
     const { container, rerender } = render(<RowActionsMenu itemName="Row One" />);
     expect(container.textContent).toBe("");
     rerender(<RowActionsMenu itemName="Row One" onEdit={() => {}} onDelete={() => {}} />);
     expect(screen.getByRole("button", { name: "Actions for Row One" }).className).toContain("tw:size-11");
+  });
+});
+
+describe("useConfirmRun", () => {
+  function ConfirmRunner({ action }: { action: () => unknown }) {
+    const { confirmRun, dialog } = useConfirmRun();
+    return (
+      <>
+        <button type="button" onClick={() => confirmRun({ title: "Confirm", description: "Run?", action, successTitle: "Done.", errorTitle: "Action failed." })}>Go</button>
+        {dialog}
+      </>
+    );
+  }
+
+  it("reports field reasons from a failed confirm action", async () => {
+    const user = userEvent.setup();
+    const failure = Object.assign(new Error("Review the highlighted fields."), { errors: { firstName: "First name is required." } });
+    render(
+      <>
+        <Toaster />
+        <ConfirmRunner action={() => Promise.reject(failure)} />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Go" }));
+    const dialog = await screen.findByRole("alertdialog", { name: "Confirm" });
+    await user.click(within(dialog).getByRole("button", { name: "Confirm" }));
+    expect(await screen.findByText("First name is required.")).toBeInTheDocument();
+    expect(screen.queryByText("Review the highlighted fields.")).toBeNull();
   });
 });
 

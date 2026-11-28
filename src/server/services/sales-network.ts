@@ -23,8 +23,11 @@ import type { FillSeatVacancyInput } from "@/data/contracts/member-repository";
 import { findOpenVacancy, vacancyStartDate, type SeatVacancy } from "@/modules/sales-network/vacancy";
 import { getDirectChildren, isValidParentEdge, validateSalesParent } from "@/modules/sales-network/genealogy";
 import { designationLabel } from "@/modules/sales-network/display";
+import { salesRoleForDesignation } from "@/modules/sales-network/sales-role";
+import { AUDIT_ACTIONS } from "@/modules/audit/types";
 import { allowedValues } from "@/modules/settings/lists";
 import { normalizeTin } from "@/shared/utils/input-sanitizers";
+import { validateGovIdNumber } from "@/shared/forms/validation/identification";
 import { getAdminApp } from "@/server/firebase-admin";
 import {
   loadAccreditations,
@@ -34,9 +37,10 @@ import {
   type MemberRecord,
 } from "@/server/repositories/sales-network";
 import { loadAccount } from "@/server/repositories/organization";
+import { assertCanChangeSalesAccountRole } from "@/server/services/organization";
 import { loadReferenceEntries } from "@/server/repositories/content";
 import { dbRead, uniqueViolation } from "@/server/db";
-import { conflict, invalid, newId, notFound, nowIso, transact } from "@/server/services/common";
+import { conflict, invalid, newId, notFound, nowIso, transact, type AuditSpec } from "@/server/services/common";
 
 const MODULE = "sales-network" as const;
 
@@ -194,11 +198,29 @@ export async function createMember(actor: Actor, input: CreateSalesNetworkMember
     parentHistory: [createHistoryEntry(actor, parent?.id ?? null, branchId)],
   };
   const { columns, details } = memberColumns(member);
+  const salesRole = member.accountId ? salesRoleForDesignation(input.designation) : null;
+  if (member.accountId && salesRole) {
+    await assertCanChangeSalesAccountRole(actor, member.accountId, [salesRole]);
+    if (members.some((item) => item.accountId === member.accountId)) throw conflict("account_linked", "This account is already linked to a member.");
+  }
+  const definitionParts = ["$d: Member_Data!"];
+  const fieldParts = ["member: member_insert(data: $d)"];
+  const variables: Record<string, unknown> = { d: { id: member.id, ...columns, details } };
+  const audits: AuditSpec[] = [audit("MEMBER_CREATED", "member", member.id, { newValue: member.designation }, member.accountId ? [member.accountId] : undefined)];
+  if (member.accountId && salesRole) {
+    // Link and role change commit with the member in one transaction, so neither can exist without the other.
+    definitionParts.push("$accountId: UUID!", "$memberId: UUID!", "$role: RoleAssignment_Data!");
+    fieldParts.push("account: userAccount_update(id: $accountId, data: { memberId: $memberId })", "role: roleAssignment_upsert(data: $role)");
+    variables.accountId = member.accountId;
+    variables.memberId = member.id;
+    variables.role = { userId: member.accountId, role: salesRole, status: "active" };
+    audits.push({ action: AUDIT_ACTIONS.ACCOUNT_ROLE_ASSIGNED, entityType: "account", entityId: member.accountId, details: { module: "organization", newValue: salesRole } });
+  }
   await transact(actor, {
-    variableDefinitions: "$d: Member_Data!",
-    fields: "member: member_insert(data: $d)",
-    variables: { d: { id: member.id, ...columns, details } },
-    audit: [audit("MEMBER_CREATED", "member", member.id, { newValue: member.designation }, member.accountId ? [member.accountId] : undefined)],
+    variableDefinitions: definitionParts.join(", "),
+    fields: fieldParts.join("\n"),
+    variables,
+    audit: audits,
   });
   return member;
 }
@@ -284,6 +306,9 @@ export async function updateMember(actor: Actor, id: string, input: UpdateSalesN
     setNullableText("jobPosition", input.jobPosition);
     setText("gender", input.gender);
     setText("civilStatus", input.civilStatus);
+    // A stored legacy ID stays saveable while it is unchanged; the current format applies when the ID is edited.
+    const previousGovernmentIdType = profile.governmentIdType || null;
+    const previousGovernmentIdNumber = profile.governmentIdNumber || null;
     setText("governmentIdType", input.governmentIdType);
     setText("governmentIdNumber", input.governmentIdNumber?.trim());
     setText("cardApplicationDate", input.cardApplicationDate);
@@ -291,6 +316,11 @@ export async function updateMember(actor: Actor, id: string, input: UpdateSalesN
     if (input.vipCardLevel !== undefined && profile.vipCardLevel !== input.vipCardLevel) {
       profile.vipCardLevel = input.vipCardLevel;
       changed = true;
+    }
+    const governmentIdChanged = (profile.governmentIdType || null) !== previousGovernmentIdType || (profile.governmentIdNumber || null) !== previousGovernmentIdNumber;
+    if (governmentIdChanged && profile.governmentIdNumber) {
+      const error = validateGovIdNumber(profile.governmentIdNumber, profile.governmentIdType ?? undefined);
+      if (error) throw invalid(error, { governmentIdNumber: error });
     }
   }
   if (input.displayName !== undefined) {
@@ -372,12 +402,29 @@ export async function transferMember(actor: Actor, id: string, newParentId: stri
     variables[`id${index}`] = item.id;
     variables[`m${index}`] = { ...columns, details, rowVersion: item.rowVersion + 1 };
   });
+  const roleChange = newDesignation !== member.designation && member.accountId
+    ? { accountId: member.accountId, oldRole: salesRoleForDesignation(member.designation), newRole: salesRoleForDesignation(newDesignation) }
+    : null;
+  if (roleChange) await assertCanChangeSalesAccountRole(actor, roleChange.accountId, [roleChange.oldRole, roleChange.newRole]);
+  if (roleChange) {
+    definitions.push("$oldRole: RoleAssignment_Data!", "$newRole: RoleAssignment_Data!");
+    fields.push("oldRole: roleAssignment_upsert(data: $oldRole)", "newRole: roleAssignment_upsert(data: $newRole)");
+    variables.oldRole = { userId: roleChange.accountId, role: roleChange.oldRole, status: "inactive" };
+    variables.newRole = { userId: roleChange.accountId, role: roleChange.newRole, status: "active" };
+  }
   fields.push(`query @redact { member(id: $rootId) @check(expr: "response.rootUpdate == 1", message: "STALE_MEMBER") { id } }`);
+  const audits: AuditSpec[] = [audit("MEMBER_TRANSFERRED", "member", member.id, { previousValue: member.parentId, newValue: newParent?.id ?? null }, newParent ? [newParent.id] : undefined)];
+  if (roleChange) {
+    audits.push(
+      { action: AUDIT_ACTIONS.ACCOUNT_ROLE_REVOKED, entityType: "account", entityId: roleChange.accountId, details: { module: "organization", previousValue: roleChange.oldRole } },
+      { action: AUDIT_ACTIONS.ACCOUNT_ROLE_ASSIGNED, entityType: "account", entityId: roleChange.accountId, details: { module: "organization", newValue: roleChange.newRole } },
+    );
+  }
   await transact(actor, {
     variableDefinitions: definitions.join(", "),
     fields: fields.join("\n"),
     variables,
-    audit: [audit("MEMBER_TRANSFERRED", "member", member.id, { previousValue: member.parentId, newValue: newParent?.id ?? null }, newParent ? [newParent.id] : undefined)],
+    audit: audits,
     markers: { STALE_MEMBER: conflict("member_changed", "The network changed while you were working. Reload and try again.") },
   });
   return moved[0];
@@ -580,7 +627,7 @@ export async function commitAccreditedSeller(actor: Actor, input: CreateAccredit
       member.aaNumber = aaNumber;
       accreditation.aaNumber = aaNumber;
       const { columns, details } = memberColumns(member);
-      const definitionParts = ["$member: Member_Data!", "$accreditation: Accreditation_Data!", "$number: AccreditationNumber_Data!"];
+      const definitionParts = ["$member: Member_Data!", "$accreditation: Accreditation_Data!", "$number: AccreditationNumber_Data!", "$role: RoleAssignment_Data!"];
       const fieldParts = ["member: member_insert(data: $member)"];
       const variables: Record<string, unknown> = {
         member: { id: memberId, ...columns, details },
@@ -596,7 +643,9 @@ export async function commitAccreditedSeller(actor: Actor, input: CreateAccredit
         fieldParts.push("account: userAccount_update(id: $accountId, data: { memberId: $memberId })");
         Object.assign(variables, { accountId, memberId });
       }
-      fieldParts.push("accreditation: accreditation_insert(data: $accreditation)", "number: accreditationNumber_insert(data: $number)");
+      const salesRole = salesRoleForDesignation(input.designation);
+      fieldParts.push("role: roleAssignment_upsert(data: $role)", "accreditation: accreditation_insert(data: $accreditation)", "number: accreditationNumber_insert(data: $number)");
+      variables.role = { userId: accountId, role: salesRole, status: "active" };
       await transact(actor, {
         variableDefinitions: definitionParts.join(", "),
         fields: fieldParts.join("\n"),
@@ -604,6 +653,7 @@ export async function commitAccreditedSeller(actor: Actor, input: CreateAccredit
         audit: [
           { action: "MEMBER_CREATED", entityType: "member", entityId: memberId, details: { module: MODULE, newValue: input.designation } },
           { action: "ACCREDITATION_ISSUED", entityType: "accreditation", entityId: accreditationId, details: { module: "accreditation", newValue: "pending", aaNumber } },
+          { action: AUDIT_ACTIONS.ACCOUNT_ROLE_ASSIGNED, entityType: "account", entityId: accountId, details: { module: "organization", newValue: salesRole } },
         ],
       });
       return { memberId, accountId, accreditationId, aaNumber, expiryDate };

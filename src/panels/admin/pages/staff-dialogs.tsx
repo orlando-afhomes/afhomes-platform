@@ -1,12 +1,12 @@
 "use client";
 
-import { humanize } from "@/shared/lib/humanize";
 import { Briefcase, ShieldCheck, SlidersHorizontal, UserRound, type LucideIcon } from "lucide-react";
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
-import { MODULE_CATALOG, departmentRoleConfersAccess, getDelegableGrants, resolveEmployeeEffectiveModules } from "@/modules/identity/permissions";
+import { departmentRoleConfersAccess, resolveEmployeeEffectiveModules } from "@/modules/identity/permissions";
 import type { StaffMember } from "@/modules/organization/types";
 import { normalizeLandline, normalizePhilippineMobile, normalizePostalCode } from "@/shared/utils/input-sanitizers";
 import {
@@ -42,10 +42,12 @@ import {
   TextField,
   TinField,
 } from "@/shared/forms/modern";
+import { useFormDirty } from "@/shared/forms/modern/use-form-dirty";
 import type { Account, AccountActionPolicy, AccountStatus } from "@/modules/accounts/types";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
 import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
+import { ModuleAccessList } from "@/shared/components/modern/module-access";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
@@ -64,6 +66,7 @@ import {
   useStaffPolicies,
   useUpdateLinkedAccountStatus,
   useUpdateStaff,
+  useUploadStaffAvatar,
 } from "@/data/queries";
 import { useReferenceOptions } from "@/data/settings-queries";
 
@@ -129,7 +132,6 @@ export function StaffDialogs({
   onCloseForm: () => void;
   onCloseProfile: () => void;
 }) {
-  const granted = useEffectiveModuleIds();
   return (
     <>
       <Dialog open={open} onOpenChange={(next) => (!next ? onCloseForm() : undefined)}>
@@ -145,7 +147,6 @@ export function StaffDialogs({
       </Dialog>
       <StaffProfileDialog
         profileStaff={profileStaff}
-        canViewRoles={granted.has("roles")}
         accountActions={profileAccountActions}
         account={profileAccount ?? null}
         accountPolicy={profileAccountPolicy ?? null}
@@ -167,6 +168,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const granted = useEffectiveModuleIds();
   const createStaff = useCreateStaff();
   const updateStaff = useUpdateStaff();
+  const uploadAvatar = useUploadStaffAvatar();
   const formRef = useRef<HTMLFormElement>(null);
   // Department and role stay unchanged (and are not sent) when the actor may not change them.
   const assignmentRestriction = editStaff ? (policiesQuery.data?.[editStaff.id]?.assignmentRestriction ?? null) : null;
@@ -202,6 +204,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const [departmentRoleId, setDepartmentRoleId] = useState(editStaff?.departmentRoleId ?? "");
   const [systemRoleIds, setSystemRoleIds] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(editStaff?.avatarUrl ?? null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [confirmSave, setConfirmSave] = useState(false);
@@ -210,6 +213,32 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
   const displayName = [firstName.trim(), noMiddleName ? "" : middleName.trim(), lastName.trim(), suffix.trim()]
     .filter(Boolean)
     .join(" ");
+  const { dirty } = useFormDirty({
+    prefix: prefix || null,
+    firstName,
+    middleName: noMiddleName ? null : middleName,
+    noMiddleName,
+    lastName,
+    suffix: suffix || null,
+    mobileNumber,
+    email,
+    street,
+    province,
+    city,
+    barangay,
+    postalCode,
+    telephone,
+    facebook,
+    tin,
+    gender: gender ?? null,
+    civilStatus: civilStatus ?? null,
+    governmentIdType: governmentIdType ?? null,
+    governmentIdNumber,
+    departmentId,
+    departmentRoleId,
+    systemRoleIds: [...systemRoleIds].sort(),
+    avatarUrl,
+  });
 
   // Every new employee gets a linked Pending account (doc 01 §5, §6.2), created
   // atomically with the staff record; activation stays Admin/Super Admin only.
@@ -246,12 +275,18 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       setAvatarError("Image must be 2MB or smaller.");
       return;
     }
+    setAvatarFile(file);
     const reader = new FileReader();
     reader.onload = () => setAvatarUrl(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
   };
 
   const requiredText = (value: string | undefined, label: string): string | null => (value && value.trim() ? null : `${label} is required.`);
+  // A stored legacy ID stays saveable while it is unchanged; the current format applies when it is edited.
+  const governmentIdChanged =
+    !editStaff ||
+    governmentIdNumber.trim() !== (editStaff.governmentIdNumber ?? "").trim() ||
+    (governmentIdType ?? "") !== (editStaff.governmentIdType ?? "");
 
   /** Every rule runs on each render; messages appear live for filled fields and for all fields after a failed submit. */
   const rules: Errors = {
@@ -273,7 +308,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
     gender: requiredText(gender, "Gender") ?? undefined,
     civilStatus: requiredText(civilStatus, "Civil Status") ?? undefined,
     governmentIdType: requiredText(governmentIdType, "Government ID type") ?? undefined,
-    governmentIdNumber: validateGovIdNumber(governmentIdNumber) ?? undefined,
+    governmentIdNumber: governmentIdChanged ? (validateGovIdNumber(governmentIdNumber, governmentIdType) ?? undefined) : undefined,
     department: !assignmentLocked && !departmentId ? "Department is required." : undefined,
     role: !assignmentLocked && !departmentRoleId ? "Department role is required." : undefined,
   };
@@ -328,12 +363,19 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
     try {
       const assignment = prepare();
       if (editStaff) {
+        let nextAvatarUrl = avatarUrl;
+        if (avatarFile) {
+          const uploaded = await uploadAvatar.mutateAsync({ id: editStaff.id, file: avatarFile });
+          nextAvatarUrl = uploaded.avatarUrl;
+          setAvatarUrl(nextAvatarUrl);
+          setAvatarFile(null);
+        }
         await updateStaff.mutateAsync({
           id: editStaff.id,
           displayName,
           ...(assignment ?? {}),
           email: email.trim(),
-          avatarUrl,
+          avatarUrl: nextAvatarUrl,
           ...profilePayload(),
         });
         setConfirmSave(false);
@@ -343,21 +385,28 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       }
       if (!assignment) throw new Error("Department role is required.");
       // One repository call creates the staff record and its Pending account together.
-      await createStaff.mutateAsync({
+      const created = await createStaff.mutateAsync({
         displayName,
         ...assignment,
         email: email.trim(),
-        avatarUrl,
+        avatarUrl: null,
         provisionPendingAccount: true,
         // Only Accounts-module holders see the picker; the repository re-checks each role.
         ...(canGrantSystemRoles && systemRoleIds.length > 0 ? { systemRoleIds } : {}),
         ...profilePayload(),
       });
+      if (avatarFile) {
+        try {
+          await uploadAvatar.mutateAsync({ id: created.id, file: avatarFile });
+        } catch {
+          toast.error("Staff added, but the photo could not be uploaded.");
+        }
+      }
       onDone();
       toast.success("Staff added successfully.", { description: `${displayName} has been added with a Pending account.` });
     } catch (err) {
       setConfirmSave(false);
-      toast.error(editStaff ? "Update failed." : "Add failed.", { description: err instanceof Error ? err.message : "Failed to save staff member." });
+      notify.actionError(err, editStaff ? "Update failed." : "Add failed.");
     } finally {
       setSubmitting(false);
     }
@@ -376,7 +425,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
       try {
         prepare();
       } catch (err) {
-        toast.error("Update failed.", { description: err instanceof Error ? err.message : "Failed to save staff member." });
+        notify.actionError(err, "Update failed.");
         return;
       }
       setConfirmSave(true);
@@ -391,7 +440,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
         label="Profile picture"
         value={avatarUrl}
         onSelect={handleAvatarFile}
-        onClear={() => setAvatarUrl(null)}
+        onClear={() => { setAvatarUrl(null); setAvatarFile(null); }}
         error={avatarError}
         accept="image/*"
         hint="Any image, max 2MB."
@@ -557,7 +606,7 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
         <Button type="button" variant="outline" onClick={onDone} className={BUTTON_CLASS}>
           Cancel
         </Button>
-        <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
+        <Button type="submit" loading={submitting} disabled={!dirty} className={BUTTON_CLASS}>
           {editStaff ? "Save" : "Add"}
         </Button>
       </DialogFooter>
@@ -584,7 +633,6 @@ function StaffForm({ editStaff, onDone }: { editStaff: StaffMember | null; onDon
  */
 function StaffProfileDialog({
   profileStaff,
-  canViewRoles,
   accountActions,
   account,
   accountPolicy,
@@ -592,7 +640,6 @@ function StaffProfileDialog({
   onEdit,
 }: {
   profileStaff: StaffMember | null;
-  canViewRoles: boolean;
   accountActions?: ProfileAccountActions;
   account: Account | null;
   accountPolicy: AccountActionPolicy | null;
@@ -614,8 +661,6 @@ function StaffProfileDialog({
     roleStatus: assignedRole?.status,
     departmentStatus: roleDepartment?.status,
   });
-  // Only delegable grants of a role that currently confers access are authority.
-  const roleGrants = roleConfersAccess && assignedRole ? getDelegableGrants(assignedRole.moduleIds) : [];
   const effectiveModules = account
     ? resolveEmployeeEffectiveModules({
         accountStatus: account.status,
@@ -629,7 +674,7 @@ function StaffProfileDialog({
       <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Employee Profile</DialogTitle>
-          <DialogDescription>Read-only profile, employment, and account access.</DialogDescription>
+          <DialogDescription>Profile, employment, and account access.</DialogDescription>
         </DialogHeader>
         {profileStaff ? (
           <div className="tw:flex tw:flex-col tw:gap-4">
@@ -685,14 +730,8 @@ function StaffProfileDialog({
                 <DetailRow term="Department">{departments.find((item) => item.id === profileStaff.departmentId)?.name ?? EMPTY}</DetailRow>
                 <DetailRow term="Position">{profileStaff.position || EMPTY}</DetailRow>
                 <DetailRow term="Role">{assignedRole?.name ?? EMPTY}</DetailRow>
-                {canViewRoles && profileStaff.departmentRoleId ? (
-                  <DetailRow term="Authorized modules">
-                    {moduleLabels(roleGrants).join(", ") ||
-                      (roleConfersAccess ? EMPTY : "None while the employee, role, or department is inactive")}
-                  </DetailRow>
-                ) : null}
                 <DetailRow term="Employment status">
-                  <StatusBadge status={profileStaff.status} /> <span className="tw:text-xs tw:text-muted-foreground">Read-only</span>
+                  <StatusBadge status={profileStaff.status} />
                 </DetailRow>
               </DetailList>
             </ProfileSection>
@@ -707,20 +746,21 @@ function StaffProfileDialog({
                       <StatusBadge status={linkedAccount.status} />
                     </DetailRow>
                     {account ? (
-                      <>
-                        <DetailRow term="System roles">
-                          {account.roleIds.length > 0 ? account.roleIds.map((role) => getSystemRoleLabel(role)).join(", ") : EMPTY}
-                        </DetailRow>
-                        <DetailRow term="Effective module access">
-                          {effectiveModules.length > 0
-                            ? moduleLabels(effectiveModules).join(", ")
-                            : account.status === "active"
-                              ? EMPTY
-                              : "None until the account is active"}
-                        </DetailRow>
-                      </>
+                      <DetailRow term="System roles">
+                        {account.roleIds.length > 0 ? account.roleIds.map((role) => getSystemRoleLabel(role)).join(", ") : EMPTY}
+                      </DetailRow>
                     ) : null}
                   </DetailList>
+                  {account ? (
+                    <div className="tw:flex tw:flex-col tw:gap-2">
+                      <span className="tw:text-xs tw:font-medium tw:text-muted-foreground">Effective module access</span>
+                      <ModuleAccessList
+                        moduleIds={effectiveModules}
+                        label="Effective module access"
+                        emptyText={account.status === "active" ? "No modules granted." : "None until the account is active"}
+                      />
+                    </div>
+                  ) : null}
                   {/* The full status dialog supersedes the Staff suspend/deactivate shortcut. */}
                   {!accountActions?.onChangeStatus ? (
                     <LinkedAccountActions
@@ -819,11 +859,4 @@ function LinkedAccountActions({
       {dialog}
     </div>
   );
-}
-
-function moduleLabels(moduleIds: string[]): string[] {
-  return moduleIds.map((moduleId) => {
-    const entry = MODULE_CATALOG.find((item) => item.id === moduleId);
-    return entry ? entry.label : humanize(moduleId);
-  });
 }

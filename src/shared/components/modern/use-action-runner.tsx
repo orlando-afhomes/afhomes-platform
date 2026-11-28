@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { notify } from "./app-toaster";
 
 /**
  * Runs an async action and reports through toasts; returns whether it
@@ -14,7 +15,7 @@ export function useActionRunner() {
       toast.success(success);
       return true;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Request failed.");
+      notify.actionError(error, "Request failed.");
       return false;
     }
   }, []);

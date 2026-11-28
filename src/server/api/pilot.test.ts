@@ -1,6 +1,6 @@
 // @vitest-environment node
 // Customer â†’ contract â†’ sale â†’ receipt approval â†’ collections, through the real Route Handlers.
-// Runs against the LOCAL emulators (npm run emulators, then npm run db:seed). Skipped when they are not running.
+// Runs against the LOCAL emulators (npm run emulators, then npm run db:seed:fixtures). Skipped when they are not running.
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";

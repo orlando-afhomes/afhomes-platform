@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode, type Ref } from "react";
+import { useState, type KeyboardEventHandler, type ReactNode, type Ref } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { EMAIL_DOMAINS, MAX_NAME_LENGTH, MAX_PASSWORD_LENGTH, cleanEmailInput, splitEmail } from "@/shared/utils/input-sanitizers";
 import { cleanTitleInput } from "@/shared/forms/formatting/text";
@@ -24,6 +24,7 @@ export type TextFieldProps = BaseFieldProps & {
   addonAfter?: ReactNode;
   /** Lets a wrapper restore the caret after reformatting the value as it is typed. */
   inputRef?: Ref<HTMLInputElement>;
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
 };
 
 const INPUT_HEIGHT = "tw:h-11";
@@ -55,6 +56,7 @@ export function TextField({
   addonAfter,
   className,
   inputRef,
+  onKeyDown,
 }: TextFieldProps) {
   const ids = useFieldIds(explicitId);
   const [visible, setVisible] = useState(false);
@@ -85,6 +87,7 @@ export function TextField({
           aria-describedby={describedBy(ids, error, hint)}
           className={`${INPUT_HEIGHT}${addonBefore !== undefined ? " tw:rounded-l-none" : ""}${addonAfter ? " tw:rounded-r-none" : ""}${isPassword ? " tw:pr-11" : ""}`}
           onChange={(event) => onChange(transform ? transform(event.target.value) : event.target.value)}
+          onKeyDown={onKeyDown}
           onBlur={onBlur}
         />
         {addonAfter}
@@ -139,10 +142,10 @@ export function EmailField({ onChange, value, ...rest }: Omit<BaseFieldProps, "i
   const typed = (raw: string) => {
     const clean = cleanEmailInput(raw);
     if (other) return onChange(clean);
-    if (!clean.includes("@")) return onChange(clean ? clean + current : "");
-    // A pasted or typed "@" means a full address: keep it whole.
-    setForceOther(true);
-    onChange(clean);
+    // A chosen domain owns the @domain half, so this box takes only the name: "@" and
+    // everything typed or pasted after it never enter, and symbols outside a name are dropped.
+    const local = clean.split("@")[0].replace(/[^a-z0-9._%+-]/g, "");
+    onChange(local ? local + current : "");
   };
   const pick = (next: string | null) => {
     if (next === OTHER_DOMAIN) return setForceOther(true);

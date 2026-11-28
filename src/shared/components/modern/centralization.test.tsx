@@ -144,6 +144,20 @@ describe("centralized feedback", () => {
     expect(await screen.findByText("Blocked.")).toBeInTheDocument();
   });
 
+  it("surfaces field reasons from a failed action", async () => {
+    const user = userEvent.setup();
+    const failure = Object.assign(new Error("Review the highlighted fields."), { errors: { firstName: "First name is required." } });
+    render(
+      <>
+        <AppToaster />
+        <Runner action={() => Promise.reject(failure)} success="Saved." />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Go" }));
+    expect(await screen.findByText("First name is required.")).toBeInTheDocument();
+    expect(screen.queryByText("Review the highlighted fields.")).toBeNull();
+  });
+
   it("exposes notify helpers", async () => {
     render(<AppToaster />);
     notify.success("Done");

@@ -1,5 +1,5 @@
 // @vitest-environment node
-// The read endpoints the screens use. Runs against the LOCAL emulators (npm run emulators, then npm run db:seed).
+// The read endpoints the screens use. Runs against the LOCAL emulators (npm run emulators, then npm run db:seed:fixtures).
 import { beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
 
@@ -43,7 +43,7 @@ describe.skipIf(!up)("read endpoints for the screens (emulators)", () => {
     const lists = new Map<string, Json[]>();
     for (const identity of OST_IDENTITIES) lists.set(identity, (await all(routes.contracts.GET, identity, "/api/v1/contracts")) as Json[]);
     const identity = OST_IDENTITIES.find((candidate) => (lists.get(candidate) ?? []).length > 0);
-    if (!identity) throw new Error("Run npm run db:seed: no seeded seller has a visible contract.");
+    if (!identity) throw new Error("Run npm run db:seed:fixtures: no seeded seller has a visible contract.");
     const contractIds = new Set((lists.get(identity) ?? []).map((item) => item.id as string));
     const outsider = OST_IDENTITIES.find((candidate) => candidate !== identity && (lists.get(candidate) ?? []).every((item) => !contractIds.has(item.id as string)));
     if (!outsider) throw new Error("No seeded seller is outside the chosen contract's scope.");

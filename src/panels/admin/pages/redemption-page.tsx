@@ -3,8 +3,8 @@
 import type { MemberQrHolder } from "@/data/contracts/member-qr-repository";
 import { useRepositories } from "@/data/queries";
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useOperation } from "@/data/business-queries";
 import { useTierDisplayName } from "../components/use-tier-display-name";
 import type { BookingView, MemberPoints } from "@/data/contracts/redemption-repository";
@@ -28,8 +28,6 @@ import { Input } from "@/shared/ui/input";
 import { formatDate } from "@/shared/lib/format-date";
 import { FilterBar } from "@/shared/components/modern/filter-bar";
 import { matchesSearch } from "@/shared/lib/search";
-import { Button } from "@/shared/ui/button";
-import { NewBookingFlow } from "../components/new-booking-flow";
 import { RestaurantReservationsTable } from "../components/restaurant-reservations-table";
 import { buildRedemptionBookingMenuProps } from "../actions/redemption-actions";
 import { ADMIN_AREA_TABS } from "../navigation";
@@ -74,12 +72,12 @@ function nowManilaInput(): string {
   return parts.replace(" ", "T");
 }
 
-/** Create dialogs are opened from the area header; each panel renders its own dialog. */
+/** Create dialogs are opened from the area header; each settings panel renders its own dialog. */
 export type RedemptionPanelCreateProps = { createOpen?: boolean; onCreateClose?: () => void; selected?: MemberQrHolder };
 
-/** Bookings tab: New booking (redemption.book), booking actions (redemption.book; money part needs finance.verify). */
-export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = () => {}, selected }: RedemptionPanelCreateProps) {
-  const data = useRedemption(selected?.scannedCode);
+/** Bookings tab: booking actions (redemption.book; money part needs finance.verify). */
+export function RedemptionBookingsPanel() {
+  const data = useRedemption();
   const act = useRedemptionBookingAction();
   const { memberQr } = useRepositories();
   const canBook = useOperation("redemption.book");
@@ -100,8 +98,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   const [bookingStatus, setBookingStatus] = useState("all");
   const [bookingVenue, setBookingVenue] = useState("all");
   const visibleBookings = useMemo(
-    () => (overview?.bookings ?? []).filter((item) => (!selected || (item.membershipId === selected.membershipId && (item.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary") === selected.holder)) && (bookingStatus === "all" || item.status === bookingStatus) && (bookingVenue === "all" || item.venueId === bookingVenue) && matchesSearch(bookingSearch, item.reference, item.customerName, item.venueName)),
-    [overview, bookingSearch, bookingStatus, bookingVenue, selected],
+    () => (overview?.bookings ?? []).filter((item) => (bookingStatus === "all" || item.status === bookingStatus) && (bookingVenue === "all" || item.venueId === bookingVenue) && matchesSearch(bookingSearch, item.reference, item.customerName, item.venueName)),
+    [overview, bookingSearch, bookingStatus, bookingVenue],
   );
   const bookingStatusOptions = [{ value: "all", label: "All statuses" }, ...(Object.keys(STATUS) as BookingStatus[]).map((value) => ({ value, label: STATUS[value].label }))];
   const venueOptions = [{ value: "all", label: "All venues" }, ...(overview?.venues ?? []).map((item) => ({ value: item.id, label: item.name }))];
@@ -126,8 +124,8 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
     if (!text.trim()) { setError(dialog.kind === "approve-cash" ? "A receipt reference is required." : "A reason is required."); return; }
     setError(undefined);
     try {
-      if (dialog.kind === "cancel") await run(act.mutateAsync({ id: dialog.booking.id, action: "cancel", reason: text.trim(), cancelledAt: new Date(`${when}:00+08:00`).toISOString(), scannedCode: selected?.scannedCode }), "Booking cancelled.");
-      else if (dialog.kind === "no-show") await run(act.mutateAsync({ id: dialog.booking.id, action: "no-show", reason: text.trim(), scannedCode: selected?.scannedCode }), "No-show recorded.");
+      if (dialog.kind === "cancel") await run(act.mutateAsync({ id: dialog.booking.id, action: "cancel", reason: text.trim(), cancelledAt: new Date(`${when}:00+08:00`).toISOString() }), "Booking cancelled.");
+      else if (dialog.kind === "no-show") await run(act.mutateAsync({ id: dialog.booking.id, action: "no-show", reason: text.trim() }), "No-show recorded.");
       else await run(act.mutateAsync({ id: dialog.booking.id, action: "approve-cash", reference: text.trim() }), "Money part approved.");
       closeDialog();
     } catch (failure) {
@@ -138,23 +136,23 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
   const recordCheckIn = async (booking: BookingView) => {
     const holder = booking.stayingHolder === "Gold extra cardholder" ? "supplementary" : "primary";
     try {
-      const cardholder = selected ?? (await memberQr.identify(booking.membershipId)).find((item) => item.holder === holder);
+      const cardholder = (await memberQr.identify(booking.membershipId)).find((item) => item.holder === holder);
       if (!cardholder) throw new Error("The staying cardholder is no longer registered.");
       confirmRun({
         title: "Record Check-In?",
         description: `Check ${cardholder.holderName}’s ID. The booking needs ${fmt(booking.reservedWeekday)} weekday and ${fmt(booking.reservedWeekend)} weekend points. These stay reserved until the stay ends.`,
         confirmText: "ID Checked · Record Check-In", tone: "success",
-        action: () => act.mutateAsync({ id: booking.id, action: "check-in", verification: { holder, identityChecked: true, scannedCode: selected?.scannedCode } }),
+        action: () => act.mutateAsync({ id: booking.id, action: "check-in", verification: { holder, identityChecked: true } }),
         successTitle: `Check-in recorded for ${booking.reference}.`, errorTitle: "Could not record check-in",
       });
     } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : "Could not verify the staying cardholder.");
+      notify.actionError(failure, "Could not verify the staying cardholder.");
     }
   };
   const completeStay = (booking: BookingView) => confirmRun({
     title: "Complete Stay?",
     description: `Deduct ${fmt(booking.reservedWeekday)} weekday and ${fmt(booking.reservedWeekend)} weekend points for ${booking.reference}.`,
-    confirmText: "Complete Stay", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete", scannedCode: selected?.scannedCode }),
+    confirmText: "Complete Stay", tone: "success", action: () => act.mutateAsync({ id: booking.id, action: "complete" }),
     successTitle: `Stay ${booking.reference} completed.`, errorTitle: "Could not complete stay",
   });
 
@@ -189,8 +187,7 @@ export function RedemptionBookingsPanel({ createOpen = false, onCreateClose = ()
               });
               return <RowActionsMenu {...menu} extraItems={menu.extraItems.map((item) => ({ ...item, tone: ACTION_TONE[item.key]?.tone }))} />;
             }} />
-            <RestaurantReservationsTable selected={selected} />
-            {createOpen && canBook ? <NewBookingFlow overview={overview} selected={selected} onClose={onCreateClose} /> : null}
+            <RestaurantReservationsTable />
           </>
         ) : null}
       </QueryState>
@@ -321,24 +318,17 @@ export function RedemptionCardholderPointsPanel() {
 /** Redemption area: one page with the tabs of `ADMIN_AREA_TABS.redemption`; tab visibility follows `useAdminAreaTabAccess`. The setup tabs live in Settings. */
 export function RedemptionAreaPage() {
   const access = useAdminAreaTabAccess("redemption");
-  const canBook = useOperation("redemption.book");
-  const [creating, setCreating] = useState(false);
-  const close = () => setCreating(false);
-
   return (
     <AreaPage
       anyOf={["redemption"]}
       title="Redemption"
-      actions={(tab) => tab === "bookings" && canBook
-        ? <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setCreating(true)}><Plus aria-hidden="true" /> New Booking</Button>
-        : null}
       tabs={ADMIN_AREA_TABS.redemption.map(({ value, label }) => ({
         value,
         label,
         allowed: access[value],
         render: () => {
           switch (value) {
-            case "bookings": return <RedemptionBookingsPanel createOpen={creating} onCreateClose={close} />;
+            case "bookings": return <RedemptionBookingsPanel />;
             case "cardholder-points": return <RedemptionCardholderPointsPanel />;
           }
         },

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
-import { BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
+import { AUDIT_ACTIONS, BUSINESS_AUDIT_ACTIONS } from "@/modules/audit/types";
 import { ApiError } from "@/server/api/errors";
 import { getAdminApp } from "@/server/firebase-admin";
 import { dbRead } from "@/server/db";
@@ -181,6 +181,119 @@ export async function downloadCustomerIdentityImage(customerId: string, profile:
 /** Best effort cleanup when a draft that never had a file is discarded; an unreferenced object is harmless. */
 export async function deleteCustomerIdentityFile(profile: Record<string, unknown> | null): Promise<void> {
   const meta = customerIdentityFileOf(profile);
+  if (!meta) return;
+  await bucket().file(meta.storagePath).delete().catch(() => undefined);
+}
+
+// ---------------------------------------------------------------- staff avatars
+const AVATAR_EXTENSIONS = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" } as const;
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+/** Reads the bytes, not the browser-reported type. JPEG, PNG and WebP only. */
+export function detectAvatarType(bytes: Buffer): keyof typeof AVATAR_EXTENSIONS | null {
+  const basic = detectEvidenceType(bytes);
+  if (basic === "image/jpeg" || basic === "image/png") return basic;
+  if (bytes.length >= 12 && bytes.subarray(0, 4).toString("latin1") === "RIFF" && bytes.subarray(8, 12).toString("latin1") === "WEBP") return "image/webp";
+  return null;
+}
+
+/** Server-only metadata for a staff avatar; the browser only sees an authenticated URL. */
+export type StaffAvatarFile = { fileId: string; storagePath: string; fileName: string; size: number; contentType: string; uploadedAt: string; uploadedBy: string };
+
+export function staffAvatarFileOf(profile: Record<string, unknown> | null | undefined): StaffAvatarFile | null {
+  const file = profile?.avatarFile as Partial<StaffAvatarFile> | undefined;
+  if (!file || typeof file.fileId !== "string" || typeof file.storagePath !== "string") return null;
+  return {
+    fileId: file.fileId,
+    storagePath: file.storagePath,
+    fileName: typeof file.fileName === "string" ? file.fileName : "avatar.jpg",
+    size: typeof file.size === "number" ? file.size : 0,
+    contentType: typeof file.contentType === "string" ? file.contentType : "image/jpeg",
+    uploadedAt: typeof file.uploadedAt === "string" ? file.uploadedAt : "",
+    uploadedBy: typeof file.uploadedBy === "string" ? file.uploadedBy : "",
+  };
+}
+
+type StaffProfileRow = { staffMember: { profile: Record<string, unknown> | null } | null };
+
+/** Raw profile JSON, needed for the private file metadata that the public StaffMember shape omits. */
+export async function loadStaffProfile(staffId: string): Promise<Record<string, unknown> | null> {
+  const result = await dbRead<StaffProfileRow>(`query($id: UUID!) { staffMember(id: $id) { profile } }`, { id: staffId });
+  return result.staffMember?.profile ?? null;
+}
+
+/**
+ * Merges an ordinary staff edit into the stored profile JSON. The avatar file metadata is server-owned:
+ * a normal save keeps it, so editing a name or photo selection never breaks the private file reference;
+ * clearing the avatar drops it together with the URL.
+ */
+export function mergeStaffProfile(
+  stored: Record<string, unknown> | null,
+  edit: Record<string, unknown>,
+  avatarUrl: string | null,
+): Record<string, unknown> {
+  const profile: Record<string, unknown> = { ...(stored ?? {}), ...edit, avatarUrl: avatarUrl ?? null };
+  if (!avatarUrl) delete profile.avatarFile;
+  return profile;
+}
+
+/**
+ * Stores one staff avatar in the private bucket. The staff row keeps only the short authenticated URL and
+ * the metadata in its profile; the previous object is removed once the new reference is committed.
+ */
+export async function attachStaffAvatar(actor: Actor, staffId: string, profile: Record<string, unknown> | null, bytes: Buffer, originalName: string | null) {
+  if (bytes.length === 0) throw invalid("The file is empty.");
+  if (bytes.length > MAX_AVATAR_BYTES) throw new ApiError(413, "file_too_large", "Attach an image of 2 MB or less.");
+  const detected = detectAvatarType(bytes);
+  if (!detected) throw invalid("Attach a JPEG, PNG or WebP image.");
+  const fileId = randomUUID();
+  const storagePath = `staff/${staffId}/avatar/${fileId}.${AVATAR_EXTENSIONS[detected]}`;
+  const meta: StaffAvatarFile = {
+    fileId,
+    storagePath,
+    fileName: displayName(originalName ?? "avatar", AVATAR_EXTENSIONS[detected]),
+    size: bytes.length,
+    contentType: detected,
+    uploadedAt: nowIso(),
+    uploadedBy: actor.userId,
+  };
+  const avatarUrl = `/api/v1/staff/${staffId}/avatar/${fileId}`;
+  const file = bucket().file(storagePath);
+  await file.save(bytes, { contentType: detected, resumable: false, metadata: { metadata: { staffId, uploaderId: actor.userId } } });
+  try {
+    // Merge into the newest profile so a concurrent field edit is not reverted by the avatar write.
+    const latest = (await loadStaffProfile(staffId)) ?? profile;
+    const previous = staffAvatarFileOf(latest);
+    await transact(actor, {
+      variableDefinitions: "$id: UUID!, $profile: Any!",
+      fields: "staff: staffMember_update(id: $id, data: { profile: $profile })",
+      variables: { id: staffId, profile: { ...(latest ?? {}), avatarUrl, avatarFile: meta } },
+      audit: [{ action: AUDIT_ACTIONS.STAFF_UPDATED, entityType: "staff", entityId: staffId, details: { module: "organization", newValue: "avatar" } }],
+    });
+    if (previous && previous.storagePath !== storagePath) await bucket().file(previous.storagePath).delete().catch(() => undefined);
+  } catch (error) {
+    await file.delete().catch(() => undefined);
+    throw error;
+  }
+  return { avatarUrl };
+}
+
+/** Streams one private avatar after the route checked that the actor may see the staff record. */
+export async function downloadStaffAvatar(staffId: string, profile: Record<string, unknown> | null, fileId: string) {
+  const meta = staffAvatarFileOf(profile);
+  if (!meta || meta.fileId !== fileId) throw notFound("Avatar");
+  try {
+    const [bytes] = await bucket().file(meta.storagePath).download();
+    return { bytes, meta };
+  } catch (error) {
+    if ((error as { code?: number }).code === 404) throw notFound("Avatar");
+    throw error;
+  }
+}
+
+/** Clears a deleted avatar reference; the object itself is best-effort cleanup. */
+export async function deleteStaffAvatar(profile: Record<string, unknown> | null): Promise<void> {
+  const meta = staffAvatarFileOf(profile);
   if (!meta) return;
   await bucket().file(meta.storagePath).delete().catch(() => undefined);
 }

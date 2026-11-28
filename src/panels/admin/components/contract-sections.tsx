@@ -268,7 +268,7 @@ function paymentsText(count: number): string {
   return count === 0 ? "Full payment" : `${count} monthly payment${count === 1 ? "" : "s"}`;
 }
 
-/** Normal vs Non-Standard price and payments, the reason, and where the two approvals stand (doc 05 Â§10.2). */
+/** Normal vs Non-Standard price and payments, the reason, and where the two approvals stand (doc 05 §10.2). */
 export function NonStandardTermsList({ contract }: { contract: ContractView }) {
   const accounts = useAccounts().data ?? [];
   const accountName = (id: string | null) => (id ? accounts.find((account) => account.id === id)?.displayName ?? id : EMPTY);

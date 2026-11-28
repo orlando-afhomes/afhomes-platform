@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CircleCheck, CircleX, Hourglass, ListOrdered, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useCustomerImportJobs, useExportCustomers, useImportCustomers, useOperation, usePaymentSchemes, useVipProducts } from "@/data/business-queries";
 import { useCustomers, useMembers } from "@/data/queries";
 import {
@@ -118,7 +119,7 @@ function ImportSteps() {
       setPreview(null);
       setDeclaration(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The import failed.");
+      notify.actionError(error, "The import failed.");
     }
   };
 
@@ -262,7 +263,7 @@ function ExportSteps() {
       }
       toast.success(`${records.length} customer(s) exported.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The export failed.");
+      notify.actionError(error, "The export failed.");
     }
   };
 

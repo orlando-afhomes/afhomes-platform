@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useOperation, usePayments } from "@/data/business-queries";
 import { useReceiptImportAction, useReceiptImportBatches } from "@/data/reconciliation-queries";
 import { buildReceiptImportRows, importedReceiptStatusLabel, RECEIPT_IMPORT_COLUMNS, rowsToReceiptRecords, type ReceiptImportBatch, type ReceiptImportRecord, type ReceiptImportRow } from "@/modules/imports/receipt-import";
@@ -131,7 +132,7 @@ function ImportPanel() {
       setPreview(null);
       setDeclaration(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The import failed.");
+      notify.actionError(error, "The import failed.");
     }
   };
 

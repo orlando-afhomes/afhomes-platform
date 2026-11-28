@@ -10,7 +10,7 @@
 
 This guide covers data modeling, identifiers, financial atomicity, ledger integrity, security, indexes, schema changes, approved imports, backups, and environment isolation.
 
-Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator on localhost, prove the pilot against PostgreSQL in staging, then use a separate company-owned production database. The app has no browser mock layer (removed in F9): `db:seed` loads synthetic local records into the emulator and `db:seed:clean` loads only the confirmed reference data.
+Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator on localhost, prove the pilot against PostgreSQL in staging, then use a separate company-owned production database. The app has no browser mock layer (removed in F9): `db:seed` and `db:seed:clean` load the true data only, and `db:seed:fixtures` adds the synthetic local records used by the test suites.
 
 ---
 
@@ -41,7 +41,7 @@ Use PostgreSQL through Firebase SQL Connect. Start in the SQL Connect Emulator o
 
 Two data-development modes:
 
-1. **Local full stack:** Next.js uses the SQL Connect Emulator through a server repository. `db:seed` loads synthetic records and `db:seed:clean` loads only the confirmed reference data. Records survive browser refreshes; recreate or persist test state through the documented seed and emulator procedures.
+1. **Local full stack:** Next.js uses the SQL Connect Emulator through a server repository. `db:seed` and `db:seed:clean` load the true data only: one Super Admin and the confirmed reference data. `db:seed:fixtures` adds the synthetic pilot records used by the emulator test suites. Every seed variant clears the local tables first. Records survive browser refreshes; recreate or persist test state through the documented seed and emulator procedures.
 2. **Hosted database:** Independent staging and production SQL Connect/Cloud SQL pairs. Each has project-specific authentication, service credentials, reviewed schema releases, and an approved backup and recovery policy.
 
 ---

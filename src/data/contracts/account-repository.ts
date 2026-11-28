@@ -10,7 +10,7 @@ export interface AccountRepository {
   assignRole(id: string, role: string, options?: MockAsyncOptions): Promise<Account>;
   revokeRole(id: string, role: string, options?: MockAsyncOptions): Promise<Account>;
   updateStatus(id: string, status: AccountStatus, options?: MockAsyncOptions): Promise<Account>;
-  /** Requests a Firebase password-reset email (owner decision 2026-11-25); no password is generated, shown or audited. */
+  /** Requests a Firebase password-reset email, including for the signed-in user; no password is generated, shown or audited. */
   requestPasswordReset(id: string, options?: MockAsyncOptions): Promise<{ message: string; email?: string; resetLink?: string }>;
   /** Removes an inactive, unlinked, non-protected account the actor has authority over. */
   delete(id: string, options?: MockAsyncOptions): Promise<void>;

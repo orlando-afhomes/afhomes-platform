@@ -200,10 +200,9 @@ export function validateAccreditedSellerFields(
     validateRequiredText(input.gender, "Gender") ??
     validateRequiredText(input.civilStatus, "Civil Status") ??
     validateGovIdType(input.governmentIdType) ??
-    validateGovIdNumber(input.governmentIdNumber) ??
+    validateGovIdNumber(input.governmentIdNumber, input.governmentIdType) ??
     validateTeamNameForDesignation(input) ??
     validateStartDate(input.approvedStart) ??
-    validatePhoto(input) ??
     validateAccreditationSelection(input) ??
     validateManualAa(input) ??
     validateOptionalFields(input)
@@ -243,10 +242,6 @@ function validateGovIdType(value: string): string | null {
 
 function validateStartDate(value: string): string | null {
   return validateDateString(value, "Start date") ?? (isLeapDayStart(value) ? "Leap-day starts need policy confirmation." : null);
-}
-
-function validatePhoto(input: CreateAccreditedSellerInput): string | null {
-  return input.profilePhotoName ? null : "Profile photo is required.";
 }
 
 function validateAccreditationSelection(input: CreateAccreditedSellerInput): string | null {

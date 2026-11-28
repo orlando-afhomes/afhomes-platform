@@ -102,6 +102,8 @@ Automated events: some operations may be automatically triggered by the system, 
 
 Document relevant security events such as account creation, account approval, login success, login failure where security-relevant, logout or session termination where supported, account activation, account deactivation, suspension, reactivation, accreditation expiry affecting access, relevant credential or authentication-setting changes, unauthorized access attempts, sensitive permission-denial events.
 
+Password reset requests, whether self-service or Administrator-initiated, are security events. Record the request, the target account, whether it was self-service, and the channel. The reset itself is completed in the authentication provider; never store the reset link, token, password or recovery secret.
+
 Do not require unrestricted collection of sensitive session contents.
 
 Secrets: Audit Logs must not store raw passwords, authentication tokens, API secrets, session credentials, private keys, OTP or recovery secrets. Sensitive technical data must be excluded or appropriately protected.

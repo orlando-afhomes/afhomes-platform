@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { RefreshCw } from "lucide-react";
 import type { AccreditationRecord } from "@/modules/accreditation/types";
 import { isRenewalAllowed, manilaToday, parseManilaDateOnly } from "@/modules/accreditation/dates";
@@ -58,7 +59,7 @@ export function AccreditationRenewAction({ record, memberName, canRenew }: { rec
             },
             (err: unknown) => {
               setOpen(false);
-              toast.error("Renewal failed.", { description: err instanceof Error ? err.message : "Failed to renew accreditation." });
+              notify.actionError(err, "Renewal failed.");
             },
           );
         }}

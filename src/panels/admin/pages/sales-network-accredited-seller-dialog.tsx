@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useVipProducts } from "@/data/business-queries";
 import { useReferenceOptions } from "@/data/settings-queries";
 import { defaultProductCode, tierOptions } from "@/modules/vip/tier-options";
@@ -11,8 +12,6 @@ import { designationLabel, teamDisplayName } from "@/modules/sales-network/displ
 import { manilaToday } from "@/modules/accreditation/dates";
 import {
   ACCREDITATION_STATUS_OPTIONS,
-  CIVIL_STATUS_OPTIONS,
-  GENDER_OPTIONS,
   calculateApprovedExpiry,
   isLeapDayStart,
   programCategoryLabel,
@@ -27,11 +26,15 @@ import {
   normalizePhilippineMobile,
   normalizePostalCode,
 } from "@/shared/utils/input-sanitizers";
+import { MAX_UPLOAD_BYTES } from "@/shared/lib/file-data";
+import { dialingPrefixFor } from "@/shared/data/philippine-locations";
+import { CIVIL_CARDS, GENDER_CARDS } from "../components/customer-form-sections";
 import {
   PersonNameField,
   MiddleNameField,
   SuffixField,
   PhilippineMobileField,
+  PhilippineLandlineField,
   EmailField,
   PasswordField,
   ConfirmPasswordField,
@@ -42,6 +45,7 @@ import {
   GovernmentIdFields,
   PhilippineAddressFields,
   ProfilePhotoUploader,
+  RadioCardField,
 } from "@/shared/forms/modern";
 import {
   validatePersonName,
@@ -66,7 +70,6 @@ import {
   validateLandline,
   validateDateString,
   validatePastDate,
-  formatPhilippineLandlineDisplay,
 } from "@/shared/forms";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { FormGrid, FormSection } from "@/shared/components/modern/form-layout";
@@ -86,8 +89,10 @@ import {
 
 type IstDesignation = "SVD" | "SSM" | "SM";
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const MAX_PHOTO_BYTES = MAX_UPLOAD_BYTES;
 const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const STEPS = ["Personal", "Address", "Assignment", "Accreditation", "Review"] as const;
+const LAST_STEP = STEPS.length - 1;
 
 function fullNameOf(firstName: string, middleName: string, noMiddleName: boolean, lastName: string, suffix: string): string {
   const first = firstName.trim();
@@ -196,6 +201,7 @@ export function AccreditedSellerDialog({
 
   const expiryPreview = calculateApprovedExpiry(approvedStart);
   const leapDay = isLeapDayStart(approvedStart);
+  const dial = dialingPrefixFor(province, city);
   const sponsorMember = (eligibleQuery.data ?? []).find((member) => member.id === parentId);
   const sponsorName = sponsorMember;
   const inheritedTeam = sponsorMember
@@ -269,7 +275,7 @@ export function AccreditedSellerDialog({
     civilStatus: civilStatus ?? "",
     governmentIdType: governmentIdType ?? "",
     governmentIdNumber: governmentIdNumber.trim(),
-    telephone: telephone.trim() ? normalizeLandline(telephone) : null,
+    telephone: telephone.trim() ? normalizeLandline(`${dial.areaCode ?? ""}${telephone}`) : null,
     facebook: facebook.trim() || null,
     tin: tin.trim() ? tin.replace(/\D/g, "") : null,
     businessEmployer: businessEmployer.trim() || null,
@@ -285,7 +291,6 @@ export function AccreditedSellerDialog({
   /** Every rule runs each render; `stepOf` says which step owns it. */
   const rules: Record<string, string | undefined> = {
     existingAccount: sellerIdentity === "existing" && !existingAccountId ? "Select an employee account." : undefined,
-    photo: profilePhotoName ? undefined : "Profile photo is required.",
     firstName: orUndefined(validatePersonName(firstName, "First name")),
     middleName: orUndefined(validateMiddleName(middleName, noMiddleName)),
     lastName: orUndefined(validatePersonName(lastName, "Last name")),
@@ -300,7 +305,7 @@ export function AccreditedSellerDialog({
     city: orUndefined(validateCity(city)),
     barangay: orUndefined(validateBarangay(barangay)),
     postalCode: orUndefined(validatePostalCode(postalCode)),
-    telephone: orUndefined(validateLandline(telephone)),
+    telephone: orUndefined(validateLandline(telephone, dial.areaCode)),
     facebook: orUndefined(validateFacebook(facebook)),
     tin: orUndefined(validateTinNumber(tin)),
     businessEmployer: orUndefined(validateBusinessName(businessEmployer)),
@@ -315,7 +320,7 @@ export function AccreditedSellerDialog({
     gender: gender?.trim() ? undefined : "Gender is required.",
     civilStatus: civilStatus?.trim() ? undefined : "Civil Status is required.",
     governmentIdType: governmentIdType ? undefined : "Government ID type is required.",
-    governmentIdNumber: orUndefined(validateGovIdNumber(governmentIdNumber)),
+    governmentIdNumber: orUndefined(validateGovIdNumber(governmentIdNumber, governmentIdType)),
     accreditationStatus: !accreditationStatus
       ? "Accreditation Status is required."
       : accreditationStatus === "cancel" || accreditationStatus === "expired"
@@ -324,7 +329,7 @@ export function AccreditedSellerDialog({
     approvedStart: orUndefined(validateDateString(approvedStart, "Start date")),
   };
   const stepOf: Record<string, number> = {
-    existingAccount: 0, photo: 0, firstName: 0, middleName: 0, lastName: 0, suffix: 0, mobile: 0, dateOfBirth: 0, email: 0, tempPassword: 0, confirmPassword: 0,
+    existingAccount: 0, firstName: 0, middleName: 0, lastName: 0, suffix: 0, mobile: 0, dateOfBirth: 0, email: 0, tempPassword: 0, confirmPassword: 0,
     street: 1, province: 1, city: 1, barangay: 1, postalCode: 1, telephone: 1, facebook: 1, tin: 1, businessEmployer: 1, businessAddress: 1, jobPosition: 1,
     position: 2, sponsor: 2, teamName: 2, cardApplicationDate: 2, programCategory: 2, vipCardLevel: 2, gender: 2, civilStatus: 2, governmentIdType: 2, governmentIdNumber: 2,
     accreditationStatus: 3, approvedStart: 3,
@@ -335,14 +340,21 @@ export function AccreditedSellerDialog({
 
   const focusFirstInvalid = () => requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus());
 
-  const handleNext = () => {
-    if (stepHasErrors(step)) {
-      setShownSteps((previous) => (previous.includes(step) ? previous : [...previous, step]));
-      focusFirstInvalid();
-      return;
+  // Clicking a step jumps there: backward is free, forward checks every step it skips.
+  const goTo = (target: number) => {
+    if (target <= step) return setStep(target);
+    for (let from = step; from < target; from += 1) {
+      if (stepHasErrors(from)) {
+        setShownSteps((previous) => (previous.includes(from) ? previous : [...previous, from]));
+        setStep(from);
+        focusFirstInvalid();
+        return;
+      }
     }
-    setStep((value) => Math.min(value + 1, 3));
+    setStep(target);
   };
+
+  const handleNext = () => goTo(Math.min(step + 1, LAST_STEP));
 
   const handleBack = () => {
     setStep((value) => Math.max(value - 1, 0));
@@ -391,7 +403,7 @@ export function AccreditedSellerDialog({
       );
     } catch (err) {
       setConfirmCreate(false);
-      toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create seller." });
+      notify.actionError(err, "Creation failed.");
     } finally {
       setSubmitting(false);
     }
@@ -402,9 +414,10 @@ export function AccreditedSellerDialog({
     !leapDay &&
     (accreditationStatus === "pending" || accreditationStatus === "accredited");
 
-  const STEPS = ["Personal", "Address", "Assignment", "Accreditation"];
+
   const fullName = fullNameOf(firstName, middleName, noMiddleName, lastName, suffix);
   const radioClass = "tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8";
+  const footerButtonClass = "tw:min-h-11 tw:sm:min-h-8";
 
   return (
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : undefined)}>
@@ -416,7 +429,7 @@ export function AccreditedSellerDialog({
         <div ref={bodyRef} className="tw:flex tw:flex-col tw:gap-4">
           {!isSuperAdmin ? <InfoNote title="Super Administrator Completion Required">Preview only. Super Administrator required.</InfoNote> : null}
 
-          <StepIndicator steps={STEPS} current={step} />
+          <StepIndicator steps={STEPS} current={step} onStepClick={goTo} />
 
           {step === 0 ? (
             <div className="tw:flex tw:flex-col tw:gap-5">
@@ -450,8 +463,8 @@ export function AccreditedSellerDialog({
                 ) : null}
               </FormSection>
 
-              <FormSection title="Profile Photo *">
-                <ProfilePhotoUploader value={profilePhotoUrl} fileName={profilePhotoName} onSelect={acceptPhotoFile} onClear={clearPhoto} error={photoError ?? visible("photo")} />
+              <FormSection title="Profile Photo">
+                <ProfilePhotoUploader value={profilePhotoUrl} fileName={profilePhotoName} onSelect={acceptPhotoFile} onClear={clearPhoto} error={photoError ?? undefined} />
               </FormSection>
 
               <FormSection title="Name & Contact">
@@ -469,7 +482,7 @@ export function AccreditedSellerDialog({
                   />
                   <PersonNameField id="last-name" label="Last Name" required value={lastName} onChange={setLastName} error={visible("lastName")} />
                   <SuffixField id="seller-suffix" value={suffix || undefined} onChange={setSuffix} error={visible("suffix")} />
-                  <PhilippineMobileField id="mobile" label="Mobile Number" required value={mobileNumber} onChange={setMobileNumber} placeholder="09xx xxx xxxx" error={visible("mobile")} />
+                  <PhilippineMobileField id="mobile" label="Mobile Number" required fixedPrefix value={mobileNumber} onChange={setMobileNumber} error={visible("mobile")} />
                   <StandardDateField id="dob" label="Birth Date" required value={dateOfBirth} onChange={setDateOfBirth} error={visible("dateOfBirth")} />
                   <EmailField id="seller-email" label="Email" required value={email} onChange={setEmail} error={visible("email")} className="tw:sm:col-span-2" />
                 </FormGrid>
@@ -511,7 +524,7 @@ export function AccreditedSellerDialog({
               </FormSection>
               <FormSection title="Additional Information (Optional)">
                 <FormGrid>
-                  <TextField id="telephone" label="Telephone" value={telephone} onChange={setTelephone} onBlur={() => setTelephone(formatPhilippineLandlineDisplay(telephone))} maxLength={15} inputMode="tel" error={visible("telephone")} />
+                  <PhilippineLandlineField id="telephone" label="Landline" localDigitsOnly value={telephone} onChange={setTelephone} maxLength={15} error={visible("telephone")} countryCode={dial.countryCode} areaCode={dial.areaCode ?? undefined} hint={dial.areaCode ? "Area code filled from the address." : undefined} />
                   <TextField id="facebook" label="Facebook" value={facebook} onChange={setFacebook} onBlur={() => setFacebook(facebook.trim())} maxLength={150} error={visible("facebook")} />
                   <TinField id="tin" label="TIN" value={tin} onChange={setTin} error={visible("tin")} />
                   <TextField id="job-position" label="Job Position" value={jobPosition} onChange={(value) => setJobPosition(cleanTitleInput(value))} onBlur={() => setJobPosition(jobPosition.trim())} maxLength={100} error={visible("jobPosition")} />
@@ -579,8 +592,6 @@ export function AccreditedSellerDialog({
 
               <FormSection title="Personal Details">
                 <FormGrid>
-                  <SelectField id="gender" label="Gender" required value={gender} options={GENDER_OPTIONS} onChange={setGender} placeholder="Select gender" error={visible("gender")} />
-                  <SelectField id="civil-status" label="Civil Status" required value={civilStatus} options={CIVIL_STATUS_OPTIONS} onChange={setCivilStatus} placeholder="Select civil status" error={visible("civilStatus")} />
                   <GovernmentIdFields
                     idType={governmentIdType}
                     onIdTypeChange={setGovernmentIdType}
@@ -592,6 +603,8 @@ export function AccreditedSellerDialog({
                     errorIdNumber={visible("governmentIdNumber")}
                   />
                 </FormGrid>
+                <RadioCardField label="Gender" required value={gender} options={GENDER_CARDS} onChange={(value) => setGender(value)} error={visible("gender")} />
+                <RadioCardField label="Civil Status" required value={civilStatus} options={CIVIL_CARDS} onChange={(value) => setCivilStatus(value)} error={visible("civilStatus")} />
               </FormSection>
             </div>
           ) : null}
@@ -622,7 +635,11 @@ export function AccreditedSellerDialog({
                   <InfoNote title="Status Preview Only">Pending or Accredited only.</InfoNote>
                 ) : null}
               </FormSection>
+            </div>
+          ) : null}
 
+          {step === LAST_STEP ? (
+            <div className="tw:flex tw:flex-col tw:gap-5">
               <FormSection title="Review and Confirmation">
                 <dl className="tw:m-0 tw:flex tw:flex-col tw:gap-1 tw:text-sm">
                   <ReviewLine term="Name" value={fullName || "—"} />
@@ -647,20 +664,20 @@ export function AccreditedSellerDialog({
           ) : null}
 
           <DialogFooter>
-            <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={onClose}>
+            <Button type="button" variant="outline" className={footerButtonClass} onClick={onClose}>
               Cancel
             </Button>
             {step > 0 ? (
-              <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={handleBack}>
+              <Button type="button" variant="outline" className={footerButtonClass} onClick={handleBack}>
                 Back
               </Button>
             ) : null}
-            {step < 3 ? (
-              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" onClick={handleNext}>
+            {step < LAST_STEP ? (
+              <Button type="button" className={footerButtonClass} onClick={handleNext}>
                 Next
               </Button>
             ) : (
-              <Button type="button" className="tw:min-h-11 tw:sm:min-h-8" loading={submitting || createSeller.isPending} disabled={!canComplete} onClick={handleFinish}>
+              <Button type="button" className={footerButtonClass} loading={submitting || createSeller.isPending} disabled={!canComplete} onClick={handleFinish}>
                 {accreditationStatus === "pending" ? "Create Seller" : "Create & Accredit Seller"}
               </Button>
             )}

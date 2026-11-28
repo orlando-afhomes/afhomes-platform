@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { toast } from "sonner";
 import type { ConfirmTone } from "./app-alert";
+import { notify } from "./app-toaster";
 import { ConfirmDialog } from "./confirm-dialog";
 
 export type ConfirmRunInput = {
@@ -47,7 +48,7 @@ export function useConfirmRun(): { confirmRun: (input: ConfirmRunInput) => void;
       toast.success(input.successTitle, input.successDescription ? { description: input.successDescription } : undefined);
     } catch (error) {
       setInput(null);
-      toast.error(input.errorTitle, { description: error instanceof Error ? error.message : "Request failed." });
+      notify.actionError(error, input.errorTitle);
     } finally {
       running.current = false;
       setPending(false);

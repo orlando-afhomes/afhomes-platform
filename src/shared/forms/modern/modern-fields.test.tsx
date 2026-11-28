@@ -105,10 +105,17 @@ describe("government ID type and number pair", () => {
         idNumber={idNumber}
         onIdNumberChange={setIdNumber}
         idTypeOptions={[
-          { value: "Passport", label: "Passport" },
-          { value: "UMID", label: "UMID" },
-          { value: "Digital National ID", label: "Digital National ID" },
           { value: "Philippine National ID", label: "Philippine National ID" },
+          { value: "Digital National ID", label: "Digital National ID" },
+          { value: "Passport", label: "Passport" },
+          { value: "Driver's License", label: "Driver's License" },
+          { value: "SSS ID", label: "SSS ID" },
+          { value: "GSIS ID", label: "GSIS ID" },
+          { value: "UMID", label: "UMID" },
+          { value: "PRC ID", label: "PRC ID" },
+          { value: "Voter's ID", label: "Voter's ID" },
+          { value: "Postal ID", label: "Postal ID" },
+          { value: "Other", label: "Other" },
         ]}
       />
     );
@@ -141,23 +148,107 @@ describe("government ID type and number pair", () => {
     expect(idNumberInput().value).toBe("1234");
   });
 
-  it("caps the Digital National ID at six uppercase alphanumeric characters", async () => {
+  it("uses the numeric 16-digit Digital National ID policy", async () => {
     const user = userEvent.setup();
     render(<GovIdHarness />);
     await pickIdType(user, "Digital National ID");
-    expect(idNumberInput()).toHaveAttribute("maxlength", "6");
-    expect(idNumberInput()).toHaveAttribute("inputmode", "text");
-    await user.type(idNumberInput(), "ab12cd");
-    expect(idNumberInput().value).toBe("AB12CD");
+    expect(idNumberInput()).toHaveAttribute("maxlength", "19");
+    expect(idNumberInput()).toHaveAttribute("inputmode", "numeric");
+    await user.type(idNumberInput(), "123456");
+    expect(idNumberInput().value).toBe("1234-56");
   });
 
-  it("uses the 16-digit National ID cap and the 40-character fallback with no type", async () => {
+  it("uses the 19-character grouped National ID cap and the 40-character fallback with no type", async () => {
     const user = userEvent.setup();
     render(<GovIdHarness />);
     expect(idNumberInput()).toHaveAttribute("maxlength", "40");
     await pickIdType(user, "Philippine National ID");
-    expect(idNumberInput()).toHaveAttribute("maxlength", "16");
+    expect(idNumberInput()).toHaveAttribute("maxlength", "19");
     expect(idNumberInput()).toHaveAttribute("inputmode", "numeric");
+    await user.type(idNumberInput(), "1234567890123456");
+    expect(idNumberInput().value).toBe("1234-5678-9012-3456");
+  });
+
+  it("reformats the existing number when the ID type changes", async () => {
+    const user = userEvent.setup();
+    render(<GovIdHarness />);
+    await pickIdType(user, "Philippine National ID");
+    await user.type(idNumberInput(), "1234567890123456");
+    expect(idNumberInput().value).toBe("1234-5678-9012-3456");
+    await pickIdType(user, "UMID");
+    expect(idNumberInput().value).toBe("1234-5678901-2");
+    expect(idNumberInput()).toHaveAttribute("maxlength", "14");
+  });
+
+  it("shows a specific format sample for every ID type and a neutral prompt before selection", async () => {
+    const user = userEvent.setup();
+    render(<GovIdHarness />);
+    expect(idNumberInput().placeholder).toBe("Enter ID number");
+    const samples: ReadonlyArray<readonly [string, string]> = [
+      ["Philippine National ID", "1234-5678-9012-3456"],
+      ["Digital National ID", "1234-5678-9012-3456"],
+      ["Passport", "P1234567A"],
+      ["Driver's License", "N01-23-456789"],
+      ["SSS ID", "12-3456789-0"],
+      ["GSIS ID", "12345678901"],
+      ["UMID", "1234-5678901-2"],
+      ["PRC ID", "0123456"],
+      ["Voter's ID", "1234-5678A-C1234BCD"],
+      ["Postal ID", "A123456789012 P"],
+      ["Other", "ABC123456"],
+    ];
+    for (const [label, sample] of samples) {
+      await pickIdType(user, label);
+      expect(idNumberInput().placeholder, label).toBe(sample);
+    }
+  });
+
+  it("groups a 16-digit Digital National ID as it is typed", async () => {
+    const user = userEvent.setup();
+    render(<GovIdHarness />);
+    await pickIdType(user, "Digital National ID");
+    expect(idNumberInput()).toHaveAttribute("maxlength", "19");
+    expect(idNumberInput()).toHaveAttribute("inputmode", "numeric");
+    await user.type(idNumberInput(), "1234567890123456");
+    expect(idNumberInput().value).toBe("1234-5678-9012-3456");
+  });
+
+  it("keeps the caret after the edited digit when inserting in the middle", async () => {
+    render(<GovIdHarness />);
+    const user = userEvent.setup();
+    await pickIdType(user, "Philippine National ID");
+    const input = idNumberInput();
+    await user.type(input, "123456");
+    insertInMiddle(input, 3, "9");
+    await waitFor(() => expect(input.value).toBe("1239-456"));
+    await waitFor(() => expect(input.selectionStart).toBe(4));
+  });
+
+  it("deletes the digit before a dash on Backspace and keeps the caret there", async () => {
+    const user = userEvent.setup();
+    render(<GovIdHarness />);
+    await pickIdType(user, "Philippine National ID");
+    const input = idNumberInput();
+    await user.type(input, "12345678");
+    expect(input.value).toBe("1234-5678");
+    input.focus();
+    input.setSelectionRange(5, 5);
+    fireEvent.keyDown(input, { key: "Backspace" });
+    await waitFor(() => expect(input.value).toBe("1235-678"));
+    await waitFor(() => expect(input.selectionStart).toBe(3));
+  });
+
+  it("deletes the digit after a dash on Delete and keeps the caret there", async () => {
+    const user = userEvent.setup();
+    render(<GovIdHarness />);
+    await pickIdType(user, "Philippine National ID");
+    const input = idNumberInput();
+    await user.type(input, "12345678");
+    input.focus();
+    input.setSelectionRange(4, 4);
+    fireEvent.keyDown(input, { key: "Delete" });
+    await waitFor(() => expect(input.value).toBe("1234-678"));
+    await waitFor(() => expect(input.selectionStart).toBe(4));
   });
 });
 
@@ -530,17 +621,44 @@ describe("EmailField", () => {
     expect(screen.getByTestId("email-value").textContent).toBe("juan@gmail.com");
   });
 
-  it("keeps a full address typed with its own domain", async () => {
+  it("blocks the @ and the domain while a listed domain is selected", async () => {
     const user = userEvent.setup();
     render(<EmailHarness />);
+    const field = screen.getByRole("textbox", { name: "Email" });
+    await user.type(field, "juan@");
+    expect((field as HTMLInputElement).value).toBe("juan");
+    expect(screen.getByTestId("email-value").textContent).toBe("juan@gmail.com");
+  });
+
+  it("strips a pasted full address back to the chosen domain", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    const field = screen.getByRole("textbox", { name: "Email" });
+    await user.click(field);
+    await user.paste("juan@gmail.com");
+    expect((field as HTMLInputElement).value).toBe("juan");
+    expect(screen.getByTestId("email-value").textContent).toBe("juan@gmail.com");
+  });
+
+  it("drops symbols outside an email name and keeps the chosen domain", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    await user.type(screen.getByRole("textbox", { name: "Email" }), "juan#tag");
+    expect(screen.getByTestId("email-value").textContent).toBe("juantag@gmail.com");
+  });
+
+  it("accepts a full address only after choosing Other", async () => {
+    const user = userEvent.setup();
+    render(<EmailHarness />);
+    await user.click(screen.getByRole("combobox", { name: "Email domain" }));
+    await user.click(await screen.findByRole("option", { name: "Other…" }));
     await user.type(screen.getByRole("textbox", { name: "Email" }), "ana@company.ph");
     expect(screen.getByTestId("email-value").textContent).toBe("ana@company.ph");
   });
 
   it("keeps the domain list visible after choosing Other and can go back to a listed domain", async () => {
     const user = userEvent.setup();
-    render(<EmailHarness />);
-    await user.type(screen.getByRole("textbox", { name: "Email" }), "ana@company.ph");
+    render(<EmailHarness initial="ana@company.ph" />);
     expect(screen.getByRole("combobox", { name: "Email domain" })).toBeVisible();
     await user.click(screen.getByRole("combobox", { name: "Email domain" }));
     await user.click(await screen.findByRole("option", { name: "@yahoo.com" }));

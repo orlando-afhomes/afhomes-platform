@@ -201,8 +201,8 @@ export function useUpdateDepartment() {
   const { identity } = useDevIdentity();
   return useMutation({
     meta: { affectsAccess: true },
-    mutationFn: (input: { id: string; name?: string; status?: "active" | "deactivated" }) =>
-      repositories.departments.update(input.id, input),
+    mutationFn: ({ id, ...body }: { id: string; name?: string; status?: "active" | "deactivated" }) =>
+      repositories.departments.update(id, body),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
@@ -238,13 +238,13 @@ export function useUpdateDepartmentRole() {
   const { identity } = useDevIdentity();
   return useMutation({
     meta: { affectsAccess: true },
-    mutationFn: (input: {
+    mutationFn: ({ id, ...body }: {
       id: string;
       name?: string;
       departmentId?: string;
       moduleIds?: AdminModuleId[];
       status?: DepartmentRole["status"];
-    }) => repositories.roles.update(input.id, input),
+    }) => repositories.roles.update(id, body),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
@@ -277,6 +277,7 @@ export function useCreateStaff() {
       provisionPendingAccount?: boolean;
       systemRoleIds?: string[];
       firstName?: string | null;
+      prefix?: string | null;
       middleName?: string | null;
       lastName?: string | null;
       suffix?: string | null;
@@ -304,7 +305,7 @@ export function useUpdateStaff() {
   const { identity } = useDevIdentity();
   return useMutation({
     meta: { affectsAccess: true },
-    mutationFn: (input: {
+    mutationFn: ({ id, ...body }: {
       id: string;
       displayName?: string;
       position?: string;
@@ -315,6 +316,7 @@ export function useUpdateStaff() {
       accountId?: string | null;
       email?: string;
       firstName?: string | null;
+      prefix?: string | null;
       middleName?: string | null;
       lastName?: string | null;
       suffix?: string | null;
@@ -331,7 +333,19 @@ export function useUpdateStaff() {
       civilStatus?: string | null;
       governmentIdType?: string | null;
       governmentIdNumber?: string | null;
-    }) => repositories.staff.update(input.id, input),
+    }) => repositories.staff.update(id, body),
+    onSuccess: () => invalidateOrganization(queryClient, identity.id),
+  });
+}
+
+/** Uploads a staff avatar to private storage; the returned URL is saved with the staff record. */
+export function useUploadStaffAvatar() {
+  const repositories = useRepositories();
+  const queryClient = useQueryClient();
+  const { identity } = useDevIdentity();
+  return useMutation({
+    meta: { affectsAccess: true },
+    mutationFn: ({ id, file }: { id: string; file: File }) => repositories.staff.uploadAvatar(id, file),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
@@ -353,8 +367,8 @@ export function useUpdateAccount() {
   const { identity } = useDevIdentity();
   return useMutation({
     meta: { affectsAccess: true },
-    mutationFn: (input: { id: string; displayName?: string; email?: string; departmentId?: string | null }) =>
-      repositories.accounts.update(input.id, input),
+    mutationFn: ({ id, ...body }: { id: string; displayName?: string; email?: string; departmentId?: string | null }) =>
+      repositories.accounts.update(id, body),
     onSuccess: () => invalidateOrganization(queryClient, identity.id),
   });
 }
@@ -393,7 +407,7 @@ export function useUpdateAccountStatus() {
   });
 }
 
-/** Requests a Firebase password-reset email; no password is cached or shown. */
+/** Requests a Firebase password-reset email, including for the signed-in user; no password is cached or shown. */
 export function useRequestPasswordReset() {
   const repositories = useRepositories();
   const queryClient = useQueryClient();
@@ -528,8 +542,8 @@ export function useUpdateSalesNetworkMember() {
   const { identity } = useDevIdentity();
   return useMutation({
     meta: { affectsAccess: true },
-    mutationFn: (input: { id: string } & UpdateSalesNetworkMemberInput) =>
-      repositories.members.update(input.id, input),
+    mutationFn: ({ id, ...body }: { id: string } & UpdateSalesNetworkMemberInput) =>
+      repositories.members.update(id, body),
     onSuccess: () => {
       invalidateAudit(queryClient);
       queryClient.invalidateQueries({ queryKey: ["members", identity.id] });

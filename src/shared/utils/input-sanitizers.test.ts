@@ -12,8 +12,11 @@ import {
   cleanStreetInput,
   cleanTitleInput,
   formatStatusLabel,
+  formatGovernmentIdNumber,
+  govIdDisplayLengthFor,
   govIdMaxLengthFor,
   govIdPolicyFor,
+  govIdSampleFor,
   isValidEmail,
   isValidLandline,
   isValidName,
@@ -206,10 +209,10 @@ describe("uppercaseGovId", () => {
 });
 
 describe("govIdPolicyFor", () => {
-  it("uses the alphanumeric policy for Digital National ID before National ID", () => {
-    expect(govIdPolicyFor("Digital National ID")).toBe("alphanumeric");
-    expect(govIdPolicyFor("digital national id")).toBe("alphanumeric");
-    expect(govIdPolicyFor("  DIGITAL NATIONAL ID  ")).toBe("alphanumeric");
+  it("uses the numeric 16-digit policy for Digital National ID before National ID", () => {
+    expect(govIdPolicyFor("Digital National ID")).toBe("numeric");
+    expect(govIdPolicyFor("digital national id")).toBe("numeric");
+    expect(govIdPolicyFor("  DIGITAL NATIONAL ID  ")).toBe("numeric");
   });
 
   it("uses the numeric policy for National ID and digit-only ID types", () => {
@@ -283,8 +286,8 @@ describe("isValidLandline", () => {
 });
 
 describe("govIdMaxLengthFor", () => {
-  it("caps the Digital National ID at 6 before National ID at 16", () => {
-    expect(govIdMaxLengthFor("Digital National ID")).toBe(6);
+  it("caps the Digital National ID at 16 like the National ID card number", () => {
+    expect(govIdMaxLengthFor("Digital National ID")).toBe(16);
     expect(govIdMaxLengthFor("Philippine National ID")).toBe(16);
     expect(govIdMaxLengthFor("National ID")).toBe(16);
   });
@@ -305,6 +308,74 @@ describe("govIdMaxLengthFor", () => {
     expect(govIdMaxLengthFor()).toBe(MAX_GOV_ID_LENGTH);
     expect(govIdMaxLengthFor(undefined)).toBe(MAX_GOV_ID_LENGTH);
     expect(govIdMaxLengthFor(null)).toBe(MAX_GOV_ID_LENGTH);
+  });
+});
+
+describe("govIdSampleFor", () => {
+  it("gives every government ID type its own sample and a neutral blank value", () => {
+    const samples: ReadonlyArray<readonly [string, string]> = [
+      ["Philippine National ID", "1234-5678-9012-3456"],
+      ["Digital National ID", "1234-5678-9012-3456"],
+      ["Passport", "P1234567A"],
+      ["Driver's License", "N01-23-456789"],
+      ["SSS ID", "12-3456789-0"],
+      ["GSIS ID", "12345678901"],
+      ["UMID", "1234-5678901-2"],
+      ["PRC ID", "0123456"],
+      ["Voter's ID", "1234-5678A-C1234BCD"],
+      ["Postal ID", "A123456789012 P"],
+      ["Other", "ABC123456"],
+    ];
+    for (const [idType, sample] of samples) {
+      expect(govIdSampleFor(idType), idType).toBe(sample);
+    }
+    expect(govIdSampleFor()).toBe("Enter ID number");
+  });
+});
+
+describe("formatGovernmentIdNumber", () => {
+  it("groups the National ID and the Digital National ID digits in fours", () => {
+    expect(formatGovernmentIdNumber("1234567890123456", "Philippine National ID")).toBe("1234-5678-9012-3456");
+    expect(formatGovernmentIdNumber("123456789012", "Philippine National ID")).toBe("1234-5678-9012");
+    expect(formatGovernmentIdNumber("1234567890123456", "Digital National ID")).toBe("1234-5678-9012-3456");
+  });
+
+  it("groups the SSS and UMID numbers in their printed shapes", () => {
+    expect(formatGovernmentIdNumber("1234567890", "SSS ID")).toBe("12-3456789-0");
+    expect(formatGovernmentIdNumber("123456789012", "UMID")).toBe("1234-5678901-2");
+  });
+
+  it("groups a driver's license as letter + 2-2-6 and keeps older digits", () => {
+    expect(formatGovernmentIdNumber("n0123456789", "Driver's License")).toBe("N01-23-456789");
+    expect(formatGovernmentIdNumber("N01234567890", "Driver's License")).toBe("N01-23-4567890");
+  });
+
+  it("groups a voter's ID as 4-5-8 characters without stripping letters", () => {
+    expect(formatGovernmentIdNumber("12345678ac1234bcd", "Voter's ID")).toBe("1234-5678A-C1234BCD");
+  });
+
+  it("preserves leading zeros and keeps compact IDs ungrouped", () => {
+    expect(formatGovernmentIdNumber("0123456", "PRC ID")).toBe("0123456");
+    expect(formatGovernmentIdNumber("p1234567x", "Passport")).toBe("P1234567X");
+    expect(formatGovernmentIdNumber("a123456789012 p", "Postal ID")).toBe("A123456789012 P");
+  });
+
+  it("re-groups typed separators and caps grouped IDs at their allowed length", () => {
+    expect(formatGovernmentIdNumber("1234 5678 9012 3456", "Philippine National ID")).toBe("1234-5678-9012-3456");
+    expect(formatGovernmentIdNumber("12345678901234567890", "Philippine National ID")).toBe("1234-5678-9012-3456");
+  });
+});
+
+describe("govIdDisplayLengthFor", () => {
+  it("adds room for the hyphens, the license letter, and 16-digit IDs", () => {
+    expect(govIdDisplayLengthFor("Philippine National ID")).toBe(19);
+    expect(govIdDisplayLengthFor("Digital National ID")).toBe(19);
+    expect(govIdDisplayLengthFor("SSS ID")).toBe(14);
+    expect(govIdDisplayLengthFor("UMID")).toBe(14);
+    expect(govIdDisplayLengthFor("Driver's License")).toBe(14);
+    expect(govIdDisplayLengthFor("Passport")).toBe(12);
+    expect(govIdDisplayLengthFor("Voter's ID")).toBe(MAX_GOV_ID_LENGTH);
+    expect(govIdDisplayLengthFor()).toBe(MAX_GOV_ID_LENGTH);
   });
 });
 

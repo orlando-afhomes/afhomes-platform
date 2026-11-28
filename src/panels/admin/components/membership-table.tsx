@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CreditCard, FileText, PackageCheck, Power } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useActivateMembership, useMemberships, useOperation, useRecordCardClaim } from "@/data/business-queries";
 import type { MembershipView } from "@/data/contracts/membership-repository";
 import type { TableOrder } from "@/shared/lib/table-order";
@@ -79,7 +80,7 @@ export function MembershipTable({ data, caption, emptyText }: { data: Membership
         onClick: () => {
           // One request per click, even if the row menu is reopened before the refresh settles.
           if (activate.isPending) return;
-          void activate.mutateAsync(item.id).then(() => toast.success("Membership activated."), (error: unknown) => toast.error("Could not activate", { description: error instanceof Error ? error.message : "Request failed." }));
+          void activate.mutateAsync(item.id).then(() => toast.success("Membership activated."), (error: unknown) => notify.actionError(error, "Could not activate"));
         },
       }];
     }

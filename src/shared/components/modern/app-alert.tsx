@@ -1,10 +1,11 @@
 "use client";
 
-import { createElement, useEffect, useRef } from "react";
+import { createElement, useCallback, useEffect, useRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import Swal, { type SweetAlertOptions } from "sweetalert2";
 import { buttonVariants } from "@/shared/ui/button";
 import { iconForLabel } from "@/shared/ui/button-icons";
+import { Spinner } from "@/shared/ui/spinner";
 import "./app-alert.css";
 
 /**
@@ -66,9 +67,26 @@ export type AppAlertProps = {
 export function AppAlert(props: AppAlertProps) {
   const { open, pending = false } = props;
   const latest = useRef(props);
+  const confirmRoot = useRef<Root | null>(null);
+  const confirmLabel = useRef("");
   useEffect(() => {
     latest.current = props;
   });
+
+  // The confirm button keeps its label while pending so its width does not jump.
+  const renderConfirm = useCallback((busy: boolean) => {
+    if (!confirmRoot.current) return;
+    const Icon = busy ? null : iconForLabel(confirmLabel.current);
+    confirmRoot.current.render(
+      createElement(
+        "span",
+        { style: { display: "inline-flex", alignItems: "center", gap: "0.5rem" } },
+        busy ? createElement(Spinner, { "aria-hidden": true }) : null,
+        Icon ? createElement(Icon, { "aria-hidden": true }) : null,
+        createElement("span", null, confirmLabel.current),
+      ),
+    );
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -102,8 +120,19 @@ export function AppAlert(props: AppAlertProps) {
       didOpen: (popup) => {
         // A confirmation interrupts the user, so announce it as an alert dialog.
         popup.setAttribute("role", "alertdialog");
-        // Each pop-up button shows the icon that matches its label, like every other button.
-        for (const button of [Swal.getConfirmButton(), Swal.getCancelButton(), Swal.getDenyButton()]) {
+        const confirmButton = Swal.getConfirmButton();
+        if (confirmButton) {
+          confirmLabel.current = (confirmButton.textContent ?? "").trim();
+          confirmButton.textContent = "";
+          const holder = document.createElement("span");
+          holder.style.display = "contents";
+          confirmButton.append(holder);
+          confirmRoot.current = createRoot(holder);
+          iconRoots.push(confirmRoot.current);
+          renderConfirm(first.pending ?? false);
+        }
+        // Cancel and deny show the icon that matches their label, like every other button.
+        for (const button of [Swal.getCancelButton(), Swal.getDenyButton()]) {
           const Icon = button ? iconForLabel(button.textContent ?? "") : undefined;
           if (!button || !Icon) continue;
           const holder = document.createElement("span");
@@ -121,16 +150,27 @@ export function AppAlert(props: AppAlertProps) {
     });
     return () => {
       closedByApp = true;
-      setTimeout(() => iconRoots.forEach((root) => root.unmount()));
+      setTimeout(() => {
+        iconRoots.forEach((root) => root.unmount());
+        confirmRoot.current = null;
+      });
       if (popup && Swal.getPopup() === popup) Swal.close();
     };
-  }, [open]);
+  }, [open, renderConfirm]);
 
   useEffect(() => {
-    if (!open || !Swal.isVisible()) return;
-    if (pending) Swal.showLoading();
-    else if (Swal.getPopup()?.hasAttribute("data-loading")) Swal.hideLoading();
-  }, [open, pending]);
+    if (!open) return;
+    const confirmButton = Swal.getConfirmButton();
+    if (confirmButton) {
+      confirmButton.disabled = pending;
+      if (pending) confirmButton.setAttribute("aria-busy", "true");
+      else confirmButton.removeAttribute("aria-busy");
+    }
+    for (const button of [Swal.getCancelButton(), Swal.getDenyButton()]) {
+      if (button) button.disabled = pending;
+    }
+    renderConfirm(pending);
+  }, [open, pending, renderConfirm]);
 
   return null;
 }

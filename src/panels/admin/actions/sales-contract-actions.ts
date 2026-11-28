@@ -6,7 +6,7 @@ import type { ConfirmRunInput } from "@/shared/components/modern/use-confirm-run
 import type { ApproveDealOutcome } from "@/modules/contracts/application/approve-deal";
 import { nonStandardStage } from "@/modules/contracts/rules";
 import { recordLabel } from "@/shared/lib/record-label";
-import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 
 /** Button color for a menu item's tone, so a detail page header shows each action once with the row menu's meaning. */
 export function actionButtonVariant(tone: RowActionTone | undefined): "default" | "success" | "warning" | "info" | "destructive" {
@@ -58,7 +58,7 @@ export function confirmNonStandardConfirm(confirm: () => Promise<unknown>): Conf
 
 /** After "Approve deal": a held finalization is reported as a warning. */
 export function reportHeldDeal(outcome: ApproveDealOutcome): void {
-  if (outcome.finalizeHeld.length > 0) toast.warning("The contract is not finalized yet.", { description: outcome.finalizeHeld.join(" ") });
+  if (outcome.finalizeHeld.length > 0) notify.warning("The contract is not finalized yet.", outcome.finalizeHeld.join(" "));
 }
 
 /** "Approve deal" needs the signed approval reference first: a Non-Standard contract in review without step 1 (doc 05 §10.2). */

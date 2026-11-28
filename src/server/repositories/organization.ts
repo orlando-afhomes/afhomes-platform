@@ -74,9 +74,9 @@ export function toStaff(row: StaffRow): StaffMember {
     status: row.status as StaffMember["status"],
     email: row.email,
     createdAt: manilaDateOf(row.createdAt),
-    avatarUrl: null,
     accountId: row.userAccounts_on_staff[0]?.id ?? null,
     ...(row.profile ?? {}),
+    avatarUrl: (row.profile as { avatarUrl?: string | null } | null)?.avatarUrl ?? null,
   } as StaffMember;
 }
 

@@ -2,6 +2,7 @@ import type { Account } from "@/modules/accounts/types";
 import type { AccreditationRecord, RegistrationApplicant, RegistrationApplication } from "@/modules/accreditation/types";
 import { calculateRenewedExpiry } from "@/modules/accreditation/dates";
 import { buildAaNumber, toAaYearMonth } from "@/modules/accreditation/issuance";
+import { DELEGABLE_MODULES } from "@/modules/identity/permissions";
 import type { Department, DepartmentRole, Designation, OrgMember, StaffMember } from "@/modules/organization/types";
 import type { SeatVacancy } from "@/modules/sales-network/vacancy";
 import { vacancyStartDate } from "@/modules/sales-network/vacancy";
@@ -280,6 +281,7 @@ export function buildDepartments(): Department[] {
     { id: "dept-finance", name: "Finance", code: "FIN", description: "Receipt verification, collections, commission payouts and month-end close.", headStaffId: null, status: "active" },
     { id: "dept-ops", name: "Operations", code: "OPS", description: "Customer applications, contract paperwork, card release and front-desk records.", headStaffId: null, status: "active" },
     { id: "dept-admin", name: "Admin", code: "ADM", description: "Company administration, approvals and system access.", headStaffId: null, status: "active" },
+    { id: "dept-smart-system", name: "Smart System Department", code: "SSD", description: "Super Administrator governance, protected system access and platform configuration.", headStaffId: "staff-super", status: "active" },
     { id: "dept-sales", name: "Sales", code: "SLS", description: "Accredited sales network: Sales Vice Directors, Senior Sales Managers, Sales Managers and OSTs.", headStaffId: null, status: "active" },
   ];
 }
@@ -296,7 +298,7 @@ export function buildRoles(): DepartmentRole[] {
     // still come from the linked account's system role, never from these grants.
     // Stored "accounts" grants on these two roles are inert: accounts is not
     // delegable (S3-01), so effective access ignores it.
-    { id: "role-super-admin", name: "Super Admin", departmentId: "dept-admin", moduleIds: ["dashboard", "departments", "roles", "staff", "accounts"], status: "active", createdAt: "2026-01-01", isProtected: true },
+    { id: "role-super-admin", name: "Super Admin", departmentId: "dept-smart-system", moduleIds: [...DELEGABLE_MODULES], status: "active", createdAt: "2026-01-01", isProtected: true },
     { id: "role-admin", name: "Administrator", departmentId: "dept-admin", moduleIds: ["dashboard", "departments", "roles", "staff", "accounts"], status: "active", createdAt: "2026-01-01" },
     { id: "role-hr", name: "Human Resources", departmentId: "dept-hr", moduleIds: ["dashboard", "departments", "staff"], status: "active", createdAt: "2026-01-01" },
     { id: "role-finance", name: "Finance", departmentId: "dept-finance", moduleIds: ["dashboard"], status: "active", createdAt: "2026-01-01" },
@@ -326,7 +328,7 @@ const emailOf = (person: { firstName: string; lastName: string }) => companyEmai
 export function buildAccounts(): Account[] {
   const p = STAFF_PEOPLE;
   return [
-    { id: "acct-super-admin", displayName: fullName(p.superAdmin), email: emailOf(p.superAdmin), roleIds: ["super_admin"], status: "active", departmentId: null, createdAt: "2026-01-01" },
+    { id: "acct-super-admin", displayName: fullName(p.superAdmin), email: emailOf(p.superAdmin), roleIds: ["super_admin"], status: "active", departmentId: "dept-smart-system", createdAt: "2026-01-01" },
     { id: "acct-admin", displayName: fullName(p.admin), email: emailOf(p.admin), roleIds: ["admin"], status: "active", departmentId: null, createdAt: "2026-01-02" },
     { id: "acct-hr", displayName: fullName(p.hr), email: emailOf(p.hr), roleIds: ["hr"], status: "active", departmentId: null, createdAt: "2026-01-03" },
     { id: "acct-finance", displayName: fullName(p.finance), email: emailOf(p.finance), roleIds: ["finance"], status: "active", departmentId: null, createdAt: "2026-01-04" },
@@ -346,7 +348,7 @@ export function buildStaff(): StaffMember[] {
     // Linked admin profiles for the My Account page. The department Role grants
     // stay within existing delegable modules; system privileges come from the account role.
     { id: "staff-admin", displayName: fullName(p.admin), position: "Administrator", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: emailOf(p.admin), createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-admin" },
-    { id: "staff-super", displayName: fullName(p.superAdmin), position: "Super Administrator", departmentId: "dept-hr", departmentRoleId: "role-hr-staff", status: "active", email: emailOf(p.superAdmin), createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-super-admin" },
+    { id: "staff-super", displayName: fullName(p.superAdmin), position: "Super Administrator", departmentId: "dept-smart-system", departmentRoleId: "role-super-admin", status: "active", email: emailOf(p.superAdmin), createdAt: "2026-01-04", avatarUrl: null, accountId: "acct-super-admin" },
     { id: "staff-records", displayName: fullName(p.records), position: "Records Clerk", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: emailOf(p.records), createdAt: "2026-01-06", avatarUrl: null, accountId: "acct-records" },
     { id: "staff-clerk", displayName: fullName(p.clerk), position: "Office Clerk", departmentId: "dept-ops", departmentRoleId: "role-ops-staff", status: "active", email: emailOf(p.clerk), createdAt: "2026-01-07", avatarUrl: null, accountId: "acct-clerk" },
   ];

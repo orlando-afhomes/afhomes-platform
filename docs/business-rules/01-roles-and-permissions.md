@@ -187,9 +187,9 @@ Because `Rejected` is not a primary account status, represent rejection as an **
 
 Do not introduce additional approval levels or chains.
 
-### 6.2.1 Forgotten Passwords (interim, owner ruling R5, 2026-11-12)
+### 6.2.1 Password Recovery (owner ruling R5, 2026-11-12; updated 2026-11-27)
 
-Until real authentication exists, a user who forgets their password asks the office. An Administrator (or the Super Administrator) issues a temporary password, and the reset is audited without recording the password itself (doc 12). A self-service email reset waits for real authentication.
+A signed-in user may request a password-reset email from My Account. The link is single-use and time-limited. No password is generated, shown or stored, and the request is audited without recording the link or token (doc 12). An Administrator or Super Administrator may request a reset for another account through Staff & Access. The public Forgot Password panel remains a neutral notice; a user who cannot sign in contacts the office.
 
 ### 6.3 Employee Lifecycle (Summary)
 
@@ -269,7 +269,7 @@ The document establishes that:
 - No generic per-field CRUD permission toggles exist.
 - The Administrator can do everything; the Super Administrator has no blocks; both may approve their own entries, and the audit history shows it (owner ruling, 2026-11-12).
 - Clerks enter only; sellers view only, except that a seller may start a customer draft and upload a payment slip photo (proof only) for their own customer.
-- Until real authentication exists, an Administrator issues a temporary password for a forgotten password.
+- A signed-in user can request a self-service password-reset email; an Administrator or Super Administrator can request a reset for another account.
 - Multiple roles are supported.
 - Role assignments are bounded.
 - Super Admin is protected: only a Super Administrator may create, give or remove the Super Administrator role; an Administrator cannot.
@@ -307,7 +307,7 @@ These rulings take precedence over earlier text in this document where they diff
 2. **Role mapping (R4).** Director = Super Administrator. Supervisor = Administrator. Clerk is a new office staff job that enters information but cannot approve. Finance verifies money and pays (section 3.8).
 3. **Sellers view only (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay. OST sees only their own. The exceptions are the seller customer draft (doc 04 §5) and the seller payment-slip upload (follow-up item 2; doc 07).
 4. **Modules for viewing, action permissions for changes (R4).** Module access controls navigation and viewing. Entering, editing and important actions (approve, verify payment, payout, refund, import) each need a separate action permission (section 3.1). This replaces the former rule that a module grant gives every function of the module.
-5. **Forgotten passwords (R5).** Until real authentication exists, an Administrator issues a temporary password; an email reset waits for real authentication (section 6.2.1).
+5. ~~**Forgotten passwords (R5).** Until real authentication exists, an Administrator issues a temporary password; an email reset waits for real authentication (section 6.2.1).~~ **Updated 2026-11-27.** A signed-in user may request a self-service password-reset email from My Account. An Administrator or Super Administrator may request a reset for another account. No password is generated, shown or stored; the request is audited (section 6.2.1; doc 12).
 6. ~~**Open.** (Superseded, owner ruling 2026-11-12: settled by follow-up item 1.) Whether the Administrator may assign or remove the Super Administrator role is not settled; section 3.4 stays in force until the owner decides.~~ **Settled 2026-11-12 (follow-ups, item 1 below).**
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
@@ -325,3 +325,11 @@ These rulings take precedence over earlier text in this document where they diff
 1. **Customer Look Up (staff only).** The Super Administrator, Administrator, Clerk and Finance may look up an active VIP card in the staff application (operation `customers.lookup`). Sellers do not hold it. There is still no public customer or card lookup (doc 04 section 13).
 
 **GSD front-desk prototype.** GSD may verify active membership by name in Customer Look Up. To earn or redeem points, GSD scans the QR presented by the cardholder. GSD may submit the purchase for review, record a configured reward use or handle a stay booking for that scanned cardholder. GSD has no bill or payment approval access. The GSD role remains limited to the sample-data prototype.
+
+## Owner ruling amendment (2026-11-27, password recovery)
+
+This amendment supersedes the interim temporary-password wording in section 6.2.1, the matching acceptance-criteria bullet, and R5 item 5.
+
+1. **Signed-in self-service reset.** A signed-in user may request a password-reset email from My Account. The link is single-use and time-limited. No password is generated, shown or stored, and the request is audited without recording the link or token (doc 12).
+2. **Administrator-initiated reset.** An Administrator or Super Administrator may request a reset for another account through Staff & Access. The target receives the reset email; the requester never sets or sees the password. Protected-account restrictions and the last-Super-Admin lockout protection remain in force.
+3. **Signed-out recovery.** The public Forgot Password panel remains a neutral notice and must not reveal whether an email exists. A user who cannot sign in contacts the office.

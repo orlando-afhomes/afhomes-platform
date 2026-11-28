@@ -14,6 +14,7 @@ import { resolveRenewTarget, buildMemberMenuProps } from "../actions/sales-netwo
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { formatDate } from "@/shared/lib/format-date";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { hasOperationPermission } from "@/modules/identity/permissions";
 import { useAccessSnapshot } from "@/data/access-snapshot";
 import { PageContainer } from "@/shared/components/modern/page-container";
@@ -266,6 +267,7 @@ export function SalesNetworkMembersPage({
         transferMember={transferMember}
         onCloseEdit={() => setEditMember(null)}
         onCloseTransfer={() => setTransferMember(null)}
+        canChangeDesignation={granted.has("accounts")}
       />
       {accreditedMode ? (
         <AccreditedSellerDialog
@@ -298,7 +300,7 @@ export function SalesNetworkMembersPage({
             },
             (err: unknown) => {
               setAccreditMember(null);
-              toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create accreditation." });
+              notify.actionError(err, "Creation failed.");
             },
           );
         }}
@@ -320,7 +322,7 @@ export function SalesNetworkMembersPage({
             },
             (err: unknown) => {
               setRenewTarget(null);
-              toast.error("Renewal failed.", { description: err instanceof Error ? err.message : "Failed to renew accreditation." });
+              notify.actionError(err, "Renewal failed.");
             },
           );
         }}

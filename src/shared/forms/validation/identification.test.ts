@@ -5,7 +5,7 @@ const LOWERCASE_MESSAGE = "Use uppercase letters only.";
 const NATIONAL_MESSAGE = "Enter a valid National ID number (12-digit PSN or 16-digit PCN).";
 const PASSPORT_MESSAGE = "Enter a valid Passport number (8-9 uppercase letters and digits, starting with a letter).";
 const DRIVERS_LICENSE_MESSAGE = "Enter a valid Driver's License number (an uppercase letter followed by 6-11 digits).";
-const DIGITAL_NATIONAL_MESSAGE = "Enter a valid Digital National ID (6 uppercase letters and digits).";
+const DIGITAL_NATIONAL_MESSAGE = "Enter a valid Digital National ID (16-digit National ID Card Number).";
 const OTHER_MESSAGE = "ID number must be 4 to 40 uppercase letters, digits, spaces, or hyphens.";
 
 describe("validateGovIdNumber requiredness", () => {
@@ -44,22 +44,21 @@ describe("validateGovIdNumber requiredness", () => {
 });
 
 describe("validateGovIdNumber digital national ID", () => {
-  it("accepts exactly six uppercase letters and digits", () => {
-    for (const value of ["AB12CD", "ABCDEF", "123456", "A1B2C3"]) {
+  it("accepts the 16-digit National ID Card Number with or without separators", () => {
+    for (const value of ["1234567890123456", "1234-5678-9012-3456", "1234 5678 9012 3456"]) {
       expect(validateGovIdNumber(value, "Digital National ID"), value).toBeNull();
     }
-    expect(validateGovIdNumber("AB-12 CD", "Digital National ID")).toBeNull();
   });
 
-  it("rejects shorter, longer, or non-alphanumeric codes with the exact message", () => {
-    for (const value of ["AB12C", "AB12CD7", "AB12C!", "AB 12"]) {
+  it("rejects the old six-character code, other lengths, and letters with the exact message", () => {
+    for (const value of ["AB12CD", "123456", "12345678901", "12345678901234567", "123456789012345A"]) {
       expect(validateGovIdNumber(value, "Digital National ID"), value).toBe(DIGITAL_NATIONAL_MESSAGE);
     }
   });
 
   it("matches the digital type before the national type", () => {
-    expect(validateGovIdNumber("AB12CD", "digital national id")).toBeNull();
-    expect(validateGovIdNumber("ABCD1234EFGH5678", "Digital National ID")).toBe(DIGITAL_NATIONAL_MESSAGE);
+    expect(validateGovIdNumber("1234567890123456", "digital national id")).toBeNull();
+    expect(validateGovIdNumber("AB12CD", "Digital National ID")).toBe(DIGITAL_NATIONAL_MESSAGE);
   });
 });
 
@@ -161,6 +160,30 @@ describe("validateGovIdNumber fallback types", () => {
     for (const value of ["ABC", "A".repeat(41), "ABC$1234", "ABC/1234"]) {
       expect(validateGovIdNumber(value, idType), `${idType}: ${value}`).toBe(OTHER_MESSAGE);
     }
+  });
+});
+
+describe("validateGovIdNumber owner samples and variations", () => {
+  it("accepts the supplied samples for every government ID type", () => {
+    const samples: ReadonlyArray<readonly [string, string]> = [
+      ["Philippine National ID", "1234-5678-9012-3456"],
+      ["Digital National ID", "1234-5678-9012-3456"],
+      ["Passport", "P1234567A"],
+      ["Driver's License", "N01-23-456789"],
+      ["SSS ID", "12-3456789-0"],
+      ["GSIS ID", "12345678901"],
+      ["UMID", "1234-5678901-2"],
+      ["PRC ID", "0123456"],
+      ["Voter's ID", "1234-5678A-C1234BCD"],
+      ["Postal ID", "A123456789012 P"],
+    ];
+    for (const [idType, sample] of samples) {
+      expect(validateGovIdNumber(sample, idType), `${idType}: ${sample}`).toBeNull();
+    }
+  });
+
+  it("accepts a 10-digit GSIS BP number without requiring 11 digits", () => {
+    expect(validateGovIdNumber("2001234567", "GSIS ID")).toBeNull();
   });
 });
 

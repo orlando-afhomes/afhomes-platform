@@ -444,6 +444,11 @@ const staff = (): Partial<StaffRepository> => ({
   getById: async (id, options) => (await fetchOrNull<{ staff: StaffMember }>(`/staff/${id}`, signalOf(options)))?.staff ?? null,
   getSelf: async (options) => (await apiFetch<{ profile: Awaited<ReturnType<StaffRepository["getSelf"]>> }>("/staff/self", { signal: signalOf(options) })).profile,
   listPolicies: async (options) => (await apiFetch<{ policies: Awaited<ReturnType<StaffRepository["listPolicies"]>> }>("/staff/policies", { signal: signalOf(options) })).policies,
+  uploadAvatar: async (id, file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<{ avatarUrl: string }>(`/staff/${id}/avatar`, { method: "POST", form });
+  },
   create: async (input) => (await apiFetch<{ staff: StaffMember }>("/staff", { method: "POST", body: input })).staff,
   update: async (id, input) => (await apiFetch<{ staff: StaffMember }>(`/staff/${id}`, { method: "POST", body: input })).staff,
   updateLinkedAccountStatus: async (staffId, status: AccountStatus, options) =>

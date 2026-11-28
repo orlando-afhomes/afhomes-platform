@@ -26,7 +26,7 @@ Where the code lives:
 | Browser sign-in, mode switch, session identity | `src/shared/lib/`, `src/shared/providers/session-identity-provider.tsx` |
 | Seed and local scripts | `scripts/seed-local-db.ts`, `scripts/dev-api.mjs`, `scripts/api-local.env` |
 
-Daily commands: `npm run emulators` (leave running), `npm run db:seed`, `npm run dev:api` (needs no other `next dev` in the folder), `npx vitest run src/server`.
+Daily commands: `npm run emulators` (leave running), `npm run db:seed` (true data) or `npm run db:seed:fixtures` (synthetic records for the server test suites), `npm run dev:api` (needs no other `next dev` in the folder), `npx vitest run src/server` (after the fixture seed).
 
 ## 2. Rules every step follows
 

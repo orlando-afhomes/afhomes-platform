@@ -152,7 +152,7 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
     const fixtures = await setupFixtures();
     const { contract, sale } = await settleContract(fixtures);
 
-    // The fully settled contract carries a pending membership; activation is a separate Admin action (doc 09 Â§5.1).
+    // The fully settled contract carries a pending membership; activation is a separate Admin action (doc 09 §5.1).
     const pending = (await records.loadMemberships()).find((item) => item.contractId === contract.id)!;
     createdMembershipIds.push(pending.id);
     expect(pending.status).toBe("pending");
@@ -174,7 +174,7 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
       id: pending.id, c: claimedThreeYearsAgo, s: settledLongerAgo, v: addYearsToDate(claimedThreeYearsAgo, 7),
     });
 
-    // A Clerk enters the bill; Finance approves it (doc 09 Â§11). The OR number is system-issued and unique.
+    // A Clerk enters the bill; Finance approves it (doc 09 §11). The OR number is system-issued and unique.
     const venues = await stayPoints.venues(clerk);
     expect(venues.length).toBeGreaterThan(0);
     const entered = await stayPoints.act(clerk, {
@@ -193,7 +193,7 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
     expect(row.ledger!.balances.released).toBe(10_000);
     expect(row.ledger!.balances.spendableWeekday).toBe(7_000);
     expect(row.ledger!.balances.spendableWeekend).toBe(3_000);
-    // The deemed Points Activation Date is recorded as a business date (doc 09 Â§8.5).
+    // The deemed Points Activation Date is recorded as a business date (doc 09 §8.5).
     expect((await records.loadMemberships()).find((item) => item.id === pending.id)!.deemedPadDate).toBeTruthy();
 
     // Staff lookup over active VIPs answers with the available points (doc 11; owner ruling R11).
@@ -202,13 +202,13 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
     expect(found[0].membershipId).toBe(pending.id);
     expect(found[0].totalPoints).toBe(10_000);
 
-    // A refund below the minimum never takes a released tranche back (doc 09 Â§13.3, invariant 12).
+    // A refund below the minimum never takes a released tranche back (doc 09 §13.3, invariant 12).
     await stayPoints.act(finance, { action: "refund", spendId: bill.id, date: manilaToday(), amountCentavos: 300_000, reason: "F7 test refund after release" });
     const afterRefund = (await stayPoints.list(finance)).find((item) => item.membershipId === pending.id)!;
     expect(afterRefund.ledger!.tranches[0].status).toBe("released");
     expect(afterRefund.ledger!.balances.released).toBe(10_000);
 
-    // An approved transfer closes unused points as not transferred; later tranches continue (doc 09 Â§18, invariant 14).
+    // An approved transfer closes unused points as not transferred; later tranches continue (doc 09 §18, invariant 14).
     const heirId = await ownCustomer("heir");
     const transferred = await membership.serviceCard(admin, pending.id, {
       kind: "transfer", requestReference: `F7-REQ-${suffix}`, approvalReference: `F7-APR-${suffix}`, nextCustomerId: heirId, holderNotified: true,
@@ -219,13 +219,13 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
     expect(afterTransfer.ledger!.balances.spendableWeekday).toBe(0);
     expect(afterTransfer.ledger!.balances.spendableWeekend).toBe(0);
 
-    // A duplicate OR number is refused system-wide (doc 09 Â§11 item 2).
+    // A duplicate OR number is refused system-wide (doc 09 §11 item 2).
     await expect(stayPoints.act(clerk, {
       action: "enter", membershipId: pending.id, venueId: venues[0].id, date: addYearsToDate(manilaToday(), -1)!,
       reference: bill.verificationRef!, grossCentavos: 100_000, excludedCentavos: 0, holder: "primary", description: "Duplicate OR",
     })).rejects.toMatchObject({ code: "duplicate_number" });
 
-    // Staff lookup moved above; the sale stays confirmed through the transfer (doc 09 Â§18).
+    // Staff lookup moved above; the sale stays confirmed through the transfer (doc 09 §18).
     expect((await records.loadSale(sale.id))!.status).toBe("confirmed");
   }, 120_000);
 
@@ -237,7 +237,7 @@ describe.skipIf(!up)("membership and Stay Points end to end (emulators)", () => 
     createdMembershipIds.push(pending.id);
     await membership.activate(admin, pending.id);
 
-    // Reverse the settling payment: the sale returns to Pending and the membership goes on Financial Hold (doc 09 Â§17.2).
+    // Reverse the settling payment: the sale returns to Pending and the membership goes on Financial Hold (doc 09 §17.2).
     const balanceRow = (await records.loadPaymentsOfContract(contract.id, null)).filter((item) => item.status === "verified").at(-1)!;
     await payments.adjustPayment(finance, balanceRow.id, { kind: "reversal", amountCentavos: balanceRow.amountCentavos, reason: "F7 test reversal" });
     expect((await records.loadMemberships()).find((item) => item.id === pending.id)!.financialHold).toBe(true);

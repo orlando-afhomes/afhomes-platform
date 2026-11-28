@@ -4,6 +4,7 @@ import { useId, useRef, useState } from "react";
 import { Camera, Trash2, Upload } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { TakePictureButton } from "./camera-capture-dialog";
 
 export type ProfilePhotoUploaderProps = {
   /** Preview URL (object URL or data URL). Null shows the placeholder. */
@@ -54,6 +55,7 @@ export function ProfilePhotoUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const errorId = useId();
+  const acceptsImage = !accept || accept.toLowerCase().includes("image");
 
   const pickFile = (file: File | undefined) => {
     if (file) onSelect(file);
@@ -101,6 +103,13 @@ export function ProfilePhotoUploader({
           >
             <Upload aria-hidden="true" /> {value ? (document ? "Change image" : "Change Photo") : uploadLabel}
           </Button>
+          {acceptsImage ? (
+            <TakePictureButton
+              onCapture={onSelect}
+              facingMode={document ? "environment" : "user"}
+              className="tw:min-h-11 tw:sm:min-h-8"
+            />
+          ) : null}
           {value ? (
             <Button type="button" variant="destructive" aria-label={removeLabel} className="tw:min-h-11 tw:sm:min-h-8" onClick={onClear}>
               <Trash2 aria-hidden="true" /> Remove

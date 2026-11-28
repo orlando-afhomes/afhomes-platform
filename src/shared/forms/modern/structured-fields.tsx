@@ -1,13 +1,15 @@
 "use client";
 
+import { useLayoutEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { listBarangays, listCities, listProvinces, postalFor } from "@/shared/data/philippine-locations";
 import {
   MAX_STREET_TEXT,
   MAX_ZIP_LENGTH,
   cleanStreetInput,
-  govIdMaxLengthFor,
+  formatGovernmentIdNumber,
+  govIdDisplayLengthFor,
   govIdPolicyFor,
-  uppercaseGovId,
+  govIdSampleFor,
 } from "@/shared/utils/input-sanitizers";
 import type { AddressValue, FieldOption, OfficeAddressValue } from "@/shared/forms/types";
 import { SelectField } from "./select-field";
@@ -39,6 +41,50 @@ export function GovernmentIdFields({
   errorIdNumber,
   idPrefix = "gov-id",
 }: GovernmentIdFieldsProps) {
+  const numberRef = useRef<HTMLInputElement>(null);
+  const pendingCaret = useRef<number | null>(null);
+  const significantCount = (text: string) => text.replace(/[^A-Za-z0-9]/g, "").length;
+
+  useLayoutEffect(() => {
+    const input = numberRef.current;
+    if (!input || pendingCaret.current === null) return;
+    let seen = 0;
+    let position = 0;
+    while (position < input.value.length && seen < pendingCaret.current) {
+      if (/[A-Za-z0-9]/.test(input.value[position])) seen += 1;
+      position += 1;
+    }
+    input.setSelectionRange(position, position);
+    pendingCaret.current = null;
+  });
+
+  const updateNumber = (raw: string) => {
+    const input = numberRef.current;
+    if (input && document.activeElement === input) {
+      pendingCaret.current = significantCount(raw.slice(0, input.selectionStart ?? raw.length));
+    }
+    onIdNumberChange(formatGovernmentIdNumber(raw, idType));
+  };
+
+  const handleNumberKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Backspace" && event.key !== "Delete") return;
+    const input = event.currentTarget;
+    if (input.selectionStart !== input.selectionEnd) return;
+    const at = input.selectionStart ?? input.value.length;
+    const separator = event.key === "Backspace" ? input.value[at - 1] : input.value[at];
+    if (!separator || /[A-Za-z0-9]/.test(separator)) return;
+    event.preventDefault();
+    if (event.key === "Backspace") {
+      const next = input.value.slice(0, Math.max(0, at - 2)) + input.value.slice(at);
+      pendingCaret.current = significantCount(next.slice(0, Math.max(0, at - 2)));
+      onIdNumberChange(formatGovernmentIdNumber(next, idType));
+    } else {
+      const next = input.value.slice(0, at) + input.value.slice(at + 2);
+      pendingCaret.current = significantCount(input.value.slice(0, at));
+      onIdNumberChange(formatGovernmentIdNumber(next, idType));
+    }
+  };
+
   return (
     <>
       <SelectField
@@ -47,7 +93,10 @@ export function GovernmentIdFields({
         required={required}
         value={idType}
         options={idTypeOptions}
-        onChange={onIdTypeChange}
+        onChange={(value) => {
+          onIdNumberChange(formatGovernmentIdNumber(idNumber, value));
+          onIdTypeChange(value);
+        }}
         placeholder="Select ID type"
         disabled={disabled}
         error={errorType}
@@ -57,12 +106,18 @@ export function GovernmentIdFields({
         label="ID Number"
         required={required}
         value={idNumber}
-        onChange={(next) => onIdNumberChange(uppercaseGovId(next, govIdPolicyFor(idType)))}
+        onChange={updateNumber}
+        onKeyDown={handleNumberKeyDown}
         onBlur={() => onIdNumberChange(idNumber.trim())}
-        maxLength={govIdMaxLengthFor(idType)}
+        placeholder={govIdSampleFor(idType)}
+        hint={typeof idType === "string" && idType.toLowerCase().includes("digital")
+          ? "Use the 16-digit National ID Card Number, not the 6-character Digital ID Number."
+          : undefined}
+        maxLength={govIdDisplayLengthFor(idType)}
         inputMode={govIdPolicyFor(idType) === "numeric" ? "numeric" : "text"}
         autoComplete="off"
         disabled={disabled}
+        inputRef={numberRef}
         error={errorIdNumber}
       />
     </>

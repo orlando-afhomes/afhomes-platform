@@ -25,8 +25,9 @@ Agents never create branches, switch branches, commit, push or merge. They work 
 
 | Command | Contents | Use |
 | --- | --- | --- |
-| `db:seed` | Rich synthetic fixtures: 17 accounts, 15 members, 40 customers, 28 contracts, sales, receipts and the other sample records | Required by the server and screen test suites |
-| `db:seed:clean` | One Super Admin (`UserAccount` + `super_admin` role, no member), the confirmed reference data, no members, customers, contracts, sales, receipts or audit history; deletes the private receipt files | Manual workflow start-up and owner walkthroughs |
+| `db:seed` | True data only: one Super Admin, the confirmed reference data, no synthetic business records; clears the local tables first | Manual start-up and owner walkthroughs |
+| `db:seed:fixtures` | Synthetic pilot records: 17 accounts, 15 members, 40 customers, 28 contracts, sales, receipts and the other sample records; clears the local tables first | Required by the server and screen test suites |
+| `db:seed:clean` | True data only, same as `db:seed`; deletes the private receipt files | Explicit clean reset |
 | `db:seed:clean --dry` | Prints the clean counts without writing | Planning and confirmation |
 
 Reference data is configuration, not sample business records, so it is present in the clean seed. It is reviewed by the owner against the business rules before use. The clean seed still starts with one account only; the reference rows do not add a seller, staff member or any operational record.
@@ -84,7 +85,7 @@ Safety stays as built: only `127.0.0.1`/`localhost` hosts and `demo-` projects, 
 
 **Screens:** the contract and customer forms read the seeded products and schemes. The VIP Products, Experiences and Settings pages may list the seeded rows read-only; editing stays "not connected" until its group. Printing reads the template rows.
 
-**Seed:** add the reference rows to both seeds. `db:seed:clean` creates one Super Admin plus the reference rows; `db:seed` keeps the fixtures plus the same reference rows.
+**Seed:** add the reference rows to both seeds. `db:seed:clean` and `db:seed` create one Super Admin plus the reference rows; `db:seed:fixtures` adds the synthetic fixtures on top of the same reference rows.
 
 **Tests:** emulator tests for the seeded counts and key fields, the product/scheme reads, template rendering, the clean seed (one account, reference rows, zero business records) and the fixture seed (tests unaffected). Unit tests for template rendering and missing-template errors.
 
@@ -309,8 +310,8 @@ Use **Planned**, **Ready**, **Verified**, or **Blocked** so a written procedure 
 
 ```bash
 npm run emulators        # Auth, SQL Connect and Storage emulators
-npm run db:seed          # rich fixtures for tests
-npm run db:seed:clean    # one Super Admin + confirmed reference data
+npm run db:seed:fixtures # synthetic pilot records for the server test suites (clears local tables)
+npm run db:seed          # true data only: one Super Admin + confirmed reference data (clears local tables)
 npm run dev:api          # api mode (stop other next dev servers first)
 npx vitest run src/server
 ```

@@ -32,6 +32,8 @@ export interface StaffRepository {
   /** The acting identity's own staff record and linked-account summary. */
   getSelf(options?: MockAsyncOptions): Promise<StaffSelfProfile | null>;
   listPolicies(options?: MockAsyncOptions): Promise<Record<string, StaffActionPolicy>>;
+  /** Uploads one staff avatar and returns the short authenticated URL to store on the staff record. */
+  uploadAvatar(id: string, file: File): Promise<{ avatarUrl: string }>;
   /**
    * `provisionPendingAccount` atomically creates and links a Pending account (doc 01 §5, §6.2).
    * `systemRoleIds` grants system roles on that account; Accounts-module holders only.

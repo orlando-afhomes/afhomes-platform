@@ -1,10 +1,10 @@
 "use client";
 
 import { EMPTY } from "@/shared/lib/empty-value";
-import { humanize } from "@/shared/lib/humanize";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Ban, CircleCheck } from "lucide-react";
+import { notify } from "@/shared/components/modern/app-toaster";
+import { Ban, CircleCheck, LayoutGrid, LockKeyhole, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { DELEGABLE_MODULES, MODULE_CATALOG, MODULE_GROUPS, type AdminModuleId } from "@/modules/identity/permissions";
 import type { DepartmentRole } from "@/modules/organization/types";
 import { cleanTitleInput, isValidName } from "@/shared/utils/input-sanitizers";
@@ -16,12 +16,14 @@ import {
   useUpdateDepartmentRole,
 } from "@/data/queries";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
-import { StatusBadge } from "@/shared/components/modern/status-badge";
-import { Badge } from "@/shared/ui/badge";
+import { ModuleAccessList } from "@/shared/components/modern/module-access";
+import { RecordDetailsDialog } from "@/shared/components/modern/record-details-dialog";
+import { StatusBadge, ToneBadge } from "@/shared/components/modern/status-badge";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/ui/dialog";
 import { RadioCardField, TextField } from "@/shared/forms/modern";
+import { useFormDirty } from "@/shared/forms/modern/use-form-dirty";
 import { Label } from "@/shared/ui/label";
 import { SearchSelect } from "@/shared/components/modern/search-select";
 
@@ -31,7 +33,6 @@ const STATUS_OPTIONS = [
 ];
 
 // Long module lists scroll inside the dialog instead of pushing it off screen.
-const DIALOG_CLASS = "tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-md";
 const FORM_DIALOG_CLASS = "tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-2xl";
 
 /** Lazy-loaded department-role dialog group: view, create, edit. */
@@ -73,77 +74,63 @@ function RoleViewDialog({ viewRole, onClose }: { viewRole: DepartmentRole | null
   const staff = useMemo(() => staffQuery.data ?? [], [staffQuery.data]);
 
   const assigned = viewRole ? staff.filter((member) => member.departmentRoleId === viewRole.id) : [];
+  const departmentName = viewRole ? (departments.find((item) => item.id === viewRole.departmentId)?.name ?? EMPTY) : EMPTY;
 
   return (
-    <Dialog open={viewRole !== null} onOpenChange={(next) => (!next ? onClose() : undefined)}>
-      <DialogContent className={DIALOG_CLASS}>
-        <DialogHeader>
-          <DialogTitle>Role Details</DialogTitle>
-          <DialogDescription>Read-only summary of the role.</DialogDescription>
-        </DialogHeader>
-        {viewRole ? (
-          <div className="tw:flex tw:flex-col tw:gap-4">
-            <dl className="tw:flex tw:flex-col">
-              <DetailRow term="Role Name">{viewRole.name}</DetailRow>
-              <DetailRow term="Department">
-                {departments.find((item) => item.id === viewRole.departmentId)?.name ?? EMPTY}
-              </DetailRow>
-              <DetailRow term="Status">
-                <StatusBadge status={viewRole.status} />
-              </DetailRow>
-              <DetailRow term="Created">{viewRole.createdAt}</DetailRow>
-            </dl>
-            <section className="tw:flex tw:flex-col tw:gap-2">
-              <h3 className="tw:font-semibold">Authorized Modules</h3>
-              <div className="tw:flex tw:flex-col tw:gap-2">
-                {MODULE_GROUPS.map((group) => {
-                  const inGroup = MODULE_CATALOG.filter((entry) => entry.group === group && viewRole.moduleIds.includes(entry.id));
-                  if (inGroup.length === 0) return null;
-                  return (
-                    <div key={group} className="tw:flex tw:flex-col tw:gap-1">
-                      <span className="tw:text-xs tw:font-semibold tw:tracking-wide tw:text-muted-foreground tw:uppercase">{group}</span>
-                      <div className="tw:flex tw:flex-wrap tw:gap-1">
-                        {inGroup.map((entry) => (
-                          <Badge key={entry.id} variant="outline">
-                            {entry.label}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-                {viewRole.moduleIds.filter((moduleId) => !MODULE_CATALOG.some((entry) => entry.id === moduleId)).map((moduleId) => (
-                  <Badge key={moduleId} variant="outline">
-                    {moduleLabel(moduleId)}
-                  </Badge>
+    <RecordDetailsDialog
+      open={viewRole !== null}
+      onClose={onClose}
+      title={viewRole?.name ?? "Role Details"}
+      subtitle={viewRole ? `Role Details · ${departmentName}` : undefined}
+      icon={<ShieldCheck />}
+      badge={viewRole ? (
+        <>
+          <StatusBadge status={viewRole.status} />
+          {viewRole.isProtected ? (
+            <ToneBadge tone="brand" icon={LockKeyhole}>
+              Protected
+            </ToneBadge>
+          ) : null}
+        </>
+      ) : null}
+      sections={[
+        {
+          title: "Overview",
+          rows: [
+            { label: "Role Name", value: viewRole?.name ?? "—" },
+            { label: "Department", value: departmentName },
+            { label: "Status", value: <StatusBadge status={viewRole?.status ?? ""} /> },
+            { label: "Created", value: viewRole?.createdAt ?? "—" },
+          ],
+        },
+        {
+          title: "Authorized Modules",
+          icon: <LayoutGrid />,
+          content: <ModuleAccessList moduleIds={viewRole?.moduleIds ?? []} showAll label="Authorized modules" />,
+        },
+        {
+          title: `Assigned Staff (${assigned.length})`,
+          icon: <UsersRound />,
+          content:
+            assigned.length === 0 ? (
+              <p className="tw:text-sm tw:text-muted-foreground">No staff assigned to this role.</p>
+            ) : (
+              <div className="tw:flex tw:flex-wrap tw:gap-1.5">
+                {assigned.map((member) => (
+                  <ToneBadge key={member.id} tone="brand" icon={UserRound}>
+                    {member.displayName}
+                  </ToneBadge>
                 ))}
               </div>
-            </section>
-            <section className="tw:flex tw:flex-col tw:gap-2">
-              <h3 className="tw:font-semibold">Assigned Staff ({assigned.length})</h3>
-              {assigned.length === 0 ? (
-                <p className="tw:text-muted-foreground">No staff assigned to this role.</p>
-              ) : (
-                <ul className="tw:m-0 tw:list-disc tw:pl-5">
-                  {assigned.map((member) => (
-                    <li key={member.id}>{member.displayName}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DetailRow({ term, children }: { term: string; children: React.ReactNode }) {
-  return (
-    <div className="tw:flex tw:items-center tw:gap-3 tw:border-b tw:border-border tw:py-2 tw:last:border-b-0">
-      <dt className="tw:w-28 tw:shrink-0 tw:font-medium tw:text-muted-foreground">{term}</dt>
-      <dd className="tw:min-w-0 tw:flex-1">{children}</dd>
-    </div>
+            ),
+        },
+      ]}
+      footer={
+        <Button type="button" variant="outline" onClick={onClose} className="tw:min-h-11 tw:sm:min-h-8">
+          Close
+        </Button>
+      }
+    />
   );
 }
 
@@ -167,6 +154,7 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
   const [errors, setErrors] = useState<FieldErrors>({});
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { dirty } = useFormDirty({ name, departmentId, moduleIds: [...moduleIds].sort(), status });
 
   // The creator may only delegate implemented modules they hold themselves.
   const delegableOptions = useMemo(
@@ -216,9 +204,7 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
       }
     } catch (err) {
       setConfirmSave(false);
-      toast.error(editRole ? "Update failed." : "Create failed.", {
-        description: err instanceof Error ? err.message : "Failed to save role.",
-      });
+      notify.actionError(err, editRole ? "Update failed." : "Create failed.");
     } finally {
       setSubmitting(false);
     }
@@ -336,7 +322,7 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
         <Button type="button" variant="outline" onClick={onDone} className="tw:min-h-11 tw:sm:min-h-8">
           Cancel
         </Button>
-        <Button type="submit" loading={submitting} className="tw:min-h-11 tw:sm:min-h-8">
+        <Button type="submit" loading={submitting} disabled={!dirty} className="tw:min-h-11 tw:sm:min-h-8">
           {editRole ? "Save" : "Create"}
         </Button>
       </DialogFooter>
@@ -353,8 +339,4 @@ function RoleForm({ editRole, onDone }: { editRole: DepartmentRole | null; onDon
       ) : null}
     </form>
   );
-}
-
-function moduleLabel(moduleId: string): string {
-  return MODULE_CATALOG.find((entry) => entry.id === moduleId)?.label ?? humanize(moduleId);
 }

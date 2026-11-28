@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import type { IgpRegister } from "@/data/contracts/igp-repository";
 import { useIgpHistoryImport } from "@/data/igp-queries";
 import {
@@ -101,7 +102,7 @@ export function IgpHistoryDialog({ register, onClose }: { register: IgpRegister;
       setPreview(null);
       setDeclaration(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The import failed.");
+      notify.actionError(error, "The import failed.");
     }
   };
 

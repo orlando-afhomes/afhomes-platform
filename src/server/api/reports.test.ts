@@ -1,5 +1,5 @@
 // @vitest-environment node
-// The report export audit endpoint. Runs against the LOCAL emulators (npm run emulators, then npm run db:seed).
+// The report export audit endpoint. Runs against the LOCAL emulators (npm run emulators, then npm run db:seed:fixtures).
 import { beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
 
@@ -24,7 +24,7 @@ describe.skipIf(!up)("report export audit (emulators)", () => {
       cookies[identity] = await sessionCookieFor(session.POST, account(identity).email, account(identity).password);
     }
     const seeded = await db.dbRead<{ userAccounts: Array<{ id: string }> }>(`query { userAccounts { id } }`);
-    if (!seeded.userAccounts.length) throw new Error("Run npm run db:seed first.");
+    if (!seeded.userAccounts.length) throw new Error("Run npm run db:seed:fixtures first.");
   }, 60_000);
 
   const auditRows = async (report: string) =>

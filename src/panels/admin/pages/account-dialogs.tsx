@@ -1,15 +1,16 @@
 "use client";
 
-import { EMPTY } from "@/shared/lib/empty-value";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Ban, CircleCheck, Clock, LockKeyhole, X } from "lucide-react";
+import { notify } from "@/shared/components/modern/app-toaster";
+import { Ban, CircleCheck, Clock, LockKeyhole, UserRound, X } from "lucide-react";
 import type { Account, AccountActionPolicy, AccountStatus } from "@/modules/accounts/types";
 import { LINKED_ACCOUNT_RESTRICTION } from "@/modules/accounts/types";
 import { getSystemRoleLabel } from "@/panels/admin/role-label";
-import { DetailList, DetailRow, InfoNote } from "@/shared/components/modern/detail-list";
+import { InfoNote } from "@/shared/components/modern/detail-list";
+import { RecordDetailsDialog } from "@/shared/components/modern/record-details-dialog";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
 import { RadioCardField, TextField } from "@/shared/forms/modern";
+import { useFormDirty } from "@/shared/forms/modern/use-form-dirty";
 import { isValidEmail } from "@/shared/utils/input-sanitizers";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -63,27 +64,54 @@ export function AccountDialogs({
   const onOpenChange = (next: boolean) => (!next ? close() : undefined);
   return (
     <>
-      <Dialog open={mode === "view" && !!selected} onOpenChange={onOpenChange}>
-        <DialogContent className={DIALOG_CLASS}>
-          <DialogHeader>
-            <DialogTitle>Account Details</DialogTitle>
-            <DialogDescription>Read-only summary of the account.</DialogDescription>
-          </DialogHeader>
-          {selected ? (
-            <div className="tw:flex tw:flex-col tw:gap-3">
-              {policy?.restriction ? <InfoNote>{policy.restriction}</InfoNote> : null}
-              {policy?.linkedToStaff ? <InfoNote>{LINKED_ACCOUNT_RESTRICTION}</InfoNote> : null}
-              <DetailList>
-                <DetailRow term="Name">{selected.displayName}</DetailRow>
-                <DetailRow term="Email">{selected.email}</DetailRow>
-                <DetailRow term="Status">{STATUS_LABELS[selected.status]}</DetailRow>
-                <DetailRow term="Roles">{selected.roleIds.map(getSystemRoleLabel).join(", ") || EMPTY}</DetailRow>
-                <DetailRow term="Created">{selected.createdAt}</DetailRow>
-              </DetailList>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <RecordDetailsDialog
+        open={mode === "view" && !!selected}
+        onClose={close}
+        title={selected?.displayName ?? "Account Details"}
+        subtitle={selected ? `Account Details · ${selected.email}` : undefined}
+        icon={<UserRound />}
+        badge={selected ? <StatusBadge status={selected.status} /> : null}
+        notice={
+          <>
+            {policy?.restriction ? <InfoNote>{policy.restriction}</InfoNote> : null}
+            {policy?.linkedToStaff ? <InfoNote>{LINKED_ACCOUNT_RESTRICTION}</InfoNote> : null}
+          </>
+        }
+        sections={[
+          {
+            title: "Identity",
+            rows: [
+              { label: "Name", value: selected?.displayName ?? "—" },
+              { label: "Email", value: selected?.email ?? "—" },
+            ],
+          },
+          {
+            title: "Access",
+            rows: [
+              { label: "Status", value: <StatusBadge status={selected?.status ?? ""} /> },
+              { label: "Created", value: selected?.createdAt ?? "—" },
+            ],
+            content: (
+              <div className="tw:flex tw:flex-wrap tw:gap-1.5">
+                {selected?.roleIds.length ? (
+                  selected.roleIds.map((role) => (
+                    <Badge key={role} variant="outline">
+                      {getSystemRoleLabel(role)}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="tw:text-sm tw:text-muted-foreground">No system roles assigned.</span>
+                )}
+              </div>
+            ),
+          },
+        ]}
+        footer={
+          <Button type="button" variant="outline" onClick={close} className="tw:min-h-11 tw:sm:min-h-8">
+            Close
+          </Button>
+        }
+      />
 
       <Dialog open={mode === "edit" && !!selected} onOpenChange={onOpenChange}>
         <DialogContent className={DIALOG_CLASS}>
@@ -166,6 +194,7 @@ function AccountForm({
   const [email, setEmail] = useState(initial.email);
   const [errors, setErrors] = useState<{ displayName?: string; email?: string }>({});
   const [submitting, setSubmitting] = useState(false);
+  const { dirty } = useFormDirty({ displayName, email });
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -180,7 +209,7 @@ function AccountForm({
       await onSubmit({ displayName: displayName.trim(), email: email.trim(), departmentId: initial.departmentId });
     } catch (err) {
       // The dialog stays open with the entered values so the user can correct them.
-      toast.error("Save failed.", { description: err instanceof Error ? err.message : "Failed to save account." });
+      notify.actionError(err, "Save failed.");
     } finally {
       setSubmitting(false);
     }
@@ -219,7 +248,7 @@ function AccountForm({
             Close
           </Button>
         ) : (
-          <Button type="submit" loading={submitting} className={BUTTON_CLASS}>
+          <Button type="submit" loading={submitting} disabled={!dirty} className={BUTTON_CLASS}>
             Save
           </Button>
         )}
@@ -252,7 +281,7 @@ function RoleEditor({
       await onAssign(role);
       setRole("");
     } catch (err) {
-      toast.error("Assign failed.", { description: err instanceof Error ? err.message : "Failed to assign role." });
+      notify.actionError(err, "Assign failed.");
     }
   };
 
@@ -260,7 +289,7 @@ function RoleEditor({
     try {
       await onRevoke(value);
     } catch (err) {
-      toast.error("Revoke failed.", { description: err instanceof Error ? err.message : "Failed to revoke role." });
+      notify.actionError(err, "Revoke failed.");
     }
   };
 
@@ -327,7 +356,7 @@ function StatusEditor({
     try {
       await onSave(status);
     } catch (err) {
-      toast.error("Status update failed.", { description: err instanceof Error ? err.message : "Failed to update status." });
+      notify.actionError(err, "Status update failed.");
     } finally {
       setSaving(false);
     }

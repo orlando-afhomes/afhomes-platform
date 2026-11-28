@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { ConfirmDialog, NoticeDialog } from "./confirm-dialog";
+import { notify } from "./app-toaster";
 import { cn } from "@/shared/lib/utils";
 
 export type RowActionTone = "default" | "danger" | "warning" | "success" | "info";
@@ -123,7 +124,7 @@ export function RowActionsMenu({
       toast.success(`${itemName} deleted successfully.`);
     } catch (error) {
       setConfirmOpen(false);
-      toast.error("Delete failed.", { description: error instanceof Error ? error.message : "Request failed." });
+      notify.actionError(error, "Delete failed.");
     } finally {
       setPending(false);
     }

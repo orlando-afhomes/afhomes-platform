@@ -2,13 +2,14 @@
 
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useBulkCommissionPayout, useCommissionAction, type BulkCommissionResult } from "@/data/business-queries";
 import type { CommissionView } from "@/data/contracts/commission-repository";
 import { formatBasisPoints, formatPeso, parsePercentToBasisPoints } from "@/shared/lib/money";
 import { manilaToday } from "@/shared/lib/dates";
 import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
 import type { ColumnDef } from "@/shared/components/modern/data-table";
-import { FieldShell, PercentField, SelectField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
+import { FieldShell, PercentField, SelectField, StandardDateField, TakePictureButton, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { Banknote, FileText, HandCoins, Landmark, Smartphone, Upload, WalletCards, X, type LucideIcon } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -185,6 +186,14 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
   const [error, setError] = useState<string | undefined>();
   const single = commissions.length === 1;
   const proofRequired = commissions.some((item) => Boolean(item.releaseDate));
+  const chooseProof = (file: File) => {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("Choose a proof file up to 5 MB.");
+      return;
+    }
+    setError(undefined);
+    setProofFile(file);
+  };
   const send = async () => {
     try {
       // Read at submit so a quick click never races the file read.
@@ -201,7 +210,7 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
       // Nothing recorded: keep the form open with the reason so it can be corrected.
       if (result.done === 0) return setError([...new Set(result.failed.map(({ reason }) => reason))].join(" "));
       if (single) toast.success("Payout recorded. Confirm paid out to mark it Paid.");
-      else if (result.failed.length) toast.warning(bulkSummary(result, "recorded"));
+      else if (result.failed.length) notify.warning(bulkSummary(result, "recorded"));
       else toast.success(bulkSummary(result, "recorded"), { description: "Confirm paid out to mark them Paid." });
       onClose();
     } catch (failure) {
@@ -244,15 +253,11 @@ export function PayoutDialog({ commissions, onClose }: { commissions: Commission
           required={proofRequired}
           accept="image/*,application/pdf"
           onChange={(event) => {
-            const file = event.target.files?.[0] ?? null;
-            if (file && file.size > MAX_UPLOAD_BYTES) {
-              setError("Choose a proof file up to 5 MB.");
-              return;
-            }
-            setError(undefined);
-            setProofFile(file);
+            const file = event.target.files?.[0];
+            if (file) chooseProof(file);
           }}
         />
+        <TakePictureButton onCapture={chooseProof} facingMode="environment" className="tw:min-h-11 tw:sm:min-h-8" />
         <p className="tw:text-xs tw:text-muted-foreground">Image or PDF up to 5 MB; Finance can view it full size.</p>
       </div>
     </FormDialog>

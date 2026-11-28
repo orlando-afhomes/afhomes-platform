@@ -471,7 +471,7 @@ These rulings take precedence over earlier text in this document where they diff
 2. **Customer intake (R5).** A seller (IST or OST) may start a customer draft. The office Clerk checks and completes it, and the Administrator or the Super Administrator approves it (section 5). This replaces the former rule that OST could not create customers and that IST could register customers directly.
 3. **Authority rule.** The Administrator can do everything in the system and the Super Administrator has no blocks. Both may approve a registration they entered themselves, and the audit history shows that the same person entered and approved. Clerks enter only; sellers view only, except for starting a customer draft (doc 01 §3.7).
 4. **Seller visibility (R4).** SVD, SSM and SM see their own and their team's customers, sales and pay, within the field limits of section 11; OST sees only their own.
-5. **Forgotten passwords (R5).** Account recovery is covered in doc 01 §6.2.1: an Administrator issues a temporary password until real authentication exists.
+5. **Forgotten passwords (R5).** Account recovery is covered in doc 01 §6.2.1: a signed-in user may request a self-service password-reset email; an Administrator or Super Administrator may request a reset for another account. No password is generated, shown or stored.
 
 ## Owner rulings amendment (2026-11-12, follow-ups)
 

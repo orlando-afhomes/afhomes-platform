@@ -1,6 +1,6 @@
 "use client";
 
-// shortcut: mock login only, remove when real authentication (Better Auth/API) is implemented
+// Real server session only; the mock-login shortcut was removed with the mock layer (F9).
 import { useAccessSnapshot } from "@/data/access-snapshot";
 import { ApiRequestError } from "@/data/http/client";
 import { Button } from "@/shared/ui/button";

@@ -26,7 +26,8 @@ import type { RadioCardOption } from "@/shared/components/modern/radio-card-grou
 import { StepIndicator } from "@/shared/components/modern/step-indicator";
 import { InfoNote } from "@/shared/components/modern/detail-list";
 import { CardGridSkeleton } from "@/shared/components/modern/skeletons";
-import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
+import { maskGovIdNumber } from "@/shared/forms";
+import { CheckboxField, FieldShell, RadioCardField, StandardDateField, TakePictureButton, TextField, describedBy, useFieldIds } from "@/shared/forms/modern";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { AppAlert } from "@/shared/components/modern/app-alert";
@@ -91,7 +92,7 @@ const STEP_KEYS: Record<number, string[]> = {
   [STEP_CARD]: ["vipPlan"],
   [STEP_PLAN]: ["paymentSchemeId", "contractClassification", "nonStandardPrice", "nonStandardMonths", "nonStandardReason"],
   [STEP_CUSTOMER]: ["firstName", "lastName", "dateOfBirth", "gender", "civilStatus", "mobileNumber", "address", "email", "citizenship", "tinNumber", "landline", "governmentIdNumber", "supplementaryHolder"],
-  [STEP_SALES]: ["recommenderMemberId", "referrerMemberId", "customerNumber", "consentDataPrivacy", "idReceivedCertified"],
+  [STEP_SALES]: ["recommenderMemberId", "referrerMemberId", "ownerMemberId", "customerNumber", "consentDataPrivacy", "idReceivedCertified"],
 };
 
 const LEGACY_WIZARD_STORAGE_KEY = "afhomes.customer-wizard.v1";
@@ -450,6 +451,17 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
     date: manilaToday(),
   } : undefined;
 
+  const chooseProof = (file: File) => {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setReservationErrors((current) => ({ ...current, proof: "Choose a file up to 5 MB." }));
+      setProofKey((key) => key + 1);
+      return;
+    }
+    setProofName(file.name);
+    setProofFile(file);
+    setReservationErrors((current) => ({ ...current, proof: undefined }));
+  };
+
   const resetNewApplication = () => {
     setPrintDraftVersion((version) => version + 1);
     setStep(STEP_CARD);
@@ -493,7 +505,20 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       else router.push(`/admin/customers/${saved.id}`);
     } catch (failure) {
       exit.dismiss();
-      if (!handleAttributionFailure(failure)) toast.error(failure instanceof Error ? failure.message : "Request failed.");
+      const handled = handleAttributionFailure(failure);
+      if (failure instanceof CustomerValidationError && !handled) {
+        // Save Draft returns the same field errors as Submit: highlight them and open the first
+        // failing step, so a rejected draft never reads as a vague "review the fields" toast.
+        const fieldErrors = Object.fromEntries(Object.entries(failure.errors).filter(([, message]) => Boolean(message)));
+        const firstKey = Object.keys(fieldErrors)[0];
+        if (firstKey) {
+          const owningStep = Number(Object.keys(STEP_KEYS).find((index) => STEP_KEYS[Number(index)].includes(firstKey)) ?? step);
+          setErrors(fieldErrors);
+          setStep(Number.isFinite(owningStep) ? owningStep : step);
+          setFocusTick((tick) => tick + 1);
+        }
+      }
+      if (!handled) notify.actionError(failure, "Save failed.");
     } finally {
       setBusy(false);
     }
@@ -591,7 +616,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
       }
       router.push(`/admin/customers/${result.customerId}`);
     } catch (failure) {
-      if (!handleAttributionFailure(failure)) toast.error(failure instanceof Error ? failure.message : "Request failed.");
+      if (!handleAttributionFailure(failure)) notify.actionError(failure, "Submit failed.");
     } finally {
       setBusy(false);
     }
@@ -751,7 +776,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
             <Row label="Mobile number" value={draft.mobileNumber} icon={Smartphone} />
             <Row label="Email" value={draft.email} />
             <Row label="Address" value={addressLine(draft)} />
-            <Row label="Government ID" icon={ShieldCheck} value={[draft.governmentIdType, draft.governmentIdNumber].filter(Boolean).join(" · ")} />
+            <Row label="Government ID" icon={ShieldCheck} value={[draft.governmentIdType, draft.governmentIdNumber ? maskGovIdNumber(draft.governmentIdNumber) : null].filter(Boolean).join(" · ")} />
           </ReviewBlock>
           <ReviewBlock title="Sales and Consent" icon={Handshake} tone="success" onEdit={() => setStep(STEP_SALES)}>
             {supplementaryAllowed ? <Row label="Extra cardholder" value={[draft.secFirstName, draft.secNoMiddleName ? "" : draft.secMiddleName, draft.secLastName, draft.secSuffix].filter(Boolean).join(" ")} /> : null}
@@ -821,15 +846,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                         className="tw:peer tw:sr-only"
                         onChange={(event) => {
                           const file = event.target.files?.[0];
-                          if (!file) return;
-                          if (file.size > MAX_UPLOAD_BYTES) {
-                            setReservationErrors((current) => ({ ...current, proof: "Choose a file up to 5 MB." }));
-                            setProofKey((key) => key + 1);
-                            return;
-                          }
-                          setProofName(file.name);
-                          setProofFile(file);
-                          setReservationErrors((current) => ({ ...current, proof: undefined }));
+                          if (file) chooseProof(file);
                         }}
                       />
                       <label
@@ -863,6 +880,7 @@ export function CustomerApplicationWizard({ existing }: { existing?: Customer } 
                         </Button>
                       ) : null}
                     </div>
+                    <TakePictureButton onCapture={chooseProof} facingMode="environment" className="tw:min-h-11 tw:sm:min-h-8" />
                   </FieldShell>
                 </>
               ) : reservationCentavos ? (

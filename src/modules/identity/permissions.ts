@@ -427,7 +427,7 @@ export function hasOperationPermission(identity: DevIdentity, operation: AdminOp
 /**
  * Read-only display of what a linked account can reach: system-role grants plus
  * the delegable grants of the employee's department role. It mirrors the
- * session rule in resolveEffectiveModules (data/mock/authorization.ts) for a
+ * server session rule (src/server/auth/actor.ts) for a
  * record other than the actor's own, and never authorizes anything. No linked
  * account, or one that is not Active, means no access. The department role
  * counts only when `departmentRoleModuleIds` is given, which the caller does

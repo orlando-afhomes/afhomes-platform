@@ -26,8 +26,8 @@ const ID_SEPARATORS_RE = /[\s.-]/g;
 /** Voter's/Postal/Other/unknown: uppercase letters, digits, spaces, periods, and hyphens. */
 const OTHER_ID_CHARS_RE = /^[A-Z0-9 .-]+$/;
 
-/** Digital National ID (PhilSys): 6-character uppercase alphanumeric security code. */
-const DIGITAL_NATIONAL_ID_RE = /^[A-Z0-9]{6}$/;
+/** Digital National ID: the 16-digit National ID Card Number, not the 6-character digital code. */
+const DIGITAL_NATIONAL_ID_RE = /^\d{16}$/;
 /** National ID: 12-digit PSN or 16-digit PCN. */
 const NATIONAL_ID_RE = /^(?:\d{12}|\d{16})$/;
 /** Passport: 8-9 characters, starting with an uppercase letter. */
@@ -62,7 +62,7 @@ export function validateGovIdNumber(value: string, idType?: string): string | nu
   // "digital" must be checked before "national": its label contains both words.
   if (kind.includes("digital")) {
     if (DIGITAL_NATIONAL_ID_RE.test(compact)) return null;
-    return "Enter a valid Digital National ID (6 uppercase letters and digits).";
+    return "Enter a valid Digital National ID (16-digit National ID Card Number).";
   }
   if (kind.includes("national")) {
     if (NATIONAL_ID_RE.test(compact)) return null;

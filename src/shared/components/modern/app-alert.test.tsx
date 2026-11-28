@@ -37,6 +37,21 @@ describe("AppAlert", () => {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect(onClose).not.toHaveBeenCalled();
   });
+  it("shows a spinner on the confirm button while pending", async () => {
+    const onConfirm = vi.fn();
+    const { rerender } = render(<AppAlert open pending title="Saving?" description="Wait." confirmText="Save" onConfirm={onConfirm} onClose={() => undefined} cancelText="Cancel" />);
+    const alert = await screen.findByRole("alertdialog", { name: "Saving?" });
+    const confirm = within(alert).getByRole("button", { name: /Save/ });
+    expect(confirm).toHaveAttribute("aria-busy", "true");
+    expect(confirm.querySelector('[data-slot="spinner"]')).toBeTruthy();
+    expect(confirm).toBeDisabled();
+    expect(within(alert).getByRole("button", { name: "Cancel" })).toBeDisabled();
+
+    rerender(<AppAlert open title="Saving?" description="Wait." confirmText="Save" onConfirm={onConfirm} onClose={() => undefined} cancelText="Cancel" />);
+    await waitFor(() => expect(confirm).not.toHaveAttribute("aria-busy"));
+    expect(confirm.querySelector('[data-slot="spinner"]')).toBeNull();
+  });
+
   it("colors the confirm button by tone and keeps the default when none is given", async () => {
     const { rerender } = render(<AppAlert open title="Approve it?" description="Go." confirmText="Approve" tone="success" onConfirm={() => undefined} onClose={() => undefined} cancelText="Cancel" />);
     const alert = await screen.findByRole("alertdialog", { name: "Approve it?" });

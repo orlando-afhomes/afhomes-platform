@@ -16,5 +16,6 @@ export { RadioCardField } from "./radio-card-field";
 export { PhilippineLandlineField, PhilippineMobileField, TIN_DISPLAY_LENGTH, TinField } from "./masked-fields";
 export { GovernmentIdFields, PhilippineAddressFields } from "./structured-fields";
 export { ProfilePhotoUploader } from "./profile-photo-uploader";
+export { CameraCaptureDialog, TakePictureButton } from "./camera-capture-dialog";
 export { StandardDateField } from "./date-field";
 export { CheckboxField, MoneyField, PercentField, PointsField, TextAreaField } from "./business-fields";

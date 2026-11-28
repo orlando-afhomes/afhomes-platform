@@ -10,13 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, FilePlus2, FileText, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useMemberships, useOperation, usePaymentSchemes, useRejectCustomer, useSales, useSendBackCustomer } from "@/data/business-queries";
-import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import { canPrepareVipContract, isEditableContractStatus, preferOpenContract } from "@/modules/contracts/rules";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { canReviewRegistration } from "@/modules/customers/review";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useCustomers, useMembers } from "@/data/queries";
 import { useAuditEvents } from "@/data/queries";
 import { SelectField } from "@/shared/forms/modern";
@@ -300,7 +300,7 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
             },
             (failure) => {
               setDiscarding(false);
-              toast.error("Delete failed.", { description: failure instanceof Error ? failure.message : "Request failed." });
+              notify.actionError(failure, "Delete failed.");
             },
           );
         }}
@@ -319,9 +319,8 @@ export function CustomerDetailPage({ customerId }: { customerId: string }) {
               setReview(null);
             },
             (failure) => {
-              // Attribution problems (closing seller, referral reference) are listed so the Clerk can fix them.
-              const detail = failure instanceof CustomerValidationError ? Object.values(failure.errors).filter(Boolean).join(" ") : failure instanceof Error ? failure.message : "Request failed.";
-              toast.error(detail);
+              // The resolver lists every field message (closing seller, referral reference) so the Clerk can fix them.
+              notify.actionError(failure, "Approval failed.");
               setReview(null);
             },
           );

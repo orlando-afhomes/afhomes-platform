@@ -408,8 +408,11 @@ export function WaiversPanel() {
 const waiverTranches = (current: MembershipPoints) => current.ledger?.tranches.filter((item) => item.status === "non_activated" &&
   !current.waivers.some((waiver) => waiver.tranche === item.number && waiver.decision?.granted !== false)) ?? [];
 
+/** Cardholder fields shared by the loyalty actions and the resort-bill dialog. */
+export type LoyaltyHolder = { membershipId: string; holderName: string; vipNumber: string };
+
 /** "Earn Points" (resort bill entry) for the chosen membership (stay-points.enter). Owns its form dialog. */
-export function EnterResortBillButton({ selected, earnPoints = false }: { selected?: import("@/data/contracts/member-qr-repository").MemberQrHolder; earnPoints?: boolean } = {}) {
+export function EnterResortBillButton({ selected, earnPoints = false }: { selected?: LoyaltyHolder; earnPoints?: boolean } = {}) {
   const { current, supplementary } = useSelectedMembership();
   const action = useStayPointsAction();
   const canEnter = useOperation("stay-points.enter");
@@ -473,7 +476,7 @@ export function StayPointsAreaPage() {
 
 function StayPointsDialog({ dialog, membershipId, gold, venues, tranches, pending, submit, onClose, selectedHolder, earnPoints = false }: {
   earnPoints?: boolean;
-  selectedHolder?: import("@/data/contracts/member-qr-repository").MemberQrHolder;
+  selectedHolder?: Pick<LoyaltyHolder, "holderName" | "vipNumber"> & { holder?: import("@/data/contracts/member-qr-repository").CardHolder; scannedCode?: string };
   dialog: Dialog; membershipId: string; gold: boolean; venues: { id: string; name: string; type: OutletType }[]; tranches: PointsTranche[];
   pending: boolean; submit: (input: StayPointsAction) => Promise<unknown>; onClose: () => void;
 }) {

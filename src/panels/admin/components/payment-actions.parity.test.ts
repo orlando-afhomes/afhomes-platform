@@ -176,6 +176,13 @@ describe("payment-actions parity: row menu vs detail-sheet footer", () => {
     expect(source).toContain('variant: TONE_VARIANT[item.tone ?? "default"]');
   });
 
+  it("resets the Verify spinner on a chain that handles a rejected request", () => {
+    const source = readSource();
+    // The verify handler shows the error through the toast promise; the loading reset must not
+    // create a second unhandled rejection when the mutation fails.
+    expect(source).toContain('request.finally(() => setVerifyingId(null)).catch(() => undefined)');
+  });
+
   it("both surfaces are wired to the SAME itemsFor helper (parity by construction)", () => {
     const source = readSource();
     // Exactly one shared helper definition.

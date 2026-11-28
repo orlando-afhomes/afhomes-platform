@@ -12,7 +12,7 @@ import { PAYMENT_METHODS, PAYMENT_PURPOSES, type PaymentMethod, type PaymentPurp
 import { manilaToday } from "@/shared/lib/dates";
 import { centavosToInputText, formatPeso, parsePesoToCentavos } from "@/shared/lib/money";
 import { MAX_UPLOAD_BYTES, readFileAsDataUrl } from "@/shared/lib/file-data";
-import { MoneyField, SelectField, StandardDateField, TextAreaField, TextField } from "@/shared/forms/modern";
+import { MoneyField, SelectField, StandardDateField, TakePictureButton, TextAreaField, TextField } from "@/shared/forms/modern";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { ImagePreview } from "@/shared/components/modern/image-preview";
@@ -122,6 +122,7 @@ export function PaymentSubmitDialog({ contractId, open, onClose }: { contractId:
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-evidence">Receipt file</Label>
         <Input id="payment-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => chooseEvidence(event.target.files?.[0])} />
+        <TakePictureButton onCapture={chooseEvidence} facingMode="environment" className="tw:min-h-11 tw:sm:min-h-8" />
         <p className="tw:text-xs tw:text-muted-foreground">{evidenceFile ? `${evidenceFile.name}. Finance can view it full size.` : "Image or PDF up to 5 MB; Finance can view it full size."}</p>
       </div>
     </FormDialog>
@@ -204,6 +205,7 @@ export function UnmatchedReceiptDialog({ open, onClose }: { open: boolean; onClo
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="unmatched-evidence">Receipt file</Label>
         <Input id="unmatched-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => chooseEvidence(event.target.files?.[0])} />
+        <TakePictureButton onCapture={chooseEvidence} facingMode="environment" className="tw:min-h-11 tw:sm:min-h-8" />
         <p className="tw:text-xs tw:text-muted-foreground">{evidenceFile ? `${evidenceFile.name}. Finance can view it full size.` : "Image or PDF up to 5 MB; Finance can view it full size."}</p>
       </div>
     </FormDialog>
@@ -299,6 +301,7 @@ function MatchUnmatchedDialog({ record, onClose }: { record: UnmatchedReceiptVie
       <div className="tw:flex tw:flex-col tw:gap-1.5">
         <Label htmlFor="payment-resend-evidence">New receipt file</Label>
         <Input id="payment-resend-evidence" type="file" accept="image/*,application/pdf" onChange={(event) => chooseEvidence(event.target.files?.[0])} />
+        <TakePictureButton onCapture={chooseEvidence} facingMode="environment" className="tw:min-h-11 tw:sm:min-h-8" />
         {payment.evidenceFileDataUrl ? (
           <ImagePreview
             src={payment.evidenceFileDataUrl}
@@ -354,7 +357,7 @@ function AdjustDialog({ payment, onClose }: { payment: PaymentView | null; onClo
 }
 
 /** A single payment-row action; the same list feeds the row menu and the details sheet footer. */
-type PaymentItem = { key: string; label: string; tone?: RowActionTone; icon: LucideIcon; onClick: () => void };
+type PaymentItem = { key: string; label: string; tone?: RowActionTone; icon: LucideIcon; loading?: boolean; disabled?: boolean; onClick: () => void };
 
 /** Footer button color for each row-menu tone: success green, warning amber, danger red, otherwise neutral. */
 const TONE_VARIANT = { success: "success", warning: "warning", danger: "destructive", info: "info", default: "outline" } as const;
@@ -377,6 +380,7 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
   const { identity } = useDevIdentity();
   const [adjusting, setAdjusting] = useState<PaymentView | null>(null);
   const [resending, setResending] = useState<PaymentView | null>(null);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = detailId ? (payments.data ?? []).find((item) => item.id === detailId) ?? null : null;
   const suggestedMatch = detail && (detail.status === "submitted" || detail.status === "under_review") && canVerify ? findSuggestedMatch(payments.data ?? [], detail) : undefined;
@@ -389,13 +393,16 @@ export function usePaymentActions(): { rowActions: (payment: PaymentView) => Rea
     }
     if (canVerify && open) {
       if (!payment.approvalBlocked && !payment.referenceConflict) {
-        items.push({ key: "verify", label: "Verify", tone: "success", icon: ShieldCheck, onClick: () => {
+        items.push({ key: "verify", label: "Verify", tone: "success", icon: ShieldCheck, loading: verifyingId === payment.id, disabled: action.isPending, onClick: () => {
           if (findSuggestedMatch(payments.data ?? [], payment)) {
             setReasonFor({ payment, kind: "verify" });
             return;
           }
           // No confirmation: a mistaken verification is fixed with the audited Reverse.
-          void toast.promise(action.mutateAsync({ id: payment.id, action: "verify" }), { loading: "Verifying…", success: "Payment verified.", error: (error: Error) => error.message });
+          const request = action.mutateAsync({ id: payment.id, action: "verify" });
+          setVerifyingId(payment.id);
+          void toast.promise(request, { loading: "Verifying…", success: "Payment verified.", error: (error: Error) => error.message });
+          void request.finally(() => setVerifyingId(null)).catch(() => undefined);
         } });
       }
       items.push(

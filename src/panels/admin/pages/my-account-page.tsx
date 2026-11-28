@@ -3,20 +3,25 @@
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { notify } from "@/shared/components/modern/app-toaster";
+import { KeyRound, Upload } from "lucide-react";
 import type { LinkedAccountSummary } from "@/modules/accounts/types";
+import { composeDisplayName, splitDisplayName } from "@/modules/organization/name";
 import type { StaffMember } from "@/modules/organization/types";
 import {
   useDepartments,
   useEffectiveModuleIds,
   useMembers,
   useMyProfile,
+  useRequestPasswordReset,
   useRoleOptions,
   useUpdateStaff,
+  useUploadStaffAvatar,
 } from "@/data/queries";
 import { useDevIdentity } from "@/shared/providers/identity-provider";
 import { PageContainer } from "@/shared/components/modern/page-container";
 import { Breadcrumbs } from "@/shared/components/modern/breadcrumbs";
+import { AppAlert } from "@/shared/components/modern/app-alert";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { PageHeader } from "@/shared/components/modern/page-header";
 import { StatusBadge } from "@/shared/components/modern/status-badge";
@@ -24,13 +29,18 @@ import { CardSection } from "@/shared/components/modern/card-section";
 import { Card } from "@/shared/ui/card";
 import { DetailList, DetailRow } from "@/shared/components/modern/detail-list";
 import { ErrorState } from "@/shared/components/modern/error-state";
-import { EmailField, TextField } from "@/shared/forms/modern";
+import { FormGrid } from "@/shared/components/modern/form-layout";
 import {
-  cleanEmailInput,
-  cleanTitleInput,
-  isValidEmail,
-  isValidName,
-} from "@/shared/utils/input-sanitizers";
+  EmailField,
+  MiddleNameField,
+  PersonNameField,
+  PrefixField,
+  SuffixField,
+  TakePictureButton,
+} from "@/shared/forms/modern";
+import { useFormDirty } from "@/shared/forms/modern/use-form-dirty";
+import { validateMiddleName, validatePersonName, validatePrefix, validateSuffix } from "@/shared/forms/validation/person-name";
+import { cleanEmailInput, isValidEmail } from "@/shared/utils/input-sanitizers";
 import { validateProfileImageFile } from "@/shared/forms/validation/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
@@ -102,7 +112,14 @@ function MyAccountForm() {
   return <MyAccountProfileForm key={profile.staff.id} staff={profile.staff} linkedAccount={profile.linkedAccount} />;
 }
 
-type FieldErrors = { name?: string; email?: string };
+type FieldErrors = {
+  prefix?: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  suffix?: string;
+  email?: string;
+};
 
 
 /**
@@ -114,19 +131,51 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
   const departmentsQuery = useDepartments();
   const rolesQuery = useRoleOptions();
   const updateStaff = useUpdateStaff();
+  const uploadAvatar = useUploadStaffAvatar();
+  const requestPasswordReset = useRequestPasswordReset();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canEditProfile = granted.has("staff");
   const departments = useMemo(() => departmentsQuery.data ?? [], [departmentsQuery.data]);
   const roles = useMemo(() => rolesQuery.data ?? [], [rolesQuery.data]);
 
-  const [name, setName] = useState(staff.displayName);
+  const split = splitDisplayName(staff.displayName);
+  const [prefix, setPrefix] = useState(staff.prefix ?? "");
+  const [firstName, setFirstName] = useState(staff.firstName ?? split.first);
+  const [middleName, setMiddleName] = useState(staff.middleName ?? split.middle);
+  const [noMiddleName, setNoMiddleName] = useState(!(staff.middleName ?? split.middle).trim());
+  const [lastName, setLastName] = useState(staff.lastName ?? split.last);
+  const [suffix, setSuffix] = useState(staff.suffix ?? "");
   const [email, setEmail] = useState(staff.email);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(staff.avatarUrl ?? null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [confirmSave, setConfirmSave] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
+
+  const displayName = composeDisplayName({ firstName, middleName, noMiddleName, lastName, suffix });
+  const { dirty, reset } = useFormDirty({
+    prefix: prefix || null,
+    firstName,
+    middleName: noMiddleName ? null : middleName,
+    noMiddleName,
+    lastName,
+    suffix: suffix || null,
+    email,
+    avatarUrl,
+  });
+
+  const sendPasswordReset = async () => {
+    if (!linkedAccount) return;
+    try {
+      const { message } = await requestPasswordReset.mutateAsync(linkedAccount.id);
+      setResetNotice(message);
+    } catch (err) {
+      notify.actionError(err, "Password reset failed.");
+    }
+  };
 
   const clearError = (key: keyof FieldErrors) => {
     if (errors[key]) setErrors((current) => ({ ...current, [key]: undefined }));
@@ -139,6 +188,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       setAvatarError(imageError);
       return;
     }
+    setAvatarFile(file);
     const reader = new FileReader();
     reader.onload = () => setAvatarUrl(typeof reader.result === "string" ? reader.result : null);
     reader.readAsDataURL(file);
@@ -146,8 +196,16 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
 
   const validate = (): FieldErrors => {
     const next: FieldErrors = {};
-    if (!name.trim()) next.name = "Full name is required.";
-    else if (!isValidName(name)) next.name = "Full name must contain letters only.";
+    const prefixError = validatePrefix(prefix);
+    if (prefixError) next.prefix = prefixError;
+    const firstNameError = validatePersonName(firstName, "First name");
+    if (firstNameError) next.firstName = firstNameError;
+    const middleError = validateMiddleName(middleName, noMiddleName);
+    if (middleError) next.middleName = middleError;
+    const lastNameError = validatePersonName(lastName, "Last name");
+    if (lastNameError) next.lastName = lastNameError;
+    const suffixError = validateSuffix(suffix);
+    if (suffixError) next.suffix = suffixError;
     if (email.trim() && !isValidEmail(email)) next.email = "Enter a valid email address.";
     return next;
   };
@@ -156,15 +214,33 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
     setSubmitting(true);
     try {
       if (canEditProfile) {
+        let nextAvatarUrl = avatarUrl;
+        if (avatarFile) {
+          const uploaded = await uploadAvatar.mutateAsync({ id: staff.id, file: avatarFile });
+          nextAvatarUrl = uploaded.avatarUrl;
+          setAvatarUrl(nextAvatarUrl);
+          setAvatarFile(null);
+        }
         // Profile fields only. The repository checks email uniqueness and keeps
         // the linked account's name and email in step with the staff record.
-        await updateStaff.mutateAsync({ id: staff.id, displayName: name.trim(), email: email.trim() || staff.email, avatarUrl });
+        await updateStaff.mutateAsync({
+          id: staff.id,
+          displayName,
+          email: email.trim() || staff.email,
+          avatarUrl: nextAvatarUrl,
+          prefix: prefix || null,
+          firstName: firstName.trim(),
+          middleName: noMiddleName ? null : middleName.trim(),
+          lastName: lastName.trim(),
+          suffix: suffix || null,
+        });
       }
+      reset();
       setConfirmSave(false);
       toast.success("Account updated successfully.", { description: "Your profile has been saved." });
     } catch (err) {
       setConfirmSave(false);
-      toast.error("Update failed.", { description: err instanceof Error ? err.message : "Failed to update account." });
+      notify.actionError(err, "Update failed.");
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +262,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
           <div className="tw:flex tw:flex-wrap tw:items-center tw:gap-4">
             <Avatar className="tw:size-16 tw:text-lg">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profile picture preview" /> : null}
-              <AvatarFallback>{initials(name || "Staff")}</AvatarFallback>
+              <AvatarFallback>{initials(displayName || "Staff")}</AvatarFallback>
             </Avatar>
             {canEditProfile ? (
               <div className="tw:flex tw:flex-col tw:gap-2">
@@ -207,8 +283,9 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
                   <Button type="button" variant="outline" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => fileInputRef.current?.click()}>
                     <Upload aria-hidden="true" /> Select Image
                   </Button>
+                  <TakePictureButton onCapture={handleAvatarFile} facingMode="user" className="tw:min-h-11 tw:sm:min-h-8" />
                   {avatarUrl ? (
-                    <Button type="button" variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => setAvatarUrl(null)}>
+                    <Button type="button" variant="destructive" className="tw:min-h-11 tw:sm:min-h-8" onClick={() => { setAvatarUrl(null); setAvatarFile(null); }}>
                       Remove
                     </Button>
                   ) : null}
@@ -222,19 +299,54 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
             ) : null}
           </div>
         </div>
-        <TextField
-          label="Full Name"
-          required
-          placeholder="Full Name"
-          value={name}
-          maxLength={80}
-          disabled={!canEditProfile}
-          error={errors.name}
-          onChange={(value) => {
-            setName(cleanTitleInput(value));
-            clearError("name");
-          }}
-        />
+        <FormGrid>
+          <PrefixField
+            id="account-prefix"
+            value={prefix || undefined}
+            onChange={(value) => { setPrefix(value); clearError("prefix"); }}
+            disabled={!canEditProfile}
+            error={errors.prefix}
+          />
+          <PersonNameField
+            id="account-first-name"
+            label="First Name"
+            required
+            value={firstName}
+            onChange={(value) => { setFirstName(value); clearError("firstName"); }}
+            placeholder="First Name"
+            disabled={!canEditProfile}
+            error={errors.firstName}
+          />
+          <PersonNameField
+            id="account-last-name"
+            label="Last Name"
+            required
+            value={lastName}
+            onChange={(value) => { setLastName(value); clearError("lastName"); }}
+            placeholder="Last Name"
+            disabled={!canEditProfile}
+            error={errors.lastName}
+          />
+          <MiddleNameField
+            id="account-middle-name"
+            label="Middle Name"
+            required
+            value={middleName}
+            onChange={(value) => { setMiddleName(value); clearError("middleName"); }}
+            noMiddleName={noMiddleName}
+            onNoMiddleNameChange={setNoMiddleName}
+            placeholder="Middle Name"
+            disabled={!canEditProfile}
+            error={errors.middleName}
+          />
+          <SuffixField
+            id="account-suffix"
+            value={suffix || undefined}
+            onChange={(value) => { setSuffix(value); clearError("suffix"); }}
+            disabled={!canEditProfile}
+            error={errors.suffix}
+          />
+        </FormGrid>
         <EmailField
           label="Email"
           placeholder="Email"
@@ -256,7 +368,29 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       </CardSection>
 
       <CardSection title="Change Password">
-        <p className="tw:text-sm tw:text-muted-foreground">To change your password, ask an Administrator to reset it for you.</p>
+        <p className="tw:text-sm tw:text-muted-foreground">
+          Send a secure reset link to your email. Your current password keeps working until you use the link.
+        </p>
+        <div className="tw:flex tw:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            loading={requestPasswordReset.isPending}
+            disabled={!linkedAccount}
+            onClick={() => void sendPasswordReset()}
+            className="tw:min-h-11 tw:sm:min-h-8"
+          >
+            <KeyRound aria-hidden="true" /> Send password reset email
+          </Button>
+        </div>
+        <AppAlert
+          open={resetNotice !== null}
+          title="Password reset requested"
+          description={resetNotice ?? ""}
+          confirmText="Done"
+          onConfirm={() => setResetNotice(null)}
+          onClose={() => setResetNotice(null)}
+        />
       </CardSection>
 
       <CardSection title="Employment and Access">
@@ -268,7 +402,7 @@ function MyAccountProfileForm({ staff, linkedAccount }: { staff: StaffMember; li
       </CardSection>
 
       <div className="tw:flex tw:justify-end">
-        <Button type="submit" loading={submitting} disabled={!canEditProfile} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
+        <Button type="submit" loading={submitting} disabled={!canEditProfile || !dirty} className="tw:min-h-11 tw:w-full tw:sm:min-h-8 tw:sm:w-auto">
           Save Changes
         </Button>
       </div>

@@ -3,6 +3,7 @@
 import { EMPTY } from "@/shared/lib/empty-value";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import type { Designation, OrgMember } from "@/modules/organization/types";
 import { normalizeLandline, normalizePhilippineMobile, normalizePostalCode } from "@/shared/utils/input-sanitizers";
 import { CIVIL_STATUS_OPTIONS, GENDER_OPTIONS } from "@/modules/sales-network/accredited-seller";
@@ -55,6 +56,7 @@ import { Label } from "@/shared/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { useUpdateSalesNetworkMember, useTransferSalesNetworkMember, useEligibleSalesNetworkParents, useMembers } from "@/data/queries";
 import { getTotalDescendantCount } from "@/modules/sales-network/genealogy";
+import { initialTransferSelection, transferPositionOptions } from "@/modules/sales-network/transfer";
 
 const BUTTON_CLASS = "tw:min-h-11 tw:sm:min-h-8";
 
@@ -63,11 +65,14 @@ export function SalesNetworkMemberDialogs({
   transferMember,
   onCloseEdit,
   onCloseTransfer,
+  canChangeDesignation,
 }: {
   editMember: OrgMember | null;
   transferMember: OrgMember | null;
   onCloseEdit: () => void;
   onCloseTransfer: () => void;
+  /** A designation change is an account-role change; only Accounts (Staff Access) authority may make it. */
+  canChangeDesignation: boolean;
 }) {
   return (
     <>
@@ -84,9 +89,13 @@ export function SalesNetworkMemberDialogs({
         <DialogContent className="tw:max-h-[calc(100dvh-2rem)] tw:overflow-y-auto tw:sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Transfer Member</DialogTitle>
-            <DialogDescription>Move the member and their team below to a new seller type and sponsor.</DialogDescription>
+            <DialogDescription>
+              {canChangeDesignation
+                ? "Move the member and their team below to a new seller type and sponsor."
+                : "Move the member and their team below to a new sponsor. Changing the seller type or designation needs Staff Access authority."}
+            </DialogDescription>
           </DialogHeader>
-          {transferMember ? <TransferMemberForm key={transferMember.id} member={transferMember} onDone={onCloseTransfer} /> : null}
+          {transferMember ? <TransferMemberForm key={transferMember.id} member={transferMember} onDone={onCloseTransfer} canChangeDesignation={canChangeDesignation} /> : null}
         </DialogContent>
       </Dialog>
     </>
@@ -145,6 +154,11 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   const [submitting, setSubmitting] = useState(false);
 
   const displayName = [firstName.trim(), noMiddleName ? "" : middleName.trim(), lastName.trim(), suffix.trim()].filter(Boolean).join(" ");
+  // A stored legacy ID stays saveable while it is unchanged; the current format applies when it is edited.
+  const governmentIdChanged =
+    !profile ||
+    governmentIdNumber.trim() !== (profile.governmentIdNumber ?? "").trim() ||
+    (governmentIdType ?? "") !== (profile.governmentIdType ?? "");
 
   const { visible, reveal } = useFormErrors(
     {
@@ -172,7 +186,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       gender: gender?.trim() ? undefined : "Gender is required.",
       civilStatus: civilStatus?.trim() ? undefined : "Civil Status is required.",
       governmentIdType: governmentIdType ? undefined : "Government ID type is required.",
-      governmentIdNumber: orUndefined(validateGovIdNumber(governmentIdNumber)),
+      governmentIdNumber: governmentIdChanged ? orUndefined(validateGovIdNumber(governmentIdNumber, governmentIdType)) : undefined,
     },
     { mobile: Boolean(mobileNumber.trim()), email: Boolean(email), postalCode: Boolean(postalCode), tin: Boolean(tin) },
     formRef,
@@ -214,7 +228,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
       toast.success("Member updated successfully.", { description: `${displayName} has been saved.` });
     } catch (err) {
       setConfirmSave(false);
-      toast.error("Update failed.", { description: err instanceof Error ? err.message : "Failed to update member." });
+      notify.actionError(err, "Update failed.");
     } finally {
       setSubmitting(false);
     }
@@ -370,7 +384,7 @@ function EditMemberForm({ member, onDone }: { member: OrgMember; onDone: () => v
   );
 }
 
-function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () => void }) {
+function TransferMemberForm({ member, onDone, canChangeDesignation }: { member: OrgMember; onDone: () => void; canChangeDesignation: boolean }) {
   const transferMember = useTransferSalesNetworkMember();
   const membersQuery = useMembers();
   const formRef = useRef<HTMLFormElement>(null);
@@ -379,8 +393,9 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
   const currentParent = member.parentId ? allMembers.find((parent) => parent.id === member.parentId) : undefined;
   const currentParentName = currentParent ? `${currentParent.displayName} (${designationLabel(currentParent.designation)})` : EMPTY;
 
-  const [target, setTarget] = useState<"IST" | "OST">(member.designation === "OST" ? "IST" : "OST");
-  const [position, setPosition] = useState<Designation>(member.designation === "OST" ? "SSM" : "OST");
+  const initialSelection = initialTransferSelection(member.designation, canChangeDesignation);
+  const [target, setTarget] = useState<"IST" | "OST">(initialSelection.target);
+  const [position, setPosition] = useState<Designation>(initialSelection.position);
   const [newParentId, setNewParentId] = useState<string | undefined>(undefined);
   const [teamName, setTeamName] = useState("");
   const [confirmTransfer, setConfirmTransfer] = useState(false);
@@ -391,6 +406,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
   const inheritedTeam = sponsorMember ? (teamDisplayName(sponsorMember, allMembers) ?? null) : null;
 
   const switchTarget = (next: "IST" | "OST") => {
+    if (!canChangeDesignation) return;
     setTarget(next);
     setPosition(next === "OST" ? "OST" : member.designation === "OST" ? "SSM" : member.designation);
     setNewParentId(undefined);
@@ -398,22 +414,14 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
   };
 
   const switchPosition = (next: Designation) => {
+    if (!canChangeDesignation) return;
     setPosition(next);
     setNewParentId(undefined);
     setTeamName("");
   };
 
-  const positionLocked = target === "OST" || member.designation !== "OST";
-  const positionOptions =
-    target === "OST"
-      ? [{ value: "OST" as const, label: designationLabel("OST") }]
-      : member.designation === "OST"
-        ? [
-            { value: "SVD" as const, label: "Sales Vice Director" },
-            { value: "SSM" as const, label: "Senior Sales Manager" },
-            { value: "SM" as const, label: "Sales Manager" },
-          ]
-        : [{ value: member.designation, label: designationLabel(member.designation) }];
+  const positionLocked = !canChangeDesignation || target === "OST" || member.designation !== "OST";
+  const positionOptions = transferPositionOptions(member.designation, target, canChangeDesignation);
 
   const { visible, reveal } = useFormErrors(
     {
@@ -438,7 +446,7 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
       toast.success("Transfer completed.", { description: `${member.displayName} is now ${designationLabel(target)}.` });
     } catch (err) {
       setConfirmTransfer(false);
-      toast.error("Transfer failed.", { description: err instanceof Error ? err.message : "Failed to transfer member." });
+      notify.actionError(err, "Transfer failed.");
     } finally {
       setSubmitting(false);
     }
@@ -458,26 +466,36 @@ function TransferMemberForm({ member, onDone }: { member: OrgMember; onDone: () 
         <TextField id="transfer-descendants" label="Affected team members" value={String(descendantCount)} onChange={() => undefined} disabled inputMode="numeric" />
       </FormSection>
       <FormSection title="New Assignment">
-        <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
-          <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">Target Seller Type</legend>
-          <RadioGroup value={target} onValueChange={(value) => switchTarget(value as "IST" | "OST")} className="tw:flex tw:gap-4" aria-label="Target Seller Type">
-            {(["IST", "OST"] as const).map((option) => (
-              <Label key={option} className="tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8">
-                <RadioGroupItem value={option} />
-                {designationLabel(option)}
-              </Label>
-            ))}
-          </RadioGroup>
-        </fieldset>
-        <SelectField
-          id="transfer-position"
-          label="Assigned Position"
-          required
-          value={position}
-          options={positionOptions}
-          onChange={(value) => switchPosition(value as Designation)}
-          disabled={positionLocked}
-        />
+        {canChangeDesignation ? (
+          <fieldset className="tw:m-0 tw:flex tw:min-w-0 tw:flex-col tw:gap-1.5 tw:border-0 tw:p-0">
+            <legend className="tw:mb-1.5 tw:p-0 tw:text-sm tw:font-medium">Target Seller Type</legend>
+            <RadioGroup value={target} onValueChange={(value) => switchTarget(value as "IST" | "OST")} className="tw:flex tw:gap-4" aria-label="Target Seller Type">
+              {(["IST", "OST"] as const).map((option) => (
+                <Label key={option} className="tw:flex tw:min-h-11 tw:cursor-pointer tw:items-center tw:gap-2 tw:sm:min-h-8">
+                  <RadioGroupItem value={option} />
+                  {designationLabel(option)}
+                </Label>
+              ))}
+            </RadioGroup>
+          </fieldset>
+        ) : (
+          <p className="tw:text-sm tw:text-muted-foreground">
+            The seller type and designation can only change with Staff Access authority. This transfer keeps {designationLabel(member.designation)}.
+          </p>
+        )}
+        {canChangeDesignation ? (
+          <SelectField
+            id="transfer-position"
+            label="Assigned Position"
+            required
+            value={position}
+            options={positionOptions}
+            onChange={(value) => switchPosition(value as Designation)}
+            disabled={positionLocked}
+          />
+        ) : (
+          <TextField id="transfer-position" label="Assigned Position" value={designationLabel(position)} onChange={() => undefined} disabled />
+        )}
         {position === "SVD" ? (
           <TextField
             id="transfer-team-name"

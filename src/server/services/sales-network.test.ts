@@ -2,7 +2,6 @@
 // F2: sales network hierarchy, accreditation numbers and the OST registration flow on the local emulators.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { call, configureEmulatorEnv, emulatorsUp, sessionCookieFor } from "@/server/testing/emulator";
-import { getCurrentAccreditationRecord } from "@/modules/accreditation/eligibility";
 import { manilaToday } from "@/shared/lib/dates";
 
 configureEmulatorEnv();
@@ -21,12 +20,19 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
   let clerk: typeof superAdmin;
   let hr: typeof superAdmin;
   let ost: typeof superAdmin;
+  let svd: typeof superAdmin;
   const createdMemberIds: string[] = [];
   const createdAccountIds: string[] = [];
   const createdAccreditationIds: string[] = [];
+  let renewedAaNumber = "";
+  let sellerMemberId = "";
+  let sellerAccountId = "";
+  let roleTestAccountId = "";
   let applicationId: string | null = null;
   const suffix = Date.now();
   const email = `f2-seller-${suffix}@afhomes.local`;
+  const roleTestEmail = `f2-role-${suffix}@afhomes.local`;
+  const leaderTargetEmail = `f2-leader-target-${suffix}@afhomes.local`;
   const applicantEmail = `f2-applicant-${suffix}@example.com`;
 
   beforeAll(async () => {
@@ -42,13 +48,14 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
     clerk = await cookie("dev-clerk");
     hr = await cookie("dev-hr");
     ost = await cookie("dev-ost-a1");
+    svd = await cookie("dev-svd-a");
   }, 60_000);
 
   afterAll(async () => {
     const { getAuth } = await import("firebase-admin/auth");
     const { getAdminApp } = await import("@/server/firebase-admin");
     if (applicationId) await db.dbWrite(`mutation($id: UUID!) { registrationApplication_delete(id: $id) }`, { id: applicationId }).catch(() => undefined);
-    for (const accountId of createdAccountIds) {
+    for (const accountId of [...createdAccountIds, roleTestAccountId].filter(Boolean)) {
       await db.dbWrite(`mutation($id: UUID!) { roleAssignment_deleteMany(where: { userId: { eq: $id } }) }`, { id: accountId }).catch(() => undefined);
       await db.dbWrite(`mutation($id: UUID!) { accountStatusEvent_deleteMany(where: { accountId: { eq: $id } }) }`, { id: accountId }).catch(() => undefined);
       await db.dbWrite(`mutation($id: UUID!) { userAccount_delete(id: $id) }`, { id: accountId }).catch(() => undefined);
@@ -60,7 +67,7 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
     for (const memberId of createdMemberIds) {
       await db.dbWrite(`mutation($id: UUID!) { member_delete(id: $id) }`, { id: memberId }).catch(() => undefined);
     }
-    for (const address of [email, applicantEmail]) {
+    for (const address of [email, roleTestEmail, leaderTargetEmail, applicantEmail]) {
       await getAuth(getAdminApp()).getUserByEmail(address).then((user) => getAuth(getAdminApp()).deleteUser(user.uid)).catch(() => undefined);
     }
   });
@@ -97,7 +104,12 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
     createdMemberIds.push(seller.memberId);
     createdAccountIds.push(seller.accountId);
     createdAccreditationIds.push(seller.accreditationId);
+    sellerMemberId = seller.memberId;
+    sellerAccountId = seller.accountId;
     expect(seller.aaNumber).toMatch(/^AAO\d{8}$/);
+    const { loadAccount } = await import("@/server/repositories/organization");
+    const account = await loadAccount(seller.accountId);
+    expect(account?.roleIds).toContain("ost");
 
     const renewed = await accreditation.renewAccreditation(admin, seller.accreditationId);
     expect(renewed.aaNumber).not.toBe(seller.aaNumber);
@@ -107,20 +119,98 @@ describe.skipIf(!up)("sales network and accreditation (emulators)", () => {
 
     const oldNumber = await accreditation.resolveAaNumberForActor(admin, seller.aaNumber);
     expect(oldNumber).toMatchObject({ recordId: seller.accreditationId, currentAaNumber: renewed.aaNumber, quotedNumberIsCurrent: false });
+    renewedAaNumber = renewed.aaNumber ?? "";
+  });
+
+  it("rejects a member ID number that is invalid for its selected type", async () => {
+    await expect(network.updateMember(superAdmin, sellerMemberId, {
+      governmentIdType: "Digital National ID",
+      governmentIdNumber: "AB12CD",
+    })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("keeps a legacy Digital National ID saveable when another member field changes", async () => {
+    // Represent a record saved by the earlier validator: a six-character digital code.
+    const row = await db.dbRead<{ member: { details: Record<string, unknown> | null } | null }>("query($id: UUID!) { member(id: $id) { details } }", { id: sellerMemberId });
+    const details = row.member?.details ?? {};
+    const profile = (details.sellerProfile ?? {}) as Record<string, unknown>;
+    await db.dbWrite("mutation($id: UUID!, $details: Any!) { member_update(id: $id, data: { details: $details }) }", {
+      id: sellerMemberId,
+      details: { ...details, sellerProfile: { ...profile, governmentIdType: "Digital National ID", governmentIdNumber: "AB12CD" } },
+    });
+    const updated = await network.updateMember(superAdmin, sellerMemberId, { mobileNumber: "09170000009" });
+    expect(updated.sellerProfile?.governmentIdNumber).toBe("AB12CD");
+    // The current format still applies the moment the ID itself changes.
+    await expect(network.updateMember(superAdmin, sellerMemberId, { governmentIdNumber: "AB1234" })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("assigns the designation role when createMember links an account", async () => {
+    const { createAccount } = await import("@/server/services/organization");
+    const newAccount = await createAccount(superAdmin, { displayName: "Role Test", email: roleTestEmail, roleIds: ["clerk"] });
+    roleTestAccountId = newAccount.id;
+    const parent = (await network.listEligibleParents(superAdmin, "SM"))[0]!;
+    expect(parent).toBeTruthy();
+    const member = await network.createMember(superAdmin, {
+      displayName: "Role Test Member",
+      designation: "SM",
+      parentId: parent.id,
+      accountId: newAccount.id,
+    });
+    createdMemberIds.push(member.id);
+    const { loadAccount } = await import("@/server/repositories/organization");
+    const linked = await loadAccount(newAccount.id);
+    expect(linked?.roleIds).toContain("sm");
+    // The account carries the member reference, so the link survives a reload and drives sales scoping.
+    const row = await db.dbRead<{ userAccount: { member: { id: string } | null } | null }>("query($id: UUID!) { userAccount(id: $id) { member { id } } }", { id: newAccount.id });
+    expect(row.userAccount?.member?.id).toBe(member.id);
+    expect((await network.getMember(superAdmin, member.id)).accountId).toBe(newAccount.id);
+  });
+
+  it("refuses to link an account and grant a sales role without Accounts authority", async () => {
+    const { createAccount } = await import("@/server/services/organization");
+    const target = await createAccount(superAdmin, { displayName: "Leader Target", email: leaderTargetEmail, roleIds: ["clerk"] });
+    createdAccountIds.push(target.id);
+    const parents = await network.listEligibleParents(svd, "SM");
+    expect(parents.length).toBeGreaterThan(0);
+    await expect(network.createMember(svd, { displayName: "Unauthorized Link", designation: "SM", parentId: parents[0].id, accountId: target.id })).rejects.toMatchObject({ status: 403 });
+    const { loadAccount } = await import("@/server/repositories/organization");
+    expect((await loadAccount(target.id))?.roleIds).not.toContain("sm");
+    const row = await db.dbRead<{ userAccount: { member: { id: string } | null } | null }>("query($id: UUID!) { userAccount(id: $id) { member { id } } }", { id: target.id });
+    expect(row.userAccount?.member ?? null).toBeNull();
+  });
+
+  it("updates the account role when a member's designation changes", async () => {
+    const parent = (await network.listEligibleParents(superAdmin, "SM"))[0]!;
+    expect(parent).toBeTruthy();
+    await network.transferMember(superAdmin, sellerMemberId, parent.id, { designation: "SM", teamName: null });
+    const { loadAccount } = await import("@/server/repositories/organization");
+    const linked = await loadAccount(sellerAccountId);
+    expect(linked?.roleIds).toContain("sm");
+    expect(linked?.roleIds).not.toContain("ost");
+  });
+
+  it("refuses a designation change on a linked account without Accounts authority", async () => {
+    const visible = await network.listMembers(svd);
+    const ost = visible.find((member) => member.designation === "OST" && member.accountId);
+    const sponsor = visible.find((member) => member.designation === "SVD");
+    expect(ost).toBeTruthy();
+    expect(sponsor).toBeTruthy();
+    await expect(network.transferMember(svd, ost!.id, sponsor!.id, { designation: "SSM" })).rejects.toMatchObject({ status: 403 });
+    // The denied request writes nothing: parent, designation and role stay as they were.
+    const after = await network.getMember(svd, ost!.id);
+    expect(after.designation).toBe("OST");
+    expect(after.parentId).toBe(ost!.parentId);
+    const { loadAccount } = await import("@/server/repositories/organization");
+    expect((await loadAccount(ost!.accountId!))?.roleIds).toContain("ost");
+    expect((await loadAccount(ost!.accountId!))?.roleIds).not.toContain("ssm");
   });
 
   it("verifies publicly with a restricted projection and no validity date", async () => {
-    expect(createdAccreditationIds.length).toBeGreaterThan(0);
-    const records = await accreditation.listAccreditations(admin);
-    // Only a member's CURRENT record is publicly verifiable; an older number is superseded.
-    const visibleRecords = new Map<string, typeof records>();
-    for (const record of records) visibleRecords.set(record.memberId, [...(visibleRecords.get(record.memberId) ?? []), record]);
-    const active = [...visibleRecords.values()]
-      .map((memberRecords) => getCurrentAccreditationRecord(memberRecords))
-      .find((record) => record?.adminStatus === "active" && record.aaNumber);
-    expect(active).toBeTruthy();
+    // Verify the seller created and renewed above: its record is guaranteed current and active.
+    // Seeded records can be expired, superseded or ambiguous, so picking one is seed-order roulette.
+    expect(renewedAaNumber).not.toBe("");
     const publicRoute = await import("@/app/api/v1/public/accreditation/route");
-    const found = await call(publicRoute.GET, { path: `/api/v1/public/accreditation?number=${active!.aaNumber}` });
+    const found = await call(publicRoute.GET, { path: `/api/v1/public/accreditation?number=${renewedAaNumber}` });
     expect(found.status).toBe(200);
     expect(found.body.result.validUntil).toBeNull();
     expect(found.body.result.maskedName).toMatch(/\*/);

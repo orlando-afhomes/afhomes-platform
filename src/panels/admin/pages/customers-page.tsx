@@ -9,12 +9,12 @@ import Link from "next/link";
 import { FileCheck, FileText, Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useApproveCustomer, useContracts, useDiscardCustomerDraft, useOperation, useRejectCustomer, useSendBackCustomer } from "@/data/business-queries";
-import { CustomerValidationError } from "@/data/contracts/customer-repository";
 import type { ContractView } from "@/data/contracts/contract-repository";
 import { RowActionsMenu } from "@/shared/components/modern/row-actions-menu";
 import { ConfirmDialog } from "@/shared/components/modern/confirm-dialog";
 import { ReasonDialog } from "@/shared/components/modern/form-dialog";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { PrepareContractDialog } from "../components/prepare-contract-dialog";
 import { useContractHref } from "../components/use-contract-href";
 import { buildCustomerMenuProps } from "../actions/customer-actions";
@@ -176,9 +176,8 @@ export function CustomersTab() {
               setReviewTarget(null);
             },
             (failure) => {
-              // Attribution problems (closing seller, referral reference) are listed so the Clerk can fix them.
-              const detail = failure instanceof CustomerValidationError ? Object.values(failure.errors).filter(Boolean).join(" ") : failure instanceof Error ? failure.message : "Request failed.";
-              toast.error(detail);
+              // The resolver lists every field message (closing seller, referral reference) so the Clerk can fix them.
+              notify.actionError(failure, "Approval failed.");
               setReviewTarget(null);
             },
           );

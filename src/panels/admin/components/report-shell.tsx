@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { flushSync } from "react-dom";
 import { ChevronDown, Download, FileDown, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { useRecordReportExport } from "@/data/business-queries";
 import { DataTable, type ColumnDef } from "@/shared/components/modern/data-table";
 import { QueryState } from "@/shared/components/modern/query-state";
@@ -154,7 +155,7 @@ export function ReportExport<T>({
       } else downloadCsv(name, [headers, ...data]);
       toast.success(`${rows.length} row(s) exported.`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The export failed.");
+      notify.actionError(error, "The export failed.");
     } finally {
       running.current = false;
       setBusy(false);

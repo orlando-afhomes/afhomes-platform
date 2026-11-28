@@ -40,6 +40,7 @@ import { useConfirmRun } from "@/shared/components/modern/use-confirm-run";
 import { buildMemberMenuProps, resolveRenewTarget } from "../actions/sales-network-actions";
 import { SalesNetworkMemberDialogs } from "./sales-network-member-dialogs";
 import { toast } from "sonner";
+import { notify } from "@/shared/components/modern/app-toaster";
 import { AccreditationEligibilityTag } from "../components/accreditation-status";
 import { AccreditationRenewAction } from "../components/accreditation-renew-action";
 import { DesignationBadge } from "@/shared/components/business/designation-badge";
@@ -514,6 +515,7 @@ export function SalesNetworkMemberDetailPage() {
         transferMember={transferOpen ? member : null}
         onCloseEdit={() => setEditOpen(false)}
         onCloseTransfer={() => setTransferOpen(false)}
+        canChangeDesignation={granted.has("accounts")}
       />
       <ConfirmDialog
         open={accreditOpen}
@@ -531,7 +533,7 @@ export function SalesNetworkMemberDetailPage() {
             },
             (err: unknown) => {
               setAccreditOpen(false);
-              toast.error("Creation failed.", { description: err instanceof Error ? err.message : "Failed to create accreditation." });
+              notify.actionError(err, "Creation failed.");
             },
           );
         }}

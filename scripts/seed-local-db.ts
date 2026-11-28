@@ -1,5 +1,6 @@
-// Seeds the LOCAL SQL Connect emulator with the synthetic pilot records.
-// Run: npm run db:seed   (the emulator must be running: npm run emulators)
+// Seeds the LOCAL SQL Connect emulator with the true Super Admin and confirmed reference data.
+// Run: npm run db:seed        (true data only; the emulator must be running: npm run emulators)
+// Run: npm run db:seed:fixtures (synthetic pilot records for emulator test suites)
 // Safety: refuses any host except localhost and any project not starting with "demo-".
 // Each run wipes the pilot tables first, so running it twice gives the same counts.
 import { DEV_IDENTITIES } from "@/data/seed/dev-identities";
@@ -10,6 +11,7 @@ import { buildDepartments, buildRoles } from "@/data/seed/organization";
 import { PRINT_TEMPLATES } from "@/modules/contracts/print-templates";
 import { seedExperiences } from "@/modules/experiences/sample-seed";
 import { activeRoles } from "@/modules/identity/active-roles";
+import { DELEGABLE_MODULES } from "@/modules/identity/permissions";
 import { seedOutlets, seedReferenceEntries } from "@/modules/settings/lists";
 import { normalizePhilippineMobile } from "@/shared/utils/input-sanitizers";
 import { seedTierLevels } from "@/modules/vip/tier-levels";
@@ -25,8 +27,9 @@ const HOST = process.env.DATA_CONNECT_EMULATOR_HOST ?? "127.0.0.1:9399";
 const SERVICE = "afhomes";
 const LOCATION = "asia-southeast1";
 const DRY = process.argv.includes("--dry");
-// Clean start: one Super Admin, no members or business records. Reference data is added by F0's next slice.
-const CLEAN = process.argv.includes("--clean");
+// True data by default; `--fixtures` loads the synthetic pilot records used by emulator test suites.
+const FIXTURES = process.argv.includes("--fixtures");
+const CLEAN = !FIXTURES;
 
 if (!PROJECT.startsWith("demo-")) throw new Error(`Refusing to seed project "${PROJECT}": only demo- projects are allowed.`);
 if (!/^(127\.0\.0\.1|localhost|\[::1\]):\d+$/.test(HOST)) throw new Error(`Refusing to seed host "${HOST}": only the local emulator is allowed.`);
@@ -321,6 +324,36 @@ for (const identity of identities) {
   }
 }
 
+// The clean seed still has one Super Admin, so give that account a complete organization row.
+if (CLEAN) {
+  const superIdentity = DEV_IDENTITIES.find((row) => row.id === "dev-super-admin")!;
+  const superAccount = SEED_ACCOUNTS.find((row) => row.identityId === superIdentity.id)!;
+  const departmentId = await insert("Department", "department", {
+    name: "Smart System Department",
+    code: "SSD",
+    description: "Super Administrator governance, protected system access and platform configuration.",
+    status: "active",
+  });
+  const roleId = await insert("DepartmentRole", "departmentRole", {
+    name: "Super Admin",
+    departmentId,
+    moduleIds: [...DELEGABLE_MODULES],
+    status: "active",
+    isProtected: true,
+  });
+  const staffId = await insert("StaffMember", "staffMember", {
+    displayName: superIdentity.displayName,
+    position: "Super Administrator",
+    departmentId,
+    departmentRoleId: roleId,
+    status: "active",
+    email: superAccount.email,
+    profile: {},
+  });
+  await gql(`mutation($id: UUID!, $staff: UUID!) { userAccount_update(id: $id, data: { staffId: $staff }) }`, { id: userIds.get(superIdentity.id), staff: staffId });
+  await gql(`mutation($id: UUID!, $head: String!) { department_update(id: $id, data: { headStaffId: $head }) }`, { id: departmentId, head: staffId });
+}
+
 // Organization fixtures (rich seed only; the clean start keeps a single Super Admin):
 // departments, delegable department roles, and office staff linked to their sign-in
 // accounts. A linked role grants modules the account already holds, so effective
@@ -349,12 +382,13 @@ if (!CLEAN) {
   }
   const cleanName = (displayName: string) => displayName.split(" · ")[0];
   const linkedStaff: Array<{ identityId: string; position: string; departmentId: string; roleId: string }> = [
-    { identityId: "dev-super-admin", position: "Super Administrator", departmentId: "dept-admin", roleId: "role-super-admin" },
+    { identityId: "dev-super-admin", position: "Super Administrator", departmentId: "dept-smart-system", roleId: "role-super-admin" },
     { identityId: "dev-admin", position: "Administrator", departmentId: "dept-admin", roleId: "role-admin" },
     { identityId: "dev-hr", position: "HR Specialist", departmentId: "dept-hr", roleId: "role-hr-staff" },
     { identityId: "dev-finance", position: "Finance Officer", departmentId: "dept-finance", roleId: "role-finance" },
     { identityId: "dev-clerk", position: "Office Clerk", departmentId: "dept-ops", roleId: "role-ops-staff" },
   ];
+  let superStaffId: string | undefined;
   for (const spec of linkedStaff) {
     const identity = DEV_IDENTITIES.find((row) => row.id === spec.identityId)!;
     const account = SEED_ACCOUNTS.find((row) => row.identityId === spec.identityId)!;
@@ -368,6 +402,10 @@ if (!CLEAN) {
       profile: {},
     });
     await gql(`mutation($id: UUID!, $staff: UUID!) { userAccount_update(id: $id, data: { staffId: $staff }) }`, { id: userIds.get(spec.identityId), staff: staffId });
+    if (spec.identityId === "dev-super-admin") superStaffId = staffId ?? undefined;
+  }
+  if (superStaffId) {
+    await gql(`mutation($id: UUID!, $head: String!) { department_update(id: $id, data: { headStaffId: $head }) }`, { id: departmentIds.get("dept-smart-system"), head: superStaffId });
   }
   // Unlinked office records so the directory also shows employees without accounts.
   for (const extra of [
